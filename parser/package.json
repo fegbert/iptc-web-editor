@@ -1,0 +1,25 @@
+{
+  "name": "iptc-parser",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "prepare": "pnpm build",
+    "lint": "eslint --ext .ts .",
+    "test": "vitest",
+    "test:watch": "vitest --watch"
+  },
+  "keywords": [],
+  "author": "fegbert",
+  "license": "ISC",
+  "packageManager": "pnpm@10.12.4",
+  "devDependencies": {
+    "@antfu/eslint-config": "^4.16.1",
+    "@types/node": "^24.0.7",
+    "eslint": "^9.30.0",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  }
+}
