@@ -1,15 +1,14 @@
 {
   "compilerOptions": {
-    /* Visit https://aka.ms/tsconfig to read more about this file */
-
     "target": "es2020",
     "module": "esnext",
     "declaration": true,
     "outDir": "./dist",
     "rootDir": "./src",
     "moduleResolution": "node",
+    "resolveJsonModule": true,
     "esModuleInterop": true,
     "strict": true
   },
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*.ts", "assets/json/**/*.json"]
 }
