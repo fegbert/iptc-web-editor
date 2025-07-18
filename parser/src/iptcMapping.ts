@@ -1,4 +1,4 @@
-import iptcTechReference from '../techReferences/iptc-pmd-techreference_2024.1.json'
+import iptcTechReference from './techReferences/iptc-pmd-techreference_2024.1.json'
 
 type IpmdTopSchema = 'IptcCore' | 'IptcExt'
 type IpmdStructSchema = 'IptcCore' | 'IptcExt' | 'PLUS'

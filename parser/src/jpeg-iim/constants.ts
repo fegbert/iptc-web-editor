@@ -14,3 +14,6 @@ export const IPTC_RESOURCE_ID = 0x0404
 
 // IPTC Tag Marker
 export const IPTC_TAG_MARKER = 0x1C
+
+// JPEG Start of Image (SOI) marker
+export const JPEG_SOI_MARKER = [0xFF, 0xD8]
