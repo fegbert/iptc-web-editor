@@ -1,4 +1,4 @@
-import { APP13_SEGMENT, PHOTOSHOP_HEADER, IPTC_TAG_MARKER } from './constants'
+import { APP13_SEGMENT, IPTC_TAG_MARKER, PHOTOSHOP_HEADER } from './constants'
 import { calculateSegmentLength, isSegmentMatchingPhotoshopHeader, searchSegmentForImageResourceBlocks } from './helpers'
 
 /**
@@ -52,7 +52,7 @@ export function parseIIM(buffer: Uint8Array): Record<string, any> {
     const length = view.getUint16(offset + 3)
 
     const tag = `${record}:${dataset}`
-  
+
     const start = offset + 5
     const end = start + length
     if (end > buffer.length) {
@@ -66,7 +66,8 @@ export function parseIIM(buffer: Uint8Array): Record<string, any> {
       result[tag] = Array.isArray(existing)
         ? [...existing, value]
         : [existing as string, value]
-    } else {
+    }
+    else {
       result[tag] = value
     }
 
