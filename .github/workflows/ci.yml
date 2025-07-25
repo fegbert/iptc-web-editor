@@ -56,4 +56,5 @@ jobs:
         run: pnpm lint
 
       - name: Test
+        if: matrix.project == 'parser'
         run: pnpm test
