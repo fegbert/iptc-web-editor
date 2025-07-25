@@ -63,3 +63,5 @@ export interface EtMapping {
   sortorder?: string
   output?: 'any' | 'none'
 }
+
+export type Standard = 'IPTC-IIM'

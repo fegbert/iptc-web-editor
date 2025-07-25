@@ -6,7 +6,7 @@ import { calculateSegmentLength, isSegmentMatchingPhotoshopHeader, searchSegment
  * @param buffer The JPEG file buffer to extract the IPTC-IIM block from
  * @returns The extracted IPTC-IIM block as a Uint8Array
  */
-export function extractIIMBlockFromJPEG(buffer: Uint8Array): Uint8Array {
+function extractIIMBlockFromJPEG(buffer: Uint8Array): Uint8Array {
   let offset = 0
 
   while (offset < buffer.length - 1) {
@@ -31,35 +31,42 @@ export function extractIIMBlockFromJPEG(buffer: Uint8Array): Uint8Array {
   throw new Error('No IPTC-IIM block found in the JPEG file.')
 }
 
+/**
+ * Parses the IPTC-IIM metadata from a JPEG file buffer into a readable JSON object.
+ * @param buffer The JPEG file buffer.
+ * @returns A JSON object containing the parsed IPTC-IIM metadata.
+ */
 export function parseIIM(buffer: Uint8Array): Record<string, any> {
+  const iimBlock = extractIIMBlockFromJPEG(buffer)
+
   const result: Record<string, string | string[]> = {}
-  const view = new DataView(buffer.buffer, buffer.byteOffset, buffer.byteLength)
+  const view = new DataView(iimBlock.buffer, iimBlock.byteOffset, iimBlock.byteLength)
 
   let offset = 0
 
-  while (offset < buffer.length) {
-    if (buffer[offset] !== IPTC_TAG_MARKER) {
+  while (offset < iimBlock.length) {
+    if (iimBlock[offset] !== IPTC_TAG_MARKER) {
       offset++
       continue
     }
 
-    if (offset + 5 > buffer.length) {
+    if (offset + 5 > iimBlock.length) {
       break
     }
 
-    const record = buffer[offset + 1]
-    const dataset = buffer[offset + 2]
+    const record = iimBlock[offset + 1]
+    const dataset = iimBlock[offset + 2]
     const length = view.getUint16(offset + 3)
 
     const tag = `${record}:${dataset}`
 
     const start = offset + 5
     const end = start + length
-    if (end > buffer.length) {
+    if (end > iimBlock.length) {
       break
     }
 
-    const value = new TextDecoder().decode(buffer.subarray(start, end))
+    const value = new TextDecoder().decode(iimBlock.subarray(start, end))
 
     if (tag in result) {
       const existing = result[tag]
