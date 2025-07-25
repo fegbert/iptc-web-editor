@@ -1,6 +1,6 @@
-import { APP13_SEGMENT, IPTC_RESOURCE_ID, IPTC_TAG_MARKER, JPEG_SOI_MARKER, PHOTOSHOP_HEADER } from './constants'
-import { concatUint8Arrays } from './helpers'
 import fs from 'node:fs'
+import { APP13_SEGMENT, IPTC_RESOURCE_ID, IPTC_TAG_MARKER, IRB_SIGNATURE, JPEG_SOI_MARKER, PHOTOSHOP_HEADER } from './constants'
+import { calculateSegmentLength, concatUint8Arrays, isSegmentMatchingPhotoshopHeader } from './helpers'
 
 function encodeData(fields: Record<string, string>) {
   const encodedFields = Object.entries(fields).map(([key, value]) => {
@@ -26,14 +26,14 @@ function encodeData(fields: Record<string, string>) {
 }
 
 function wrapDataInIRB(data: Uint8Array) {
-  const dataSize = new Uint8Array([
-    data.length >> 24 & 0xFF,
-    data.length >> 16 & 0xFF,
-    data.length >> 8 & 0xFF,
-    data.length & 0xFF,
-  ])
-
   const paddedData = data.length % 2 === 0 ? data : Uint8Array.from([...data, 0])
+
+  const dataSize = new Uint8Array([
+    paddedData.length >> 24 & 0xFF,
+    paddedData.length >> 16 & 0xFF,
+    paddedData.length >> 8 & 0xFF,
+    paddedData.length & 0xFF,
+  ])
 
   const resourceId = new Uint8Array([
     (IPTC_RESOURCE_ID >> 8) & 0xFF,
@@ -41,9 +41,9 @@ function wrapDataInIRB(data: Uint8Array) {
   ])
 
   return concatUint8Arrays([
-    PHOTOSHOP_HEADER,
+    IRB_SIGNATURE,
     resourceId,
-    new Uint8Array([0, 0]), // "name" field - empty for IPTC-IIM
+    new Uint8Array([0x00, 0x00]), // "name" field + padding - empty for IPTC-IIM
     dataSize,
     paddedData,
   ])
@@ -51,11 +51,11 @@ function wrapDataInIRB(data: Uint8Array) {
 
 function wrapDataInAPP13(data: Uint8Array) {
   const payload = concatUint8Arrays([PHOTOSHOP_HEADER, data])
+  const segmentLength = payload.length + 2 // +2 for the length bytes
 
-  // +2 to account for the length bytes as well
   const lengthBytes = new Uint8Array([
-    (payload.length + 2) >> 8 & 0xFF,
-    (payload.length + 2) & 0xFF,
+    (segmentLength >> 8) & 0xFF,
+    segmentLength & 0xFF,
   ])
 
   return concatUint8Arrays([
@@ -71,22 +71,41 @@ export function writeToJPEG(jpegBuffer: Uint8Array, data: Record<string, string>
   }
 
   let offset = 2
+  let insertBefore = 2
+  let insertAfter: number | undefined
 
   while (
-    offset < jpegBuffer.length &&
-    jpegBuffer[offset] === APP13_SEGMENT[0] &&
-    jpegBuffer[offset + 1] !== APP13_SEGMENT[1]
+    offset + 4 < jpegBuffer.length
+    && jpegBuffer[offset] === 0xFF
+    && jpegBuffer[offset + 1] >= 0xE0
+    && jpegBuffer[offset + 1] < 0xF0
   ) {
-    const segmentLength = (jpegBuffer[offset + 2] << 8) | jpegBuffer[offset + 3]
-    offset += segmentLength + 2
+    const segmentType = jpegBuffer[offset + 1]
+    const segmentLength = calculateSegmentLength(jpegBuffer, offset)
+
+    const segmentStart = offset
+    const segmentEnd = offset + segmentLength + 2
+
+    if (segmentEnd > jpegBuffer.length) {
+      throw new Error('Invalid JPEG file: segment length exceeds buffer size')
+    }
+
+    if (segmentType === APP13_SEGMENT[1]) {
+      const payload = jpegBuffer.subarray(offset + 4, segmentEnd)
+
+      if (isSegmentMatchingPhotoshopHeader(payload)) {
+        insertBefore = segmentStart
+        insertAfter = segmentEnd
+        break
+      }
+    }
+
+    insertBefore = segmentEnd
+    offset = segmentEnd
   }
 
-  if (offset + 5 >= jpegBuffer.length) {
-    throw new Error('Invalid JPEG file: APP13 segment not found or too short')
-  }
-
-  const before = jpegBuffer.subarray(0, offset)
-  const after = jpegBuffer.subarray(offset)
+  const before = jpegBuffer.subarray(0, insertBefore)
+  const after = insertAfter ? jpegBuffer.subarray(insertAfter) : jpegBuffer.subarray(insertBefore)
 
   const encodedData = encodeData(data)
   const irbData = wrapDataInIRB(encodedData)
@@ -97,5 +116,10 @@ export function writeToJPEG(jpegBuffer: Uint8Array, data: Record<string, string>
   output.set(app13Data, before.length)
   output.set(after, before.length + app13Data.length)
 
-  fs.writeFileSync(path, output)
+  try {
+    fs.writeFileSync(path, output)
+  }
+  catch (error) {
+    console.error('Error writing JPEG file:', error)
+  }
 }

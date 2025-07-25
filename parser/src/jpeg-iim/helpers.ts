@@ -80,6 +80,9 @@ export function searchSegmentForImageResourceBlocks(segment: Uint8Array, offset:
       // If dataEnd is odd, we need to add padding to make it even
       position = dataEnd + (dataEnd % 2)
     }
+    else {
+      position++
+    }
   }
   throw new Error('No IPTC-IIM block was found in the segment')
 }
@@ -88,11 +91,10 @@ export function concatUint8Arrays(arrays: Uint8Array[]): Uint8Array {
   const totalLength = arrays.reduce((sum, arr) => sum + arr.length, 0)
   const result = new Uint8Array(totalLength)
 
-  let offset = 0
-  for (const array of arrays) {
+  arrays.reduce((offset, array) => {
     result.set(array, offset)
-    offset += array.length
-  }
+    return offset + array.length
+  }, 0)
 
   return result
 }
