@@ -1,18 +1,11 @@
 import fs from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { helloWorld } from '../src/index'
-import { parseIIM } from '../src/jpeg-iim/reader'
-
-describe('helloWorld function', () => {
-  it('should return true', () => {
-    expect(helloWorld()).toBe(true)
-  })
-})
+import { parseMetadata } from '../src/index'
 
 describe('jPEG IIM Reader', () => {
   it('should extract IPTC-IIM block from JPEG buffer', () => {
     const jpeg = fs.readFileSync('./tests/assets/test01.jpg')
-    const metaData = parseIIM(jpeg)
+    const metaData = parseMetadata(jpeg)
 
     expect(metaData).toMatchObject({
       '1:90': '\x1B%G',

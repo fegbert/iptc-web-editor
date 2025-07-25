@@ -6,7 +6,7 @@ import { IPTC_RESOURCE_ID, IRB_SIGNATURE, PHOTOSHOP_HEADER } from './constants'
  * @param offset The current offset in the buffer
  * @returns A number representing the length of the segment
  */
-export function calculateSegmentLength(buffer: Uint8Array, offset: number): number {
+function calculateSegmentLength(buffer: Uint8Array, offset: number): number {
   if (offset + 3 >= buffer.length) {
     throw new Error('Buffer too short to read segment length')
   }
@@ -23,7 +23,7 @@ export function calculateSegmentLength(buffer: Uint8Array, offset: number): numb
  * @param segment The segment to check
  * @returns True if the segment matches the Photoshop header, false otherwise
  */
-export function isSegmentMatchingPhotoshopHeader(segment: Uint8Array) {
+function isSegmentMatchingPhotoshopHeader(segment: Uint8Array) {
   // Check that segment matches the Photoshop header by comparing each byte
   return PHOTOSHOP_HEADER.filter((byte, index) => byte !== segment[index]).length === 0
 }
@@ -50,7 +50,7 @@ function isSegmentMatchingSignature(segment: Uint8Array, position: number): bool
  * @param offset The offset in the segment to start searching from
  * @returns The IPTC-IIM block if found, or throws an error if nothing is found.
  */
-export function searchSegmentForImageResourceBlocks(segment: Uint8Array, offset: number): Uint8Array {
+function searchSegmentForImageResourceBlocks(segment: Uint8Array, offset: number): Uint8Array {
   let position = offset
   // Check if the segment is long enough to contain an IRB
   while (position + 10 < segment.length) {
@@ -82,4 +82,11 @@ export function searchSegmentForImageResourceBlocks(segment: Uint8Array, offset:
     }
   }
   throw new Error('No IPTC-IIM block was found in the segment')
+}
+
+export {
+  calculateSegmentLength,
+  isSegmentMatchingPhotoshopHeader,
+  isSegmentMatchingSignature,
+  searchSegmentForImageResourceBlocks,
 }
