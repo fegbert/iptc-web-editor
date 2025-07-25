@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'app/**'
+      - 'parser/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'app/**'
+      - 'parser/**'
+
+jobs:
+  test-and-lint:
+    name: Test & Lint (${{ matrix.project }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        project: [app, parser]
+      fail-fast: false
+
+    defaults:
+      run:
+        working-directory: ${{ matrix.project }}
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: '10.12.4'
+          run_install: false
+
+      - name: Restore pnpm cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ matrix.project }}/node_modules
+          key: ${{ runner.os }}-pnpm-${{ matrix.project }}-${{ hashFiles(format('{0}/pnpm-lock.yaml', matrix.project)) }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-${{ matrix.project }}-
+
+      - name: Install dependencies
+        run: pnpm i
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Test
+        if: matrix.project == 'parser'
+        run: pnpm test
