@@ -2,7 +2,6 @@
 import type { FileWithHandle } from 'browser-fs-access'
 
 const files = defineModel<FileWithHandle[]>()
-
 </script>
 
 <template>
