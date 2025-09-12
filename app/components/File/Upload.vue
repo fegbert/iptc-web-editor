@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import type { FileWithHandle } from 'browser-fs-access'
+import { useIDBKeyval } from '@vueuse/integrations/useIDBKeyval'
 import { fileOpen } from 'browser-fs-access'
 
+const { data: savedFiles } = useIDBKeyval<FileWithHandle[]>('uploaded-images', [])
 const files = defineModel<FileWithHandle[]>()
 
 async function openFile() {
@@ -11,7 +13,8 @@ async function openFile() {
     multiple: true,
   })
 
-  files.value = Array.isArray(blob) ? blob : [blob]
+  files.value = [...files.value ?? [], ...blob]
+  savedFiles.value = [...savedFiles.value ?? [], ...blob]
 }
 </script>
 

@@ -2,6 +2,7 @@
 import type { FileWithHandle } from 'browser-fs-access'
 
 const files = defineModel<FileWithHandle[]>()
+
 </script>
 
 <template>
@@ -9,8 +10,10 @@ const files = defineModel<FileWithHandle[]>()
     Welcome to the IPTC Web Editor!
 
     <div>
-      <FileUpload v-model="files" />
-      <FileDisplay :files="files ?? []" />
+      <ClientOnly>
+        <FileUpload v-model="files" />
+        <FileDisplay :files="files ?? []" />
+      </ClientOnly>
     </div>
   </div>
 </template>
