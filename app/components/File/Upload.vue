@@ -20,7 +20,7 @@ async function openFile() {
 
 <template>
   <div>
-    <button @click="openFile">
+    <button type="button" @click="openFile">
       Upload Files
     </button>
   </div>
