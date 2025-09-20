@@ -1,0 +1,28 @@
+<template>
+  <div class="HeaderHeight px-16 flex justify-between items-center bg-default/75 border-default border-b">
+    <div>
+      <h1 class="font-bold text-lg">
+        IPTC Web Editor
+      </h1>
+    </div>
+    <div class="flex items-center gap-2">
+      <UColorModeButton />
+      <UTooltip text="Open on GitHub">
+        <UButton
+          color="neutral"
+          variant="ghost"
+          to="https://github.com/fegbert/iptc-web-editor"
+          target="_blank"
+          icon="i-simple-icons-github"
+          aria-label="GitHub"
+        />
+      </UTooltip>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.HeaderHeight {
+  height: calc(0.25rem * 16);
+}
+</style>
