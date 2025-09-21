@@ -38,10 +38,19 @@ async function addFiles(files: FileWithHandle[]) {
   loadFilesFromIndexedDB()
 }
 
+async function removeFile(fileToRemove: FileWithHandle) {
+  const updatedFiles = loadedFiles.value.filter(file => file !== fileToRemove)
+
+  const { set } = useIDBKeyval<FileWithHandle[]>('uploaded-images', loadedFiles.value)
+  await set(updatedFiles)
+
+  loadFilesFromIndexedDB()
+}
+
 export default function () {
   if (!import.meta.env.SSR) {
     loadFilesFromIndexedDB()
   }
 
-  return { loadedFiles, isLoading, loadFilesFromIndexedDB, addFiles }
+  return { loadedFiles, isLoading, loadFilesFromIndexedDB, addFiles, removeFile }
 }

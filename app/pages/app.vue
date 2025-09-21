@@ -10,7 +10,8 @@ const { loadedFiles, isLoading } = useFiles()
           <FileLoadButton />
         </div>
       </template>
-      {{ loadedFiles }} {{ isLoading }}
+      <FileList v-if="!isLoading" :files="loadedFiles" />
+      <USkeleton v-else class="h-full" />
     </UDashboardSidebar>
     <UDashboardPanel>
       <template #header>
