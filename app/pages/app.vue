@@ -1,10 +1,17 @@
 <script setup lang="ts">
-
+const { loadedFiles, isLoading } = useFiles()
 </script>
 
 <template>
   <UDashboardGroup class="Dashboard">
-    <UDashboardSidebar />
+    <UDashboardSidebar class="Sidebar">
+      <template #header>
+        <div class="flex flex-col w-full h-[var(--u-header-height)]">
+          <FileLoadButton />
+        </div>
+      </template>
+      {{ loadedFiles }} {{ isLoading }}
+    </UDashboardSidebar>
     <UDashboardPanel>
       <template #header>
         <UDashboardNavbar title="Edit Metadata" />

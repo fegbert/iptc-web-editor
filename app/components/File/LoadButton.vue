@@ -1,0 +1,23 @@
+<script setup lang="ts">
+import { fileOpen } from 'browser-fs-access'
+
+const { addFiles } = useFiles()
+
+async function openFiles() {
+  const blob = await fileOpen({
+    mimeTypes: ['image/*'],
+    startIn: 'pictures',
+    multiple: true,
+  })
+
+  await addFiles(blob)
+}
+</script>
+
+<template>
+  <div>
+    <UButton icon="i-lucide-folder-open" class="justify-center w-full" @click="openFiles">
+      Load Files
+    </UButton>
+  </div>
+</template>
