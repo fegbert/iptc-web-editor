@@ -3,8 +3,8 @@ import { useIDBKeyval } from '@vueuse/integrations/useIDBKeyval'
 
 const loadedFiles = ref<FileWithHandle[]>([])
 const isLoading = ref(true)
+const fileAmount = ref(0)
 
-// setup loaded files
 function loadFilesFromIndexedDB() {
   const { data: files, isFinished } = useIDBKeyval<FileWithHandle[]>('uploaded-images', [])
 
@@ -12,8 +12,16 @@ function loadFilesFromIndexedDB() {
     if (newVal) {
       loadedFiles.value = files.value || []
       isLoading.value = false
+
+      const amountCookie = useCookie('file-amount')
+      amountCookie.value = String(loadedFiles.value.length)
     }
   })
+}
+
+function loadAmountFromCookies() {
+  const amountCookie = useCookie('file-amount')
+  fileAmount.value = Number.parseInt(amountCookie.value ?? '0')
 }
 
 function deduplicateFiles(files: FileWithHandle[]) {
@@ -52,5 +60,7 @@ export default function () {
     loadFilesFromIndexedDB()
   }
 
-  return { loadedFiles, isLoading, loadFilesFromIndexedDB, addFiles, removeFile }
+  loadAmountFromCookies()
+
+  return { loadedFiles, isLoading, loadFilesFromIndexedDB, addFiles, removeFile, fileAmount }
 }
