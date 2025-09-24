@@ -1,12 +1,14 @@
 import type { FileWithHandle } from 'browser-fs-access'
+import type { FileWithMetadata } from '~/shared/types'
 import { useIDBKeyval } from '@vueuse/integrations/useIDBKeyval'
+import { parseMetadata } from 'iptc-parser'
 
-const loadedFiles = ref<FileWithHandle[]>([])
+const loadedFiles = ref<FileWithMetadata[]>([])
 const isLoading = ref(true)
 const fileAmount = ref(0)
 
 function loadFilesFromIndexedDB() {
-  const { data: files, isFinished } = useIDBKeyval<FileWithHandle[]>('uploaded-images', [])
+  const { data: files, isFinished } = useIDBKeyval<FileWithMetadata[]>('uploaded-images', [])
 
   watch(() => isFinished.value, (newVal) => {
     if (newVal) {
@@ -24,11 +26,11 @@ function loadAmountFromCookies() {
   fileAmount.value = Number.parseInt(amountCookie.value ?? '0')
 }
 
-function deduplicateFiles(files: FileWithHandle[]) {
+function deduplicateFiles(files: FileWithMetadata[]) {
   const dedupedIds = new Set()
 
   return files.filter((file) => {
-    const id = file.name + file.lastModified + file.size
+    const id = file.file.name + file.file.lastModified + file.file.size
     if (dedupedIds.has(id)) {
       return false
     }
@@ -38,18 +40,39 @@ function deduplicateFiles(files: FileWithHandle[]) {
 }
 
 async function addFiles(files: FileWithHandle[]) {
-  const dedupedUpdatedFiles = deduplicateFiles([...loadedFiles.value, ...files])
+  // load metadata for new files
+  const metadataMapping: FileWithMetadata[] = await Promise.all(files.map(async (file) => {
+    const buffer = await file.arrayBuffer()
 
-  const { set } = useIDBKeyval<FileWithHandle[]>('uploaded-images', loadedFiles.value)
+    try {
+      const metadata = parseMetadata(new Uint8Array(buffer))
+      return {
+        file,
+        metadata,
+      }
+    }
+    catch (e) {
+      console.warn('Failed to find metadata for file: ', file.name, ' - ', e)
+      return {
+        file,
+        metadata: {},
+      }
+    }
+  }))
+
+  const rawLoadedFiles = toRaw(loadedFiles.value)
+  const dedupedUpdatedFiles = deduplicateFiles([...rawLoadedFiles, ...metadataMapping])
+
+  const { set } = useIDBKeyval<FileWithMetadata[]>('uploaded-images', loadedFiles.value)
   await set(dedupedUpdatedFiles)
 
   loadFilesFromIndexedDB()
 }
 
 async function removeFile(fileToRemove: FileWithHandle) {
-  const updatedFiles = loadedFiles.value.filter(file => file !== fileToRemove)
+  const updatedFiles = loadedFiles.value.filter(file => file.file !== fileToRemove).map(file => toRaw(file))
 
-  const { set } = useIDBKeyval<FileWithHandle[]>('uploaded-images', loadedFiles.value)
+  const { set } = useIDBKeyval<FileWithMetadata[]>('uploaded-images', loadedFiles.value)
   await set(updatedFiles)
 
   loadFilesFromIndexedDB()
