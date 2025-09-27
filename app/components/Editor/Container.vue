@@ -4,6 +4,24 @@ const { loadedFiles } = useFiles()
 const selectedFiles = computed(() => {
   return loadedFiles.value.filter(file => file.isSelected)
 })
+
+const selectedFile = computed(() => selectedFiles.value[0] || null)
+
+const state = ref({
+  '2:105': {
+    title: 'Headline',
+    value: '',
+  },
+})
+
+watch(selectedFile, (newFile) => {
+  if (newFile) {
+    state.value['2:105'].value = newFile.metadata['2:105'] || ''
+  }
+  else {
+    state.value['2:105'].value = ''
+  }
+}, { immediate: true })
 </script>
 
 <template>
@@ -25,7 +43,11 @@ const selectedFiles = computed(() => {
             block
           />
           <template #content>
-            Some iptc data here
+            <div class="py-4">
+              <UForm :state="state">
+                <EditorField v-model="state['2:105'].value" :name="state['2:105'].title" type="text" class="w-1/4" />
+              </UForm>
+            </div>
           </template>
         </UCollapsible>
       </div>
