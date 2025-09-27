@@ -84,6 +84,14 @@ async function addFiles(files: FileWithHandle[]) {
 }
 
 async function removeFile(fileToRemove: FileWithMetadata) {
+  if (fileToRemove.isSelected) {
+    const indexToRemove = loadedFiles.value.findIndex(file => file.file === fileToRemove.file)
+    if (indexToRemove === -1) {
+      return
+    }
+    selectedIndexes.value = selectedIndexes.value.filter(index => index !== indexToRemove)
+  }
+
   const updatedFiles = loadedFiles.value.filter(file => file.file !== fileToRemove.file).map(file => toRaw(file))
   updateIdb(updatedFiles)
 }
