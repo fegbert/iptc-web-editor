@@ -72,24 +72,90 @@ async function addFiles(files: FileWithHandle[]) {
   updateIdb(dedupedUpdatedFiles)
 }
 
-async function removeFile(fileToRemove: FileWithHandle) {
-  const updatedFiles = loadedFiles.value.filter(file => file.file !== fileToRemove).map(file => toRaw(file))
+async function removeFile(fileToRemove: FileWithMetadata) {
+  const updatedFiles = loadedFiles.value.filter(file => file.file !== fileToRemove.file).map(file => toRaw(file))
   updateIdb(updatedFiles)
 }
 
-async function toggleSelection(file: FileWithMetadata) {
-  const filesWithUpdatedSelectionState = loadedFiles.value.map(loadedFile => {
-    if (loadedFile !== file) {
-      return toRaw(loadedFile)
+const selectedIndexes = ref<number[]>([])
+async function toggleSelection(file: FileWithMetadata, modifier: 'shift' | 'ctrl' | undefined = undefined) {
+  const selectedFileIndex = loadedFiles.value.findIndex(f => f.file === file.file)
+
+  if (selectedFileIndex === -1) {
+    return
+  }
+
+  if (modifier === 'shift') {
+    if (selectedIndexes.value.length === 0) {
+      handleNormalSelect(selectedFileIndex)
+    } else {
+      const lastSelectedIndex = selectedIndexes.value[selectedIndexes.value.length - 1] ?? 0
+      handleShiftSelect(selectedFileIndex, lastSelectedIndex)
+    }
+  } else if (modifier === 'ctrl') {
+    handleCtrlSelect(selectedFileIndex)
+  } else {
+    handleNormalSelect(selectedFileIndex)
+  }
+
+  const rawFiles = loadedFiles.value.map(file => toRaw(file))
+  await updateIdb(rawFiles)
+}
+
+function handleShiftSelect(fileIndex: number, lastSelectedIndex: number) {
+  const [start, end] = fileIndex < lastSelectedIndex ? [fileIndex, lastSelectedIndex] : [lastSelectedIndex, fileIndex]
+
+  loadedFiles.value = loadedFiles.value.map((loadedFile, index) => {
+    loadedFile.isSelected = index >= start && index <= end
+    return loadedFile
+  })
+}
+
+function handleCtrlSelect(fileIndex: number) {
+  if (!loadedFiles.value[fileIndex]) {
+    return
+  }
+
+  const isSelected = loadedFiles.value[fileIndex].isSelected
+
+  if (!isSelected) {
+    selectedIndexes.value.push(fileIndex)
+  } else {
+    selectedIndexes.value = selectedIndexes.value.filter(i => i !== fileIndex)
+  }
+
+  loadedFiles.value[fileIndex].isSelected = !isSelected
+}
+
+function handleNormalSelect(fileIndex: number) {
+  if (!loadedFiles.value[fileIndex]) {
+    return
+  }
+
+  const otherIndexes = selectedIndexes.value.filter(i => i !== fileIndex)
+  const isSelectedBefore = !loadedFiles.value[fileIndex].isSelected
+
+  loadedFiles.value = loadedFiles.value.map((loadedFile, index) => {
+    if (index !== fileIndex) {
+      loadedFile.isSelected = false
+      return loadedFile
     }
 
-    return {
-      ...toRaw(loadedFile),
-      isSelected: !loadedFile.isSelected,
+
+    if (otherIndexes.length > 0) {
+      loadedFile.isSelected = true
+    } else {
+      loadedFile.isSelected = !loadedFile.isSelected
     }
+
+    return loadedFile
   })
 
-  updateIdb(filesWithUpdatedSelectionState)
+  if (isSelectedBefore || otherIndexes.length > 0) {
+    selectedIndexes.value = [fileIndex]
+  } else {
+    selectedIndexes.value = []
+  }
 }
 
 export default function () {

@@ -12,7 +12,10 @@ const props = withDefaults(defineProps<{
   showDetails: false,
 })
 
-const { removeFile, toggleSelection } = useFiles()
+const emit = defineEmits<{
+  (e: 'select', file: FileWithMetadata): void
+  (e: 'remove', file: FileWithMetadata): void
+}>()
 
 const file = computed(() => props.image.file)
 const fileUrl = URL.createObjectURL(file.value)
@@ -21,7 +24,7 @@ const altText = `${file.value.name} - ${fileSize} KB`
 </script>
 
 <template>
-  <div class="flex relative items-center gap-4 border border-accented rounded-lg p-2 hover:bg-accented/20" :class="{ 'border-primary bg-accented/20': image.isSelected }" @click="toggleSelection(image)">
+  <div class="flex relative items-center gap-4 border border-accented rounded-lg p-2 hover:bg-accented/20" :class="{ 'border-primary bg-accented/20': image.isSelected }" @click="emit('select', image)">
     <NuxtImg :src="fileUrl" :alt="altText" :width="width" :height="height" />
     <div v-if="showDetails" class="flex flex-col max-w-[60%]">
       <UTooltip :text="file.name">
@@ -34,6 +37,6 @@ const altText = `${file.value.name} - ${fileSize} KB`
         <span class="text-default/50 text-sm truncate">{{ formatDate(file.lastModified).value }}</span>
       </UTooltip>
     </div>
-    <UButton color="error" variant="ghost" icon="i-lucide-circle-x" class="absolute top-0 right-0 mt-1 mr-1" @click="removeFile(file)" />
+    <UButton color="error" variant="ghost" icon="i-lucide-circle-x" class="absolute top-0 right-0 mt-1 mr-1" @click="emit('remove', image)" />
   </div>
 </template>
