@@ -6,17 +6,25 @@ import { parseMetadata } from 'iptc-parser'
 const loadedFiles = ref<FileWithMetadata[]>([])
 const isLoading = ref(true)
 const fileAmount = ref(0)
+const selectedIndexes = ref<number[]>([])
 
 function loadFilesFromIndexedDB() {
   const { data: files, isFinished } = useIDBKeyval<FileWithMetadata[]>('uploaded-images', [])
+  const { data: indexes, isFinished: areIndexesFinished } = useIDBKeyval<number[]>('selected-indexes', [])
 
   watch(() => isFinished.value, (newVal) => {
     if (newVal) {
-      loadedFiles.value = files.value || []
+      loadedFiles.value = files.value
       isLoading.value = false
 
       const amountCookie = useCookie('file-amount')
       amountCookie.value = String(loadedFiles.value.length)
+    }
+  })
+
+  watch(() => areIndexesFinished.value, (newVal) => {
+    if (newVal) {
+      selectedIndexes.value = indexes.value
     }
   })
 }
@@ -42,6 +50,9 @@ function deduplicateFiles(files: FileWithMetadata[]) {
 async function updateIdb(updatedFiles: FileWithMetadata[]) {
   const { set } = useIDBKeyval<FileWithMetadata[]>('uploaded-images', loadedFiles.value)
   await set(updatedFiles)
+
+  const { set: setIndexes } = useIDBKeyval<number[]>('selected-indexes', selectedIndexes.value)
+  await setIndexes(toRaw(selectedIndexes.value))
 
   loadFilesFromIndexedDB()
 }
@@ -77,7 +88,7 @@ async function removeFile(fileToRemove: FileWithMetadata) {
   updateIdb(updatedFiles)
 }
 
-const selectedIndexes = ref<number[]>([])
+
 async function toggleSelection(file: FileWithMetadata, modifier: 'shift' | 'ctrl' | undefined = undefined) {
   const selectedFileIndex = loadedFiles.value.findIndex(f => f.file === file.file)
 
