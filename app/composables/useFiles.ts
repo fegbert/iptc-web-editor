@@ -1,12 +1,14 @@
 import type { FileWithHandle } from 'browser-fs-access'
+import type { FileWithMetadata } from '~/shared/types'
 import { useIDBKeyval } from '@vueuse/integrations/useIDBKeyval'
+import { parseMetadata } from 'iptc-parser'
 
-const loadedFiles = ref<FileWithHandle[]>([])
+const loadedFiles = ref<FileWithMetadata[]>([])
 const isLoading = ref(true)
 const fileAmount = ref(0)
 
 function loadFilesFromIndexedDB() {
-  const { data: files, isFinished } = useIDBKeyval<FileWithHandle[]>('uploaded-images', [])
+  const { data: files, isFinished } = useIDBKeyval<FileWithMetadata[]>('uploaded-images', [])
 
   watch(() => isFinished.value, (newVal) => {
     if (newVal) {
@@ -24,11 +26,11 @@ function loadAmountFromCookies() {
   fileAmount.value = Number.parseInt(amountCookie.value ?? '0')
 }
 
-function deduplicateFiles(files: FileWithHandle[]) {
+function deduplicateFiles(files: FileWithMetadata[]) {
   const dedupedIds = new Set()
 
   return files.filter((file) => {
-    const id = file.name + file.lastModified + file.size
+    const id = file.file.name + file.file.lastModified + file.file.size
     if (dedupedIds.has(id)) {
       return false
     }
@@ -37,22 +39,128 @@ function deduplicateFiles(files: FileWithHandle[]) {
   })
 }
 
-async function addFiles(files: FileWithHandle[]) {
-  const dedupedUpdatedFiles = deduplicateFiles([...loadedFiles.value, ...files])
-
-  const { set } = useIDBKeyval<FileWithHandle[]>('uploaded-images', loadedFiles.value)
-  await set(dedupedUpdatedFiles)
+async function updateIdb(updatedFiles: FileWithMetadata[]) {
+  const { set } = useIDBKeyval<FileWithMetadata[]>('uploaded-images', loadedFiles.value)
+  await set(updatedFiles)
 
   loadFilesFromIndexedDB()
 }
 
-async function removeFile(fileToRemove: FileWithHandle) {
-  const updatedFiles = loadedFiles.value.filter(file => file !== fileToRemove)
+async function addFiles(files: FileWithHandle[]) {
+  const metadataMapping: FileWithMetadata[] = await Promise.all(files.map(async (file) => {
+    const buffer = await file.arrayBuffer()
 
-  const { set } = useIDBKeyval<FileWithHandle[]>('uploaded-images', loadedFiles.value)
-  await set(updatedFiles)
+    try {
+      const metadata = parseMetadata(new Uint8Array(buffer))
+      return {
+        file,
+        metadata,
+      }
+    }
+    catch (e) {
+      console.warn('Failed to find metadata for file: ', file.name, ' - ', e)
+      return {
+        file,
+        metadata: {},
+      }
+    }
+  }))
 
-  loadFilesFromIndexedDB()
+  const rawLoadedFiles = toRaw(loadedFiles.value)
+  const dedupedUpdatedFiles = deduplicateFiles([...rawLoadedFiles, ...metadataMapping])
+
+  updateIdb(dedupedUpdatedFiles)
+}
+
+async function removeFile(fileToRemove: FileWithMetadata) {
+  const updatedFiles = loadedFiles.value.filter(file => file.file !== fileToRemove.file).map(file => toRaw(file))
+  updateIdb(updatedFiles)
+}
+
+const selectedIndexes = ref<number[]>([])
+async function toggleSelection(file: FileWithMetadata, modifier: 'shift' | 'ctrl' | undefined = undefined) {
+  const selectedFileIndex = loadedFiles.value.findIndex(f => f.file === file.file)
+
+  if (selectedFileIndex === -1) {
+    return
+  }
+
+  if (modifier === 'shift') {
+    if (selectedIndexes.value.length === 0) {
+      handleNormalSelect(selectedFileIndex)
+    }
+    else {
+      const lastSelectedIndex = selectedIndexes.value[selectedIndexes.value.length - 1] ?? 0
+      handleShiftSelect(selectedFileIndex, lastSelectedIndex)
+    }
+  }
+  else if (modifier === 'ctrl') {
+    handleCtrlSelect(selectedFileIndex)
+  }
+  else {
+    handleNormalSelect(selectedFileIndex)
+  }
+
+  const rawFiles = loadedFiles.value.map(file => toRaw(file))
+  await updateIdb(rawFiles)
+}
+
+function handleShiftSelect(fileIndex: number, lastSelectedIndex: number) {
+  const [start, end] = fileIndex < lastSelectedIndex ? [fileIndex, lastSelectedIndex] : [lastSelectedIndex, fileIndex]
+
+  loadedFiles.value = loadedFiles.value.map((loadedFile, index) => {
+    loadedFile.isSelected = index >= start && index <= end
+    return loadedFile
+  })
+}
+
+function handleCtrlSelect(fileIndex: number) {
+  if (!loadedFiles.value[fileIndex]) {
+    return
+  }
+
+  const isSelected = loadedFiles.value[fileIndex].isSelected
+
+  if (!isSelected) {
+    selectedIndexes.value.push(fileIndex)
+  }
+  else {
+    selectedIndexes.value = selectedIndexes.value.filter(i => i !== fileIndex)
+  }
+
+  loadedFiles.value[fileIndex].isSelected = !isSelected
+}
+
+function handleNormalSelect(fileIndex: number) {
+  if (!loadedFiles.value[fileIndex]) {
+    return
+  }
+
+  const otherIndexes = selectedIndexes.value.filter(i => i !== fileIndex)
+  const isSelectedBefore = !loadedFiles.value[fileIndex].isSelected
+
+  loadedFiles.value = loadedFiles.value.map((loadedFile, index) => {
+    if (index !== fileIndex) {
+      loadedFile.isSelected = false
+      return loadedFile
+    }
+
+    if (otherIndexes.length > 0) {
+      loadedFile.isSelected = true
+    }
+    else {
+      loadedFile.isSelected = !loadedFile.isSelected
+    }
+
+    return loadedFile
+  })
+
+  if (isSelectedBefore || otherIndexes.length > 0) {
+    selectedIndexes.value = [fileIndex]
+  }
+  else {
+    selectedIndexes.value = []
+  }
 }
 
 export default function () {
@@ -62,5 +170,5 @@ export default function () {
 
   loadAmountFromCookies()
 
-  return { loadedFiles, isLoading, loadFilesFromIndexedDB, addFiles, removeFile, fileAmount }
+  return { loadedFiles, isLoading, loadFilesFromIndexedDB, addFiles, removeFile, fileAmount, toggleSelection }
 }

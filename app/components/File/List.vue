@@ -1,15 +1,27 @@
 <script setup lang="ts">
-import type { FileWithHandle } from 'browser-fs-access'
+import type { FileWithMetadata } from '~/shared/types'
 
 defineProps<{
-  files: FileWithHandle[]
+  files: FileWithMetadata[]
+}>()
+
+const emit = defineEmits<{
+  (e: 'select', file: FileWithMetadata): void
+  (e: 'remove', file: FileWithMetadata): void
 }>()
 </script>
 
 <template>
-  <div class="flex flex-col gap-2 overflow-y-scroll pb-2">
-    <div v-for="file in files" :key="`${file.name}-${file.size}`">
-      <FilePreview :file="file" show-details :width="64" :height="64" />
+  <div class="flex flex-col gap-2 overflow-y-auto pb-2">
+    <div v-for="file in files" :key="`${file.file.name}-${file.file.size}`">
+      <FilePreview
+        :image="file"
+        :width="64"
+        :height="64"
+        show-details
+        @select="emit('select', $event)"
+        @remove="emit('remove', $event)"
+      />
     </div>
   </div>
 </template>
