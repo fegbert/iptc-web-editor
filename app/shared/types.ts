@@ -4,4 +4,5 @@ import type { FileWithHandle } from 'browser-fs-access'
 export interface FileWithMetadata {
   file: FileWithHandle
   metadata: Record<string, any>
+  isSelected?: boolean
 }

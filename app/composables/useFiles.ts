@@ -39,8 +39,14 @@ function deduplicateFiles(files: FileWithMetadata[]) {
   })
 }
 
+async function updateIdb(updatedFiles: FileWithMetadata[]) {
+  const { set } = useIDBKeyval<FileWithMetadata[]>('uploaded-images', loadedFiles.value)
+  await set(updatedFiles)
+
+  loadFilesFromIndexedDB()
+}
+
 async function addFiles(files: FileWithHandle[]) {
-  // load metadata for new files
   const metadataMapping: FileWithMetadata[] = await Promise.all(files.map(async (file) => {
     const buffer = await file.arrayBuffer()
 
@@ -63,19 +69,27 @@ async function addFiles(files: FileWithHandle[]) {
   const rawLoadedFiles = toRaw(loadedFiles.value)
   const dedupedUpdatedFiles = deduplicateFiles([...rawLoadedFiles, ...metadataMapping])
 
-  const { set } = useIDBKeyval<FileWithMetadata[]>('uploaded-images', loadedFiles.value)
-  await set(dedupedUpdatedFiles)
-
-  loadFilesFromIndexedDB()
+  updateIdb(dedupedUpdatedFiles)
 }
 
 async function removeFile(fileToRemove: FileWithHandle) {
   const updatedFiles = loadedFiles.value.filter(file => file.file !== fileToRemove).map(file => toRaw(file))
+  updateIdb(updatedFiles)
+}
 
-  const { set } = useIDBKeyval<FileWithMetadata[]>('uploaded-images', loadedFiles.value)
-  await set(updatedFiles)
+async function toggleSelection(file: FileWithMetadata) {
+  const filesWithUpdatedSelectionState = loadedFiles.value.map(loadedFile => {
+    if (loadedFile !== file) {
+      return toRaw(loadedFile)
+    }
 
-  loadFilesFromIndexedDB()
+    return {
+      ...toRaw(loadedFile),
+      isSelected: !loadedFile.isSelected,
+    }
+  })
+
+  updateIdb(filesWithUpdatedSelectionState)
 }
 
 export default function () {
@@ -85,5 +99,5 @@ export default function () {
 
   loadAmountFromCookies()
 
-  return { loadedFiles, isLoading, loadFilesFromIndexedDB, addFiles, removeFile, fileAmount }
+  return { loadedFiles, isLoading, loadFilesFromIndexedDB, addFiles, removeFile, fileAmount, toggleSelection }
 }
