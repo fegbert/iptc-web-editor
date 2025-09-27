@@ -88,13 +88,16 @@ async function toggleSelection(file: FileWithMetadata, modifier: 'shift' | 'ctrl
   if (modifier === 'shift') {
     if (selectedIndexes.value.length === 0) {
       handleNormalSelect(selectedFileIndex)
-    } else {
+    }
+    else {
       const lastSelectedIndex = selectedIndexes.value[selectedIndexes.value.length - 1] ?? 0
       handleShiftSelect(selectedFileIndex, lastSelectedIndex)
     }
-  } else if (modifier === 'ctrl') {
+  }
+  else if (modifier === 'ctrl') {
     handleCtrlSelect(selectedFileIndex)
-  } else {
+  }
+  else {
     handleNormalSelect(selectedFileIndex)
   }
 
@@ -120,7 +123,8 @@ function handleCtrlSelect(fileIndex: number) {
 
   if (!isSelected) {
     selectedIndexes.value.push(fileIndex)
-  } else {
+  }
+  else {
     selectedIndexes.value = selectedIndexes.value.filter(i => i !== fileIndex)
   }
 
@@ -141,10 +145,10 @@ function handleNormalSelect(fileIndex: number) {
       return loadedFile
     }
 
-
     if (otherIndexes.length > 0) {
       loadedFile.isSelected = true
-    } else {
+    }
+    else {
       loadedFile.isSelected = !loadedFile.isSelected
     }
 
@@ -153,7 +157,8 @@ function handleNormalSelect(fileIndex: number) {
 
   if (isSelectedBefore || otherIndexes.length > 0) {
     selectedIndexes.value = [fileIndex]
-  } else {
+  }
+  else {
     selectedIndexes.value = []
   }
 }
