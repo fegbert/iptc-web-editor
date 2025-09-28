@@ -1,8 +1,7 @@
-import type { FileWithHandle } from 'browser-fs-access'
-
 // TODO: Improve this typing when adding full metadata mapping
 export interface FileWithMetadata {
-  file: FileWithHandle
+  file: File
+  handle?: FileSystemFileHandle
   metadata: Record<string, any>
   isSelected?: boolean
 }

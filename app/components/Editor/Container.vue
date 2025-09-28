@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { loadedFiles } = useFiles()
+const { loadedFiles, updateMetadata } = useFiles()
 
 const selectedFiles = computed(() => {
   return loadedFiles.value.filter(file => file.isSelected)
@@ -10,6 +10,10 @@ const selectedFile = computed(() => selectedFiles.value[0] || null)
 const state = ref({
   '2:105': {
     title: 'Headline',
+    value: '',
+  },
+  '2:110': {
+    title: 'Credit',
     value: '',
   },
 })
@@ -32,7 +36,6 @@ watch(selectedFile, (newFile) => {
         <UCollapsible default-open>
           <UButton
             class="group"
-            label="IPTC-IIM"
             color="neutral"
             variant="subtle"
             size="xl"
@@ -41,7 +44,14 @@ watch(selectedFile, (newFile) => {
               trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200',
             }"
             block
-          />
+          >
+            <div class="flex w-full items-center justify-between">
+              <span>IPTC-IIM</span>
+              <UButton v-if="selectedFile" icon="i-lucide-save" size="sm" color="primary" @click.stop="updateMetadata(selectedFile, state)">
+                Save changes
+              </UButton>
+            </div>
+          </UButton>
           <template #content>
             <div class="py-4">
               <UForm :state="state">

@@ -1,7 +1,7 @@
 import type { FileWithHandle } from 'browser-fs-access'
 import type { FileWithMetadata } from '~/shared/types'
 import { useIDBKeyval } from '@vueuse/integrations/useIDBKeyval'
-import { parseMetadata } from 'iptc-parser'
+import { parseMetadata, writeMetadata } from 'iptc-parser'
 
 const loadedFiles = ref<FileWithMetadata[]>([])
 const isLoading = ref(true)
@@ -65,6 +65,7 @@ async function addFiles(files: FileWithHandle[]) {
       const metadata = parseMetadata(new Uint8Array(buffer))
       return {
         file,
+        handle: file.handle,
         metadata,
       }
     }
@@ -72,6 +73,7 @@ async function addFiles(files: FileWithHandle[]) {
       console.warn('Failed to find metadata for file: ', file.name, ' - ', e)
       return {
         file,
+        handle: file.handle,
         metadata: {},
       }
     }
@@ -182,6 +184,44 @@ function handleNormalSelect(fileIndex: number) {
   }
 }
 
+async function updateMetadata(file: FileWithMetadata, metadata: Record<string, any>) {
+  const mappedMetadata = Object.entries(metadata).reduce<Record<string, any>>((acc, [key, value]) => {
+    if (!value.value) {
+      return acc
+    }
+
+    acc[key] = value.value
+    return acc
+  }, {})
+
+  const updatedMetadata = {
+    ...file.metadata,
+    ...mappedMetadata,
+  }
+
+  const buffer = await file.file.arrayBuffer()
+
+  try {
+    await writeMetadata(new Uint8Array(buffer), updatedMetadata, undefined, file.handle)
+  }
+  catch (e) {
+    console.warn('Failed to save metadata for file: ', file.file.name, ' - ', e)
+  }
+
+  const updatedFiles = loadedFiles.value.map(loadedFile => {
+    if (loadedFile.file === file.file) {
+      return {
+        ...toRaw(loadedFile),
+        metadata: updatedMetadata,
+      }
+    }
+
+    return toRaw(loadedFile)
+  })
+
+  updateIdb(updatedFiles)
+}
+
 export default function () {
   if (!import.meta.env.SSR) {
     loadFilesFromIndexedDB()
@@ -189,5 +229,5 @@ export default function () {
 
   loadAmountFromCookies()
 
-  return { loadedFiles, isLoading, loadFilesFromIndexedDB, addFiles, removeFile, fileAmount, toggleSelection }
+  return { loadedFiles, isLoading, loadFilesFromIndexedDB, addFiles, removeFile, fileAmount, toggleSelection, updateMetadata }
 }
