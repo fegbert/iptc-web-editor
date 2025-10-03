@@ -98,7 +98,6 @@ async function removeFile(fileToRemove: FileWithMetadata) {
   updateIdb(updatedFiles)
 }
 
-
 async function toggleSelection(file: FileWithMetadata, modifier: 'shift' | 'ctrl' | undefined = undefined) {
   const selectedFileIndex = loadedFiles.value.findIndex(f => f.file === file.file)
 
@@ -208,7 +207,7 @@ async function updateMetadata(file: FileWithMetadata, metadata: Record<string, a
     console.warn('Failed to save metadata for file: ', file.file.name, ' - ', e)
   }
 
-  const updatedFiles = loadedFiles.value.map(loadedFile => {
+  const updatedFiles = loadedFiles.value.map((loadedFile) => {
     if (loadedFile.file === file.file) {
       return {
         ...toRaw(loadedFile),
