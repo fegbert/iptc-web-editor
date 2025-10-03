@@ -65,7 +65,7 @@ function wrapDataInAPP13(data: Uint8Array) {
   ])
 }
 
-export function writeToJPEG(jpegBuffer: Uint8Array, data: Record<string, string>, path: string) {
+export async function writeToJPEG(jpegBuffer: Uint8Array, data: Record<string, string>, path?: string, fileHandle?: FileSystemFileHandle) {
   if (jpegBuffer[0] !== JPEG_SOI_MARKER[0] || jpegBuffer[1] !== JPEG_SOI_MARKER[1]) {
     throw new Error('Invalid JPEG file: does not start with SOI marker')
   }
@@ -116,10 +116,25 @@ export function writeToJPEG(jpegBuffer: Uint8Array, data: Record<string, string>
   output.set(app13Data, before.length)
   output.set(after, before.length + app13Data.length)
 
-  try {
-    fs.writeFileSync(path, output)
+  // 1. If path is provided, write the file at the specified path
+  if (path) {
+    try {
+      fs.writeFileSync(path, output)
+    }
+    catch (error) {
+      console.error('Error writing JPEG file:', error)
+    }
   }
-  catch (error) {
-    console.error('Error writing JPEG file:', error)
+
+  // 2. If fileHandle is provided, use it to write the file
+  else if (fileHandle) {
+    try {
+      const writeable = await fileHandle.createWritable()
+      await writeable.write(output)
+      await writeable.close()
+    }
+    catch (error) {
+      console.error('Error writing JPEG file using file handle:', error)
+    }
   }
 }

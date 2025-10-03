@@ -37,6 +37,6 @@ const altText = `${file.value.name} - ${fileSize} KB`
         <span class="text-default/50 text-sm truncate">{{ formatDate(file.lastModified).value }}</span>
       </UTooltip>
     </div>
-    <UButton color="error" variant="ghost" icon="i-lucide-circle-x" class="absolute top-0 right-0 mt-1 mr-1" @click="emit('remove', image)" />
+    <UButton color="error" variant="ghost" icon="i-lucide-circle-x" class="absolute top-0 right-0 mt-1 mr-1" @click.stop="emit('remove', image)" />
   </div>
 </template>
