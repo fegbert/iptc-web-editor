@@ -125,13 +125,15 @@ export async function writeToJPEG(jpegBuffer: Uint8Array, data: Record<string, s
       console.error('Error writing JPEG file:', error)
     }
   }
+
   // 2. If fileHandle is provided, use it to write the file
   else if (fileHandle) {
     try {
       const writeable = await fileHandle.createWritable()
       await writeable.write(output)
       await writeable.close()
-    } catch (error) {
+    }
+    catch (error) {
       console.error('Error writing JPEG file using file handle:', error)
     }
   }
