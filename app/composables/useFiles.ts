@@ -1,5 +1,6 @@
 import type { FileWithHandle } from 'browser-fs-access'
 import type { FileWithMetadata } from '~/shared/types'
+import type { IPTCField } from '~/utils/iptc-iim/types'
 import { useIDBKeyval } from '@vueuse/integrations/useIDBKeyval'
 import { parseMetadata, writeMetadata } from 'iptc-parser'
 
@@ -183,15 +184,17 @@ function handleNormalSelect(fileIndex: number) {
   }
 }
 
-async function updateMetadata(file: FileWithMetadata, metadata: Record<string, any>) {
-  const mappedMetadata = Object.entries(metadata).reduce<Record<string, any>>((acc, [key, value]) => {
-    if (!value.value) {
+async function updateMetadata(file: FileWithMetadata, metadata: Array<{ key: string, value?: string }>) {
+  const mappedMetadata = metadata.reduce<Record<string, any>>((acc, { key, value }) => {
+    if (!value) {
       return acc
     }
 
-    acc[key] = value.value
+    acc[key] = value
     return acc
   }, {})
+
+  console.log(mappedMetadata)
 
   const updatedMetadata = {
     ...file.metadata,
