@@ -1,365 +1,519 @@
-import type { IPTCFields } from './types'
+import type { IPTCField } from './types'
+import { CharacterTypes } from './types'
 
-export const iptcIimMapping: IPTCFields = {
-  '2:00': {
+export const iptcIimMapping: IPTCField[] = [
+  {
+    key: '2:00',
+    type: 'number',
     title: 'Record Version',
     description: 'A binary number identifying the version of the Information Interchange Model, Part II (Record 2:xx), utilised by the provider. Version numbers are assigned by IPTC and NAA.',
-    type: 'number',
     mandatory: true,
     repeatable: false,
+    octets: 2,
+    maxValue: 4,
+    minValue: 4,
   },
-  '2:03': {
+  {
+    key: '2:03',
     title: 'Object Type Reference',
     description: `
     The Object Type is used to distinguish between different types of objects within the IIM.
     The first part is a number representing a language independent international reference to an Object Type followed by a colon separator.
     The second part, if used, is a text representation of the Object Type Number (maximum 64 octets) consisting of graphic characters plus spaces either in English, as defined in the language of the service as indicated in DataSet 2:135`,
-    type: 'text',
+    type: 'object-type',
+    octets: { min: 3, max: 67 },
     mandatory: false,
     repeatable: false,
   },
-  '2:04': {
+  {
+    key: '2:04',
     title: 'Object Attribute Reference',
     description: `
     The Object Attribute defines the nature of the object independent of the Subject.
     The first part is a number representing a language independent international reference to an Object Attribute followed by a colon separator.
     The second part, if used, is a text representation of the Object Attribute Number (maximum 64 octets) consisting of graphic characters plus spaces either in English, as defined in the language of the service as indicated in DataSet 2:135
     A registry of Object Attribute Numbers and Names and their corresponding definitions (if available) will be maintained by theIPTC in different languages, with translations as supplied by members.`,
-    type: 'text',
+    type: 'object-attribute',
+    octets: { min: 4, max: 68 },
     mandatory: false,
     repeatable: true,
   },
-  '2:05': {
+  {
+    key: '2:05',
     title: 'Object Name',
     description: 'Used as a shorthand reference for the object. Changes to existing data, such as updated stories or new crops on photos, should be identified in Edit Status.',
     type: 'text',
+    allowedCharacterTypes: [CharacterTypes.graphic, CharacterTypes.space],
+    octets: { max: 64 },
     mandatory: false,
     repeatable: false,
   },
-  '2:07': {
+  {
+    key: '2:07',
     title: 'Edit Status',
     description: 'Status of the objectdata, according to the practice of the provider.',
     type: 'text',
+    octets: { max: 64 },
+    allowedCharacterTypes: [CharacterTypes.graphic, CharacterTypes.space],
     mandatory: false,
     repeatable: false,
   },
-  '2:08': {
+  {
+    key: '2:08',
     title: 'Editorial Update',
     description: 'Indicates the type of update that this object provides to a previous object. The link to the previous object is made using the ARM (DataSets 1:120 and 1:122), according to the practices of the provider.',
-    type: 'text',
+    type: 'select',
+    octets: 2,
+    options: [
+      { value: '01', label: 'Additional Language' },
+    ],
     mandatory: false,
     repeatable: false,
   },
-  '2:10': {
+  {
+    key: '2:10',
     title: 'Urgency',
     description: `
     Specifies the editorial urgency of content and not necessarily the envelope handling priority (see 1:60, Envelope Priority). 
     The '1' is most urgent, '5' normal and '8' denotes the least-urgent copy. The numerals '9' and '0' are reserved for future use.`,
     type: 'number',
+    minValue: 1,
+    maxValue: 8,
+    octets: 1,
     mandatory: false,
     repeatable: false,
   },
-  '2:12': {
+  {
+    key: '2:12',
     title: 'Subject Reference',
     description: '??? will have to figure this out',
-    type: 'text',
+    type: 'subject-reference',
     mandatory: false,
     repeatable: true,
   },
-  '2:15': {
+  {
+    key: '2:15',
     title: 'Category',
     description: 'Identifies the subject of the objectdata in the opinion of the provider. A list of categories will be maintained by a regional registry, where available, otherwise by the provider.',
     type: 'text',
+    allowedCharacterTypes: [CharacterTypes.alphabetic],
+    octets: { max: 3 },
     mandatory: false,
     repeatable: false,
+    deprecated: true,
   },
-  '2:20': {
+  {
+    key: '2:20',
     title: 'Supplemental Category',
     description: 'Supplemental categories further refine the subject of an objectdata. Only a single supplemental category may be contained in each DataSet. A supplemental category may include any of the recognised categories as used in 2:15. Otherwise, selection of supplemental categories are left to the provider.',
+    octets: { max: 32 },
+    allowedCharacterTypes: [CharacterTypes.graphic, CharacterTypes.space],
     type: 'text',
     mandatory: false,
     repeatable: true,
+    deprecated: true,
   },
-  '2:22': {
+  {
+    key: '2:22',
     title: 'Fixture Identifier',
     description: 'Identifies objectdata that recurs often and predictably. Enables users to immediately find or recall such an object.',
+    octets: { max: 32 },
+    allowedCharacterTypes: [CharacterTypes.graphic],
     type: 'text',
     mandatory: false,
     repeatable: false,
   },
-  '2:25': {
+  {
+    key: '2:25',
     title: 'Keywords',
     description: `
     Used to indicate specific information retrieval words. Each keyword uses a single Keywords DataSet. Multiple keywords use multiple Keywords DataSets.
     It is expected that a provider of various types of data that are related in subject matter uses the same keyword, enabling the receiving system or subsystems to search across all types of data for related material.`,
+    octets: { max: 64 },
+    allowedCharacterTypes: [CharacterTypes.graphic, CharacterTypes.space],
     type: 'text',
     mandatory: false,
     repeatable: true,
   },
-  '2:26': {
+  {
+    key: '2:26',
     title: 'Content Location Code',
     description: `
     Indicates the code of a country/geographical location referenced by the content of the object. Where ISO has established an appropriate country code under ISO 3166, that code will be used. 
     When ISO3166 does not adequately provide for identification of a location or a country, e.g. ships at sea, space, IPTC will assign an appropriate threecharacter code under the provisions of ISO3166 to avoid conflicts.
     If used in the same object with DataSet 2:27, must immediately precede and correspond to it.`,
+    octets: { max: 3 },
+    allowedCharacterTypes: [CharacterTypes.alphabetic],
     type: 'text',
     mandatory: false,
     repeatable: true,
   },
-  '2:27': {
+  {
+    key: '2:27',
     title: 'Content Location Name',
+    octets: { max: 64 },
     description: `
     Provides a full, publishable name of a country/geographical location referenced by the content of the object, according to guidelines of the provider.
     If used in the same object with DataSet 2:26, must immediately follow and correspond to it.`,
+    allowedCharacterTypes: [CharacterTypes.graphic, CharacterTypes.space],
     type: 'text',
     mandatory: false,
     repeatable: true,
   },
-  '2:30': {
+  {
+    key: '2:30',
     title: 'Release Date',
     description: 'Designates in the form CCYYMMDD the earliest date the provider intends the object to be used. Follows ISO 8601 standard.',
+    octets: 8,
     type: 'date',
     mandatory: false,
     repeatable: false,
   },
-  '2:35': {
+  {
+    key: '2:35',
     title: 'Release Time',
+    octets: 11,
     description: 'Designates in the form HHMMSS±HHMM the earliest time the provider intends the object to be used. Follows ISO 8601 standard.',
     type: 'time',
     mandatory: false,
     repeatable: false,
   },
-  '2:37': {
+  {
+    key: '2:37',
     title: 'Expiration Date',
     description: 'Designates in the form CCYYMMDD the latest date the provider or owner intends the object data to be used. Follows ISO 8601 standard.',
+    octets: 8,
     type: 'date',
     mandatory: false,
     repeatable: false,
   },
-  '2:38': {
+  {
+    key: '2:38',
     title: 'Expiration Time',
     description: 'Designates in the form HHMMSS±HHMM the latest time the provider or owner intends the object data to be used. Follows ISO 8601 standard.',
+    octets: 11,
     type: 'time',
     mandatory: false,
     repeatable: false,
   },
-  '2:40': {
+  {
+    key: '2:40',
     title: 'Special Instructions',
     description: 'Other editorial instructions concerning the use of the objectdata, such as embargoes and warnings.',
+    octets: { max: 256 },
+    allowedCharacterTypes: [CharacterTypes.graphic, CharacterTypes.space],
     type: 'text',
     mandatory: false,
     repeatable: false,
   },
-  '2:42': {
+  {
+    key: '2:42',
     title: 'Action Advised',
     description: 'Indicates the type of action that this object provides to a previous object. The link to the previous object is made using the ARM (DataSets 1:120 and 1:122), according to the practices of the provider.',
-    type: 'number',
+    octets: 2,
+    type: 'select',
+    options: [
+      { value: '01', label: 'Object Kill' },
+      { value: '02', label: 'Object Replace' },
+      { value: '03', label: 'Object Append' },
+      { value: '04', label: 'Object Reference' },
+    ],
     mandatory: false,
     repeatable: false,
   },
-  '2:45': {
+  {
+    key: '2:45',
     title: 'Reference Service',
     description: '',
+    octets: { max: 10 },
+    allowedCharacterTypes: [CharacterTypes.graphic],
     type: 'text',
     mandatory: false,
     repeatable: true,
   },
-  '2:47': {
+  {
+    key: '2:47',
     title: 'Reference Date',
     description: '',
     type: 'date',
-    mandatory: false,
+    octets: 8,
+    mandatory: true,
     repeatable: true,
+    parent: '2:45',
   },
-  '2:50': {
+  {
+    key: '2:50',
     title: 'Reference Number',
     description: '',
+    octets: 8,
     type: 'text',
-    mandatory: false,
+    allowedCharacterTypes: [CharacterTypes.numeric],
+    mandatory: true,
     repeatable: true,
+    parent: '2:45',
   },
-  '2:55': {
+  {
+    key: '2:55',
     title: 'Date Created',
+    octets: 8,
     description: 'Represented in the form CCYYMMDD to designate the date the intellectual content of the objectdata was created rather than the date of the creation of the physical representation.',
     type: 'date',
     mandatory: false,
     repeatable: false,
   },
-  '2:60': {
+  {
+    key: '2:60',
     title: 'Time Created',
+    octets: 11,
     description: 'Represented in the form HHMMSS±HHMM to designate the time the intellectual content of the objectdata current sourcematerial was created rather than the creation of the physical representation. Follows ISO 8601 standard.',
     type: 'time',
     mandatory: false,
     repeatable: false,
   },
-  '2:62': {
+  {
+    key: '2:62',
     title: 'Digital Creation Date',
     description: 'Represented in the form CCYYMMDD to designate the date the digital representation of the objectdata was created.',
+    octets: 8,
     type: 'date',
     mandatory: false,
     repeatable: false,
   },
-  '2:63': {
+  {
+    key: '2:63',
     title: 'Digital Creation Time',
     description: 'Represented in the form HHMMSS±HHMM to designate the time the digital representation of the objectdata was created. Follows ISO 8601 standard.',
+    octets: 11,
     type: 'time',
     mandatory: false,
     repeatable: false,
   },
-  '2:65': {
+  {
+    key: '2:65',
     title: 'Originating Program',
     description: 'Identifies the type of program used to originate the objectdata.',
+    octets: { max: 32 },
+    allowedCharacterTypes: [CharacterTypes.graphic, CharacterTypes.space],
     type: 'text',
     mandatory: false,
     repeatable: false,
   },
-  '2:70': {
+  {
+    key: '2:70',
     title: 'Program Version',
     description: 'Identifies the version of the program specified in 2:65.',
+    octets: { max: 10 },
+    allowedCharacterTypes: [CharacterTypes.graphic, CharacterTypes.space],
     type: 'text',
     mandatory: false,
     repeatable: false,
+    parent: '2:65',
   },
-  '2:75': {
+  {
+    key: '2:75',
     title: 'Object Cycle',
     description: `Where: 'a' = morning, 'p' = evening, 'b' = both. Virtually only used in North America.`,
-    type: 'text',
+    type: 'select',
+    octets: 1,
+    options: [
+      { value: 'a', label: 'Morning' },
+      { value: 'p', label: 'Evening' },
+      { value: 'b', label: 'Both' },
+    ],
     mandatory: false,
     repeatable: false,
   },
-  '2:80': {
+  {
+    key: '2:80',
     title: 'By-line',
     description: 'Contains name of the creator of the objectdata, e.g. writer, photographer or graphic artist.',
+    octets: { max: 32 },
+    allowedCharacterTypes: [CharacterTypes.graphic, CharacterTypes.space],
     type: 'text',
     mandatory: false,
     repeatable: true,
   },
-  '2:85': {
+  {
+    key: '2:85',
     title: 'By-line Title',
     description: 'A by-line title is the title of the creator or creators of an objectdata. Where used, a by-line title should follow the by-line it modifies.',
+    octets: { max: 32 },
+    allowedCharacterTypes: [CharacterTypes.graphic, CharacterTypes.space],
     type: 'text',
     mandatory: false,
     repeatable: true,
   },
-  '2:90': {
+  {
+    key: '2:90',
     title: 'City',
     description: 'Identifies city of objectdata origin according to guidelines established by the provider.',
+    octets: { max: 32 },
+    allowedCharacterTypes: [CharacterTypes.graphic, CharacterTypes.space],
     type: 'text',
     mandatory: false,
     repeatable: false,
   },
-  '2:92': {
+  {
+    key: '2:92',
     title: 'Sub-location',
     description: 'Identifies the location within a city from which the objectdata originates, according to guidelines established by the provider.',
+    octets: { max: 32 },
+    allowedCharacterTypes: [CharacterTypes.graphic, CharacterTypes.space],
     type: 'text',
     mandatory: false,
     repeatable: false,
   },
-  '2:95': {
+  {
+    key: '2:95',
     title: 'Province/State',
     description: 'Identifies Province/State of origin according to guidelines established by the provider.',
+    octets: { max: 32 },
+    allowedCharacterTypes: [CharacterTypes.graphic, CharacterTypes.space],
     type: 'text',
     mandatory: false,
     repeatable: false,
   },
-  '2:100': {
+  {
+    key: '2:100',
     title: 'Country/Primary Location Code',
     description: 'Indicates the code of the country/primary location where the intellectual property of the objectdata was created, e.g. a photo was taken, an event occurred.',
+    octets: 3,
+    allowedCharacterTypes: [CharacterTypes.alphabetic],
     type: 'text',
     mandatory: false,
     repeatable: false,
   },
-  '2:101': {
+  {
+    key: '2:101',
     title: 'Country/Primary Location Name',
     description: 'Provides full, publishable, name of the country/primary location where the intellectual property of the objectdata was created, according to guidelines of the provider.',
+    octets: { max: 64 },
+    allowedCharacterTypes: [CharacterTypes.graphic, CharacterTypes.space],
     type: 'text',
     mandatory: false,
     repeatable: false,
   },
-  '2:103': {
+  {
+    key: '2:103',
     title: 'Original Transmission Reference',
     description: 'A code representing the location of original transmission according to practices of the provider.',
+    octets: { max: 32 },
+    allowedCharacterTypes: [CharacterTypes.graphic, CharacterTypes.space],
     type: 'text',
     mandatory: false,
     repeatable: false,
   },
-  '2:105': {
+  {
+    key: '2:105',
     title: 'Headline',
     description: 'A publishable entry providing a synopsis of the contents of the objectdata.',
+    octets: { max: 256 },
+    allowedCharacterTypes: [CharacterTypes.graphic, CharacterTypes.space],
     type: 'text',
     mandatory: false,
     repeatable: false,
   },
-  '2:110': {
+  {
+    key: '2:110',
     title: 'Credit',
     description: 'Identifies the provider of the objectdata, not necessarily the owner/creator.',
+    octets: { max: 32 },
+    allowedCharacterTypes: [CharacterTypes.graphic, CharacterTypes.space],
     type: 'text',
     mandatory: false,
     repeatable: false,
   },
-  '2:115': {
+  {
+    key: '2:115',
     title: 'Source',
     description: 'The name of a person or party who has a role in the content supply chain. This could be an agency, a member of an agency, an individual or a combination. Source could be different from Creator and from the entities in the Copyright Notice.',
+    octets: { max: 32 },
+    allowedCharacterTypes: [CharacterTypes.graphic, CharacterTypes.space],
     type: 'text',
     mandatory: false,
     repeatable: false,
   },
-  '2:116': {
+  {
+    key: '2:116',
     title: 'Copyright Notice',
     description: 'Contains any necessary copyright notice.',
+    octets: { max: 128 },
+    allowedCharacterTypes: [CharacterTypes.graphic, CharacterTypes.space],
     type: 'text',
     mandatory: false,
     repeatable: false,
   },
-  '2:118': {
+  {
+    key: '2:118',
     title: 'Contact',
     description: 'Identifies the person or organisation which can provide further background information on the objectdata.',
-    type: 'text',
-    mandatory: false,
-    repeatable: false,
-  },
-  '2:120': {
-    title: 'Caption/Abstract',
-    description: 'A textual description of the objectdata, particularly used where the object is not text.',
-    type: 'text',
-    mandatory: false,
-    repeatable: false,
-  },
-  '2:122': {
-    title: 'Writer/Editor',
-    description: 'Identification of the name of the person involved in the writing, editing or correcting the objectdata or caption/abstract.',
+    octets: { max: 128 },
+    allowedCharacterTypes: [CharacterTypes.graphic, CharacterTypes.space],
     type: 'text',
     mandatory: false,
     repeatable: true,
   },
-  '2:125': {
+  {
+    key: '2:120',
+    title: 'Caption/Abstract',
+    description: 'A textual description of the objectdata, particularly used where the object is not text.',
+    octets: { max: 2000 },
+    allowedCharacterTypes: [CharacterTypes.graphic, CharacterTypes.space, CharacterTypes.return, CharacterTypes.linefeed],
+    type: 'text',
+    mandatory: false,
+    repeatable: false,
+  },
+  {
+    key: '2:122',
+    title: 'Writer/Editor',
+    description: 'Identification of the name of the person involved in the writing, editing or correcting the objectdata or caption/abstract.',
+    octets: { max: 32 },
+    allowedCharacterTypes: [CharacterTypes.graphic, CharacterTypes.space],
+    type: 'text',
+    mandatory: false,
+    repeatable: true,
+  },
+  {
+    key: '2:125',
     title: 'Rasterized Caption',
     description: '??? Have to figure it out',
     type: 'text',
     mandatory: false,
     repeatable: false,
   },
-  '2:130': {
+  {
+    key: '2:130',
     title: 'Image Type',
     description: '??? TODO figure out typing. The numeric characters 1 to 4 indicate the number of components in an image, in single or multiple envelopes. The numeric character 0 indicates Record 2 caption for a specific image.',
-    type: 'text',
+    type: 'image-type',
+    octets: 2,
     mandatory: false,
     repeatable: false,
   },
-  '2:131': {
+  {
+    key: '2:131',
     title: 'Image Orientation',
     description: 'Indicates the layout of the image area.',
-    type: 'text',
+    octets: 1,
+    type: 'select',
+    options: [
+      { value: 'P', label: 'Portrait' },
+      { value: 'L', label: 'Landscape' },
+      { value: 'S', label: 'Square' },
+    ],
     mandatory: false,
     repeatable: false,
   },
-  '2:135': {
+  {
+    key: '2:135',
     title: 'Language Identifier',
     description: `
     Describes the major national language of the object, according to the 2-letter codes of ISO 639:1988. 
     Does not define or imply any coded character set, but is used for internal routing, e.g. to various editorial desks.`,
+    octets: { min: 2, max: 3 },
+    allowedCharacterTypes: [CharacterTypes.alphabetic],
     type: 'text',
     mandatory: false,
     repeatable: false,
   },
-}
+]
