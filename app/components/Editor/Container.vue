@@ -9,10 +9,10 @@ const selectedFiles = computed(() => {
 
 const selectedFile = computed(() => selectedFiles.value[0] || null)
 
-const editableFields = Object.entries(iptcIimMapping).filter(([key]) => key.startsWith('2'))
+const editableFields = iptcIimMapping.filter(field => field.key.startsWith('2'))
 
-const state = ref(editableFields.map(([key, field]) => ({
-  key,
+const state = ref(editableFields.map(field => ({
+  key: field.key,
   title: field.title,
   value: '',
 })))

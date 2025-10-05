@@ -194,8 +194,6 @@ async function updateMetadata(file: FileWithMetadata, metadata: Array<{ key: str
     return acc
   }, {})
 
-  console.log(mappedMetadata)
-
   const updatedMetadata = {
     ...file.metadata,
     ...mappedMetadata,
@@ -220,6 +218,8 @@ async function updateMetadata(file: FileWithMetadata, metadata: Array<{ key: str
 
     return toRaw(loadedFile)
   })
+
+  console.log('Updated files: ', updatedFiles)
 
   updateIdb(updatedFiles)
 }
