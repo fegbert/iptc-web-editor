@@ -1,6 +1,5 @@
 import type { FileWithHandle } from 'browser-fs-access'
 import type { FileWithMetadata } from '~/shared/types'
-import type { IPTCField } from '~/utils/iptc-iim/types'
 import { useIDBKeyval } from '@vueuse/integrations/useIDBKeyval'
 import { parseMetadata, writeMetadata } from 'iptc-parser'
 
