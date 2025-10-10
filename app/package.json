@@ -22,12 +22,13 @@
     "async-validator": "^4.2.5",
     "browser-fs-access": "^0.38.0",
     "idb-keyval": "^6.2.2",
+    "iptc-parser": "workspace:*",
     "nuxt": "^4.1.1",
     "tailwindcss": "^4.1.13",
     "typescript": "^5.8.3",
     "vue": "^3.5.16",
     "vue-router": "^4.5.1",
-    "iptc-parser": "workspace:*"
+    "zod": "^4.1.12"
   },
   "packageManager": "pnpm@10.12.4",
   "devDependencies": {
