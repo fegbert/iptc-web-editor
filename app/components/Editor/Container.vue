@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { iptcIimMapping } from '~/utils/iptc-iim/mapping'
+
 const { loadedFiles, updateMetadata } = useFiles()
 
 const selectedFiles = computed(() => {
@@ -7,23 +9,22 @@ const selectedFiles = computed(() => {
 
 const selectedFile = computed(() => selectedFiles.value[0] || null)
 
-const state = ref({
-  '2:105': {
-    title: 'Headline',
-    value: '',
-  },
-  '2:110': {
-    title: 'Credit',
-    value: '',
-  },
-})
+const editableFields = iptcIimMapping.filter(field => field.key.startsWith('2'))
+
+const state = ref(editableFields.map(field => ({
+  key: field.key,
+  title: field.title,
+  value: '',
+})))
 
 watch(selectedFile, (newFile) => {
   if (newFile) {
-    state.value['2:105'].value = newFile.metadata['2:105'] || ''
+    Object.entries(newFile.metadata).forEach(([key, value]) => {
+      state.value = state.value.map(field => field.key === key ? { ...field, value } : field)
+    })
   }
   else {
-    state.value['2:105'].value = ''
+    state.value = state.value.map(field => ({ ...field, value: '' }))
   }
 }, { immediate: true })
 </script>
@@ -55,7 +56,9 @@ watch(selectedFile, (newFile) => {
           <template #content>
             <div class="py-4">
               <UForm :state="state">
-                <EditorField v-model="state['2:105'].value" :name="state['2:105'].title" type="text" class="w-1/4" />
+                <div v-for="field in state" :key="field.key">
+                  <EditorField v-model="field.value" :name="field.title" type="text" class="w-1/4" />
+                </div>
               </UForm>
             </div>
           </template>

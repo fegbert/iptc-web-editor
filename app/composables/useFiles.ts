@@ -183,13 +183,13 @@ function handleNormalSelect(fileIndex: number) {
   }
 }
 
-async function updateMetadata(file: FileWithMetadata, metadata: Record<string, any>) {
-  const mappedMetadata = Object.entries(metadata).reduce<Record<string, any>>((acc, [key, value]) => {
-    if (!value.value) {
+async function updateMetadata(file: FileWithMetadata, metadata: Array<{ key: string, value?: string }>) {
+  const mappedMetadata = metadata.reduce<Record<string, any>>((acc, { key, value }) => {
+    if (!value) {
       return acc
     }
 
-    acc[key] = value.value
+    acc[key] = value
     return acc
   }, {})
 
