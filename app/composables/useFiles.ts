@@ -219,8 +219,6 @@ async function updateMetadata(file: FileWithMetadata, metadata: Array<{ key: str
     return toRaw(loadedFile)
   })
 
-  console.log('Updated files: ', updatedFiles)
-
   updateIdb(updatedFiles)
 }
 
