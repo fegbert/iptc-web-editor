@@ -57,6 +57,7 @@ watch(selectedFile, (newFile) => {
             <div class="py-4">
               <UForm :state="state">
                 <EditorFieldDate v-if="state[23]" v-model="state[23].value" :title="state[23].title" class="w-1/4" />
+                <EditorFieldTime v-if="state[26]" v-model="state[26].value" :title="state[26].title" class="w-1/4" />
                 <div v-for="field in state" :key="field.key">
                   <EditorField v-model="field.value" :name="field.title" type="text" class="w-1/4" />
                 </div>
