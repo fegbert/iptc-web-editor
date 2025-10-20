@@ -198,10 +198,8 @@ async function updateMetadata(file: FileWithMetadata, metadata: Array<{ key: str
     ...mappedMetadata,
   }
 
-  const buffer = await file.file.arrayBuffer()
-
   try {
-    await writeMetadata(new Uint8Array(buffer), updatedMetadata, undefined, file.handle)
+    await writeMetadata(file.file, updatedMetadata, undefined, file.handle)
   }
   catch (e) {
     console.warn('Failed to save metadata for file: ', file.file.name, ' - ', e)
