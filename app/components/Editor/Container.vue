@@ -1,30 +1,24 @@
 <script setup lang="ts">
-import { iptcIimMapping } from '~/utils/iptc-iim/mapping'
-
-const { loadedFiles, updateMetadata } = useFiles()
+const { loadedFiles } = useFiles()
 
 const selectedFiles = computed(() => {
   return loadedFiles.value.filter(file => file.isSelected)
 })
 
 const selectedFile = computed(() => selectedFiles.value[0] || null)
+// state = useState()
 
-const editableFields = iptcIimMapping.filter(field => field.key.startsWith('2'))
+const { updateFileData, getFileState } = useFileState()
 
-const state = ref(editableFields.map(field => ({
-  key: field.key,
-  title: field.title,
-  value: '',
-})))
+const selectedState = computed(() => getFileState(selectedFile.value?.id || ''))
+
+// state.update(file)
+// state.original(file) -> file.metadata
+// state.changes() -> number of changed files
 
 watch(selectedFile, (newFile) => {
   if (newFile) {
-    Object.entries(newFile.metadata).forEach(([key, value]) => {
-      state.value = state.value.map(field => field.key === key ? { ...field, value } : field)
-    })
-  }
-  else {
-    state.value = state.value.map(field => ({ ...field, value: '' }))
+    Object.entries(newFile.metadata).forEach(([key, value]) => updateFileData(newFile.id, key, value))
   }
 }, { immediate: true })
 </script>
@@ -48,15 +42,17 @@ watch(selectedFile, (newFile) => {
           >
             <div class="flex w-full items-center justify-between">
               <span>IPTC-IIM</span>
+              <!--
               <UButton v-if="selectedFile" icon="i-lucide-save" size="sm" color="primary" @click.stop="updateMetadata(selectedFile, state)">
                 Save changes
               </UButton>
+              -->
             </div>
           </UButton>
           <template #content>
             <div class="py-4">
-              <UForm :state="state">
-                <div v-for="field in state" :key="field.key">
+              <UForm :state="selectedState">
+                <div v-for="field in selectedState" :key="field.key">
                   <EditorField v-model="field.value" :name="field.title" type="text" class="w-1/4" />
                 </div>
               </UForm>

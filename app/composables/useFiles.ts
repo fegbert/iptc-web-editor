@@ -60,10 +60,12 @@ async function updateIdb(updatedFiles: FileWithMetadata[]) {
 async function addFiles(files: FileWithHandle[]) {
   const metadataMapping: FileWithMetadata[] = await Promise.all(files.map(async (file) => {
     const buffer = await file.arrayBuffer()
+    const fileId = file.name + file.lastModified + file.size
 
     try {
       const metadata = parseMetadata(new Uint8Array(buffer))
       return {
+        id: fileId,
         file,
         handle: file.handle,
         metadata,
@@ -72,6 +74,7 @@ async function addFiles(files: FileWithHandle[]) {
     catch (e) {
       console.warn('Failed to find metadata for file: ', file.name, ' - ', e)
       return {
+        id: fileId,
         file,
         handle: file.handle,
         metadata: {},
