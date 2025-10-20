@@ -6,7 +6,6 @@ const selectedFiles = computed(() => {
 })
 
 const selectedFile = computed(() => selectedFiles.value[0] || null)
-// state = useState()
 
 const { updateFileData, getFileState } = useFileState()
 

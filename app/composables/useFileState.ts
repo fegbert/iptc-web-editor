@@ -3,6 +3,7 @@ import { iptcIimMapping } from '~/utils/iptc-iim/mapping'
 
 export default function useFileState() {
   const fileStates = useState<Record<string, Field[]>>('file-states', () => ({}))
+  const { loadedFiles } = useFiles()
 
   function setupState() {
     const editableFields = iptcIimMapping.filter(field => field.key.startsWith('2'))
@@ -41,11 +42,42 @@ export default function useFileState() {
     })
   }
 
+  function hasFieldChanged(fileId: string, key: string, currentValue: string) {
+    const file = loadedFiles.value.find(file => file.id === fileId)
+    if (!file) {
+      return false
+    }
+
+    const originalValue = file.metadata[key] || ''
+    return originalValue !== currentValue
+  }
+
+  function fileChanges(fileId: string) {
+    const file = loadedFiles.value.find(file => file.id === fileId)
+    if (!file) {
+      return 0
+    }
+
+    const state = getFileState(fileId)
+    let changes = 0
+
+    state.forEach((field) => {
+      const originalValue = file.metadata[field.key] || ''
+      if (originalValue !== field.value) {
+        changes++
+      }
+    })
+
+    return changes
+  }
+
   return {
     fileStates,
     setupFileState,
     removeFileState,
     getFileState,
     updateFileData,
+    hasFieldChanged,
+    fileChanges,
   }
 }
