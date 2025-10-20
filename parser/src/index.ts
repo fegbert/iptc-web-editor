@@ -20,14 +20,14 @@ function parseMetadata(data: Uint8Array, standard: Standard = 'IPTC-IIM') {
 
 /**
  * Writes metadata to the specified image file and saves it at the specified path.
- * @param imageData The image buffer to write metadata to.
+ * @param image The image buffer to write metadata to.
  * @param metadata The metadata to write to the image.
  * @param path [Optional] The file path to save the updated image.
  * @param fileHandle [Optional] A FileSystemFileHandle to write the updated image directly.
  * @param standard [Optional] The metadata standard to use. Currently only 'IPTC-IIM' is supported.
  * @param fileType [Optional] The type of the image file. Currently only 'JPEG' is supported.
  */
-async function writeMetadata(image: FileWithHandle, metadata: Record<string, string>, path?: string, fileHandle?: FileSystemFileHandle, standard: Standard = 'IPTC-IIM', fileType: 'JPEG' = 'JPEG') {
+async function writeMetadata(image: FileWithHandle | Uint8Array, metadata: Record<string, string>, path?: string, fileHandle?: FileSystemFileHandle, standard: Standard = 'IPTC-IIM', fileType: 'JPEG' = 'JPEG') {
   switch (standard) {
     case 'IPTC-IIM':
       if (fileType !== 'JPEG') {

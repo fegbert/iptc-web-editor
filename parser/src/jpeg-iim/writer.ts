@@ -66,8 +66,8 @@ function wrapDataInAPP13(data: Uint8Array) {
   ])
 }
 
-export async function writeToJPEG(image: File, data: Record<string, string>, path?: string, fileHandle?: FileSystemFileHandle) {
-  const jpegBuffer = new Uint8Array(await image.arrayBuffer())
+export async function writeToJPEG(image: File | Uint8Array, data: Record<string, string>, path?: string, fileHandle?: FileSystemFileHandle) {
+  const jpegBuffer = image instanceof File ? new Uint8Array(await image.arrayBuffer()) : image
   if (jpegBuffer[0] !== JPEG_SOI_MARKER[0] || jpegBuffer[1] !== JPEG_SOI_MARKER[1]) {
     throw new Error('Invalid JPEG file: does not start with SOI marker')
   }
@@ -142,10 +142,10 @@ export async function writeToJPEG(image: File, data: Record<string, string>, pat
 
   // 3. If neither is provided, download the file
   else {
-    const blob = new Blob([output], { type: image.type })
+    const blob = new Blob([output], { type: image instanceof File ? image.type : 'image/jpeg' })
     try {
       await fileSave(blob, {
-        fileName: image.name,
+        fileName: image instanceof File ? image.name : 'unnamed.jpg',
         extensions: ['.jpg', '.jpeg'],
       }, undefined)
     }
@@ -156,7 +156,7 @@ export async function writeToJPEG(image: File, data: Record<string, string>, pat
         const url = URL.createObjectURL(blob)
         const linkElement = document.createElement('a')
         linkElement.href = url
-        linkElement.download = image.name
+        linkElement.download = image instanceof File ? image.name : 'unnamed.jpg'
         document.body.appendChild(linkElement)
         linkElement.click()
         linkElement.remove()
