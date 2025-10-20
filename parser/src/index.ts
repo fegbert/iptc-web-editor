@@ -1,3 +1,4 @@
+import type { FileWithHandle } from 'browser-fs-access'
 import type { Standard } from './types'
 import { parseIIM } from './jpeg-iim/reader'
 import { writeToJPEG } from './jpeg-iim/writer'
@@ -26,13 +27,13 @@ function parseMetadata(data: Uint8Array, standard: Standard = 'IPTC-IIM') {
  * @param standard [Optional] The metadata standard to use. Currently only 'IPTC-IIM' is supported.
  * @param fileType [Optional] The type of the image file. Currently only 'JPEG' is supported.
  */
-async function writeMetadata(imageData: Uint8Array, metadata: Record<string, string>, path?: string, fileHandle?: FileSystemFileHandle, standard: Standard = 'IPTC-IIM', fileType: 'JPEG' = 'JPEG') {
+async function writeMetadata(image: FileWithHandle, metadata: Record<string, string>, path?: string, fileHandle?: FileSystemFileHandle, standard: Standard = 'IPTC-IIM', fileType: 'JPEG' = 'JPEG') {
   switch (standard) {
     case 'IPTC-IIM':
       if (fileType !== 'JPEG') {
         throw new Error('IPTC-IIM metadata can only be written to JPEG files.')
       }
-      return writeToJPEG(imageData, metadata, path, fileHandle)
+      return writeToJPEG(image, metadata, path, fileHandle)
     default:
       throw new Error(`Unsupported metadata standard: ${standard}`)
   }

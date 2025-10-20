@@ -1,4 +1,5 @@
 import fs from 'node:fs'
+import { fileSave } from 'browser-fs-access'
 import { APP13_SEGMENT, IPTC_RESOURCE_ID, IPTC_TAG_MARKER, IRB_SIGNATURE, JPEG_SOI_MARKER, PHOTOSHOP_HEADER } from './constants'
 import { calculateSegmentLength, concatUint8Arrays, isSegmentMatchingPhotoshopHeader } from './helpers'
 
@@ -65,7 +66,8 @@ function wrapDataInAPP13(data: Uint8Array) {
   ])
 }
 
-export async function writeToJPEG(jpegBuffer: Uint8Array, data: Record<string, string>, path?: string, fileHandle?: FileSystemFileHandle) {
+export async function writeToJPEG(image: File, data: Record<string, string>, path?: string, fileHandle?: FileSystemFileHandle) {
+  const jpegBuffer = new Uint8Array(await image.arrayBuffer())
   if (jpegBuffer[0] !== JPEG_SOI_MARKER[0] || jpegBuffer[1] !== JPEG_SOI_MARKER[1]) {
     throw new Error('Invalid JPEG file: does not start with SOI marker')
   }
@@ -135,6 +137,31 @@ export async function writeToJPEG(jpegBuffer: Uint8Array, data: Record<string, s
     }
     catch (error) {
       console.error('Error writing JPEG file using file handle:', error)
+    }
+  }
+
+  // 3. If neither is provided, download the file
+  else {
+    const blob = new Blob([output], { type: image.type })
+    try {
+      await fileSave(blob, {
+        fileName: image.name,
+        extensions: ['.jpg', '.jpeg'],
+      }, undefined)
+    }
+    catch (error) {
+      console.warn('File save using browser-fs-access failed. Trying to download manually...')
+      console.error('Error saving file:', error)
+      if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+        const url = URL.createObjectURL(blob)
+        const linkElement = document.createElement('a')
+        linkElement.href = url
+        linkElement.download = image.name
+        document.body.appendChild(linkElement)
+        linkElement.click()
+        linkElement.remove()
+        setTimeout(() => URL.revokeObjectURL(url), 1000)
+      }
     }
   }
 }
