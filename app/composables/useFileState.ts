@@ -1,9 +1,32 @@
 import type { Field } from '~/shared/types'
+import { useIDBKeyval } from '@vueuse/integrations/useIDBKeyval.mjs'
 import { iptcIimMapping } from '~/utils/iptc-iim/mapping'
 
+type FileState = Record<string, Field[]>
+
+const fileStates = ref<FileState>({})
+const isLoading = ref(true)
+
 export default function useFileState() {
-  const fileStates = useState<Record<string, Field[]>>('file-states', () => ({}))
-  const { loadedFiles } = useFiles()
+  const { loadedFiles, updateMetadata } = useFiles()
+
+  if (!import.meta.env.SSR) {
+    loadFileStatesFromIndexedDB()
+  }
+
+  async function loadFileStatesFromIndexedDB() {
+    const { data: states, isFinished } = useIDBKeyval<FileState>('file-states', {})
+
+    await until(isFinished).toBe(true)
+
+    fileStates.value = states.value
+    isLoading.value = false
+  }
+
+  async function updateIdb() {
+    const { set } = useIDBKeyval<FileState>('file-states', fileStates.value)
+    await set(toRaw(fileStates.value))
+  }
 
   function setupState() {
     const editableFields = iptcIimMapping.filter(field => field.key.startsWith('2'))
@@ -29,7 +52,7 @@ export default function useFileState() {
     return fileStates.value[fileId] || []
   }
 
-  function updateFileData(fileId: string, key: string, newValue: string) {
+  function updateFileData(fileId: string, key: string, newValue?: string) {
     if (!fileStates.value[fileId]) {
       setupFileState(fileId)
     }
@@ -71,6 +94,35 @@ export default function useFileState() {
     return changes
   }
 
+  const filesChanged = ref(0)
+
+  function saveAll() {
+    if (!filesChanged.value) {
+      return
+    }
+
+    const statesToSave = Object.entries(fileStates.value).filter(([fileId, _]) => fileChanges(fileId) > 0).map(([fileId, state]) => ({
+      fileId,
+      state,
+    }))
+
+    statesToSave.forEach(({ fileId, state }) => {
+      const file = loadedFiles.value.find(file => file.id === fileId)
+      if (!file) {
+        throw new Error('File not found for saving metadata')
+      }
+
+      updateMetadata(file, state)
+    })
+  }
+
+  watchDeep(() => fileStates.value, async (updatedStates) => {
+    const totalChanges = Object.keys(updatedStates).filter(fileId => fileChanges(fileId) > 0).length
+    filesChanged.value = totalChanges
+
+    await updateIdb()
+  })
+
   return {
     fileStates,
     setupFileState,
@@ -79,5 +131,7 @@ export default function useFileState() {
     updateFileData,
     hasFieldChanged,
     fileChanges,
+    filesChanged,
+    saveAll,
   }
 }

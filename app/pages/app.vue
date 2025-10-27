@@ -39,9 +39,7 @@ function toggleFileSelection(file: FileWithMetadata) {
       <template #header>
         <UDashboardNavbar title="Edit Metadata">
           <template #right>
-            <UButton v-if="loadedFiles.length > 0" icon="i-lucide-save" color="primary">
-              Save Changes
-            </UButton>
+            <EditorSaveButton />
           </template>
         </UDashboardNavbar>
       </template>

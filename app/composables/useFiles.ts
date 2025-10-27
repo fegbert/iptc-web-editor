@@ -8,6 +8,8 @@ const isLoading = ref(true)
 const fileAmount = ref(0)
 const selectedIndexes = ref<number[]>([])
 
+const ALLOW_MULTIPLE_SELECTION = false
+
 function loadFilesFromIndexedDB() {
   const { data: files, isFinished } = useIDBKeyval<FileWithMetadata[]>('uploaded-images', [])
   const { data: indexes, isFinished: areIndexesFinished } = useIDBKeyval<number[]>('selected-indexes', [])
@@ -108,17 +110,19 @@ async function toggleSelection(file: FileWithMetadata, modifier: 'shift' | 'ctrl
     return
   }
 
-  if (modifier === 'shift') {
-    if (selectedIndexes.value.length === 0) {
-      handleNormalSelect(selectedFileIndex)
+  if (ALLOW_MULTIPLE_SELECTION) {
+    if (modifier === 'shift') {
+      if (selectedIndexes.value.length === 0) {
+        handleNormalSelect(selectedFileIndex)
+      }
+      else {
+        const lastSelectedIndex = selectedIndexes.value[selectedIndexes.value.length - 1] ?? 0
+        handleShiftSelect(selectedFileIndex, lastSelectedIndex)
+      }
     }
-    else {
-      const lastSelectedIndex = selectedIndexes.value[selectedIndexes.value.length - 1] ?? 0
-      handleShiftSelect(selectedFileIndex, lastSelectedIndex)
+    else if (modifier === 'ctrl') {
+      handleCtrlSelect(selectedFileIndex)
     }
-  }
-  else if (modifier === 'ctrl') {
-    handleCtrlSelect(selectedFileIndex)
   }
   else {
     handleNormalSelect(selectedFileIndex)

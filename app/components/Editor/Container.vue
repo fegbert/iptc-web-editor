@@ -7,16 +7,16 @@ const selectedFiles = computed(() => {
 
 const selectedFile = computed(() => selectedFiles.value[0] || null)
 
-const { updateFileData, getFileState } = useFileState()
+const { updateFileData, getFileState, setupFileState } = useFileState()
 
 const selectedState = computed(() => getFileState(selectedFile.value?.id || ''))
 
-// state.update(file)
-// state.original(file) -> file.metadata
-// state.changes() -> number of changed files
-
 watch(selectedFile, (newFile) => {
   if (newFile) {
+    if (getFileState(newFile.id).length === 0) {
+      setupFileState(newFile.id)
+      return
+    }
     Object.entries(newFile.metadata).forEach(([key, value]) => updateFileData(newFile.id, key, value))
   }
 }, { immediate: true })
@@ -39,14 +39,7 @@ watch(selectedFile, (newFile) => {
             }"
             block
           >
-            <div class="flex w-full items-center justify-between">
-              <span>IPTC-IIM</span>
-              <!--
-              <UButton v-if="selectedFile" icon="i-lucide-save" size="sm" color="primary" @click.stop="updateMetadata(selectedFile, state)">
-                Save changes
-              </UButton>
-              -->
-            </div>
+            <span>IPTC-IIM</span>
           </UButton>
           <template #content>
             <div class="py-4">
