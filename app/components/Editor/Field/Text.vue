@@ -8,9 +8,7 @@ const props = defineProps<{
 
 const value = defineModel<string>()
 
-const formattedTitle = computed(() => {
-  return props.title.charAt(0).toUpperCase() + props.title.slice(1)
-})
+const formattedTitle = useFieldTitle(props.title)
 </script>
 
 <template>

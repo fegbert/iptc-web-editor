@@ -14,9 +14,7 @@ const value = defineModel<string>()
 
 const dateValue = ref<CalendarDate | undefined>()
 
-const formattedTitle = computed(() => {
-  return props.title.charAt(0).toUpperCase() + props.title.slice(1)
-})
+const formattedTitle = useFieldTitle(props.title)
 
 watch(value, (newValue) => {
   if (newValue) {

@@ -26,9 +26,7 @@ watch(value, (newValue) => {
   }
 }, { immediate: true })
 
-const formattedTitle = computed(() => {
-  return props.title.charAt(0).toUpperCase() + props.title.slice(1)
-})
+const formattedTitle = useFieldTitle(props.title)
 
 function updateOffset(offset: string) {
   timeValue.value.offset = offset
