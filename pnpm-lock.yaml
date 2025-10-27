@@ -74,6 +74,10 @@ importers:
         version: 9.36.0(jiti@2.6.0)
 
   parser:
+    dependencies:
+      browser-fs-access:
+        specifier: ^0.38.0
+        version: 0.38.0
     devDependencies:
       '@antfu/eslint-config':
         specifier: ^4.16.1

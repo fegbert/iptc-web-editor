@@ -5,7 +5,7 @@ const { addFiles } = useFiles()
 
 async function openFiles() {
   const blob = await fileOpen({
-    mimeTypes: ['image/*'],
+    mimeTypes: ['image/jpeg'],
     startIn: 'pictures',
     multiple: true,
   })
