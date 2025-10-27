@@ -1,6 +1,10 @@
 import type { IPTCField } from './types'
 import { CharacterTypes } from './types'
 
+/**
+ * Based on the IPTC IIM Specification Version 4.2
+ * Source: https://www.iptc.org/std/IIM/4.2/specification/IIMV4.2.pdf
+ */
 export const iptcIimMapping: IPTCField[] = [
   {
     key: '2:00',

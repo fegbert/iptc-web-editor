@@ -16,6 +16,6 @@ const formattedTitle = computed(() => {
 
 <template>
   <UFormField :name="props.title" :label="formattedTitle" :required="required" class="w-full">
-    <UInputNumber v-model="value" :placeholder="placeholder" orientation="vertical" class="w-full" />
+    <UInputNumber v-model="value" :min="min" :max="max" :placeholder="placeholder" orientation="vertical" class="w-full" />
   </UFormField>
 </template>
