@@ -7,17 +7,6 @@ import { CharacterTypes } from './types'
  */
 export const iptcIimFields: IPTCField[] = [
   {
-    key: '2:00',
-    type: 'number',
-    title: 'Record Version',
-    description: 'A binary number identifying the version of the Information Interchange Model, Part II (Record 2:xx), utilised by the provider. Version numbers are assigned by IPTC and NAA.',
-    mandatory: true,
-    repeatable: false,
-    octets: 2,
-    maxValue: 4,
-    minValue: 4,
-  },
-  {
     key: '2:03',
     title: 'Object Type Reference',
     description: `

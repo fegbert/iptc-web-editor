@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { subjectDetails, subjectMatters, subjects } from '~/utils/iptc-iim/mapping'
 
-defineProps<{
+const props = defineProps<{
+  original: string
   required?: boolean
 }>()
 
@@ -15,7 +16,11 @@ const subjectSelectOptions = subjects.map(data => ({
 const selectedSubject = computed({
   get: () => {
     const subjectNumber = value.value?.split(':')[1]
-    return subjectSelectOptions.find(option => option.value === subjectNumber)
+    if (!subjectNumber) {
+      return undefined
+    }
+
+    return subjectSelectOptions.find(option => option.value === subjectNumber) || { label: '', value: subjectNumber }
   },
   set: (newValue) => {
     if (!newValue) {
@@ -41,7 +46,11 @@ const subjectMatterSelectOptions = computed(() => {
 const selectedSubjectMatter = computed({
   get: () => {
     const subjectMatterNumber = value.value?.split(':')[2]
-    return subjectMatterSelectOptions.value.find(option => option.value === subjectMatterNumber)
+    if (!subjectMatterNumber) {
+      return undefined
+    }
+
+    return subjectMatterSelectOptions.value.find(option => option.value === subjectMatterNumber) || { label: '', value: subjectMatterNumber }
   },
   set: (newValue) => {
     if (!newValue) {
@@ -70,7 +79,11 @@ const subjectDetailSelectOptions = computed(() => {
 const selectedSubjectDetail = computed({
   get: () => {
     const subjectDetailNumber = value.value?.split(':')[3]
-    return subjectDetailSelectOptions.value.find(option => option.value === subjectDetailNumber)
+    if (!subjectDetailNumber) {
+      return undefined
+    }
+
+    return subjectDetailSelectOptions.value.find(option => option.value === subjectDetailNumber) || { label: '', value: subjectDetailNumber }
   },
   set: (newValue) => {
     if (!newValue) {
@@ -83,19 +96,88 @@ const selectedSubjectDetail = computed({
     value.value = `IPTC:${selectedSubject.value!.value}:${selectedSubjectMatter.value!.value}:${newValue.value}`
   },
 })
+
+const originalSubject = computed(() => {
+  const parts = props.original.split(':')
+  const original = parts.length === 4 ? parts[1] : ''
+
+  return original === '00' ? undefined : original
+})
+
+const originalSubjectMatter = computed(() => {
+  const parts = props.original.split(':')
+  const original = parts.length === 4 ? parts[2] : ''
+
+  return original === '000' ? undefined : original
+})
+
+const originalSubjectDetail = computed(() => {
+  const parts = props.original.split(':')
+  const original = parts.length === 4 ? parts[3] : ''
+
+  return original === '000' ? undefined : original
+})
+
+const hasSubjectChanged = computed(() => {
+  if (!originalSubject.value && !selectedSubject.value?.value) {
+    return false
+  }
+
+  return originalSubject.value !== selectedSubject.value?.value
+})
+
+const hasSubjectMatterChanged = computed(() => {
+  const original = !originalSubjectMatter.value ? '000' : originalSubjectMatter.value
+  const selected = !selectedSubjectMatter.value?.value ? '000' : selectedSubjectMatter.value?.value
+
+  if (original === '000' && selected === '000') {
+    return false
+  }
+
+  return hasSubjectChanged.value || original !== selected
+})
+
+const hasSubjectDetailChanged = computed(() => {
+  const original = !originalSubjectDetail.value ? '000' : originalSubjectDetail.value
+  const selected = !selectedSubjectDetail.value?.value ? '000' : selectedSubjectDetail.value?.value
+
+  if (original === '000' && selected === '000') {
+    return false
+  }
+
+  return hasSubjectMatterChanged.value || original !== selected
+})
+
+function resetSubject() {
+  selectedSubject.value = { label: '', value: originalSubject.value ?? '' }
+}
+
+async function resetSubjectMatter() {
+  resetSubject()
+
+  // next tick to give computed time to update
+  await nextTick(() => {
+    selectedSubjectMatter.value = { label: '', value: originalSubjectMatter.value ?? '' }
+  })
+}
+
+async function resetSubjectDetail() {
+  await resetSubjectMatter()
+  selectedSubjectDetail.value = { label: '', value: originalSubjectDetail.value ?? '' }
+}
 </script>
 
 <template>
   <div>
-    <UFormField name="subject" label="Subject" :required="required" class="w-full">
-      <BaseSelect v-model="selectedSubject" :options="subjectSelectOptions" placeholder="Select a subject">
+    <BaseField title="Subject" :required="required" :has-changed="hasSubjectChanged" @reset="resetSubject">
+      <BaseSelect v-model="selectedSubject" :options="subjectSelectOptions" :has-changed="hasSubjectChanged" placeholder="Select a subject">
         <template #label>
           {{ selectedSubject?.label }}
         </template>
       </BaseSelect>
-    </UFormField>
-    <UFormField name="subjectMatter" label="Subject Matter" :required="required" class="w-full">
-      <BaseSelect v-model="selectedSubjectMatter" :disabled="subjectMatterSelectOptions.length < 1" :options="subjectMatterSelectOptions">
+    </BaseField>
+    <BaseField title="Subject Matter" :required="required" :has-changed="hasSubjectMatterChanged" class="w-full" @reset="resetSubjectMatter">
+      <BaseSelect v-model="selectedSubjectMatter" :disabled="subjectMatterSelectOptions.length < 1" :options="subjectMatterSelectOptions" :has-changed="hasSubjectMatterChanged">
         <template #label>
           {{ selectedSubjectMatter?.label }}
         </template>
@@ -107,9 +189,9 @@ const selectedSubjectDetail = computed({
           </div>
         </template>
       </BaseSelect>
-    </UFormField>
-    <UFormField name="subjectDetail" label="Subject Detail" :required="required" class="w-full">
-      <BaseSelect v-model="selectedSubjectDetail" :disabled="subjectDetailSelectOptions.length < 1" :options="subjectDetailSelectOptions">
+    </BaseField>
+    <BaseField title="Subject Detail" :required="required" :has-changed="hasSubjectDetailChanged" class="w-full" @reset="resetSubjectDetail">
+      <BaseSelect v-model="selectedSubjectDetail" :disabled="subjectDetailSelectOptions.length < 1" :options="subjectDetailSelectOptions" :has-changed="hasSubjectDetailChanged">
         <template #label>
           {{ selectedSubjectDetail?.label }}
         </template>
@@ -121,6 +203,6 @@ const selectedSubjectDetail = computed({
           </div>
         </template>
       </BaseSelect>
-    </UFormField>
+    </BaseField>
   </div>
 </template>

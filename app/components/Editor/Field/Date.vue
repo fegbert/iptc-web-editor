@@ -6,6 +6,7 @@ const props = withDefaults(defineProps<{
   placeholder?: string
   icon?: string
   required?: boolean
+  original: string
 }>(), {
   placeholder: 'Select a date',
 })
@@ -14,23 +15,29 @@ const value = defineModel<string>()
 
 const dateValue = ref<CalendarDate | undefined>()
 
-const formattedTitle = useFieldTitle(props.title)
+function parseDate(value?: string): CalendarDate | undefined {
+  if (value && value.length === 8) {
+    const year = Number.parseInt(value.slice(0, 4))
+    const month = Number.parseInt(value.slice(4, 6))
+    const day = Number.parseInt(value.slice(6, 8))
+
+    return new CalendarDate(year, month, day)
+  }
+
+  return undefined
+}
 
 watch(value, (newValue) => {
   if (newValue) {
-    const year = Number.parseInt(newValue.slice(0, 4))
-    const month = Number.parseInt(newValue.slice(4, 6))
-    const day = Number.parseInt(newValue.slice(6, 8))
+    const date = parseDate(newValue)
 
-    const date = new CalendarDate(year, month, day)
-
-    if (!dateValue.value || !date.compare(dateValue.value)) {
+    if (!dateValue.value || (date && !date.compare(dateValue.value))) {
       dateValue.value = date
     }
   }
 }, { immediate: true })
 
-function updateDate(newDate: CalendarDate) {
+function updateDate(newDate?: CalendarDate) {
   dateValue.value = newDate
 
   if (newDate) {
@@ -40,19 +47,30 @@ function updateDate(newDate: CalendarDate) {
 
     value.value = `${year}${month}${day}`
   }
+  else {
+    value.value = ''
+  }
 }
+const original = computed(() => props.original)
+const hasChanged = useHasChanged(original, value)
 </script>
 
 <template>
-  <UFormField :name="props.title" :label="formattedTitle" :required="required" class="w-full">
+  <BaseField v-model="value" :title="title" :required="required" :has-changed="hasChanged" @reset="updateDate(parseDate(original))">
     <UPopover arrow :content="{ side: 'top' }">
-      <UButton color="neutral" variant="subtle" icon="i-lucide-calendar" class="w-full">
-        {{ dateValue ? formatDate(dateValue.toString(), 'DD MMMM YYYY') : placeholder }}
+      <UButton :color="hasChanged ? 'secondary' : 'neutral'" variant="subtle" icon="i-lucide-calendar" class="w-full h-8">
+        <template #trailing>
+          <UButton v-if="dateValue" icon="i-lucide-x" variant="ghost" :color="hasChanged ? 'secondary' : 'neutral'" size="sm" @click.stop="updateDate(undefined)" />
+        </template>
+
+        <div class="w-full text-start">
+          {{ dateValue ? formatDate(dateValue.toString(), 'DD MMMM YYYY') : placeholder }}
+        </div>
       </UButton>
 
       <template #content>
         <UCalendar :model-value="dateValue" class="p-2" @update:model-value="$event => $event ? updateDate($event as CalendarDate) : undefined" />
       </template>
     </UPopover>
-  </UFormField>
+  </BaseField>
 </template>

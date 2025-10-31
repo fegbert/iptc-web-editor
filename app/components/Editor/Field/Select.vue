@@ -1,9 +1,9 @@
 <script setup lang="ts">
 const props = withDefaults(defineProps<{
   title: string
+  original: string
   options: { label: string, value: string }[]
   placeholder?: string
-  icon?: string
   required?: boolean
 }>(), {
   placeholder: 'Select an option',
@@ -18,15 +18,16 @@ const rawValue = computed({
   },
 })
 
-const formattedTitle = useFieldTitle(props.title)
+const original = computed(() => props.original)
+const hasChanged = useHasChanged(original, value)
 </script>
 
 <template>
-  <UFormField :name="title" :label="formattedTitle" :required="required" class="w-full">
-    <BaseSelect v-model="rawValue" :options="options" :placeholder="placeholder">
+  <BaseField :title="title" :required="required" :has-changed="hasChanged" @reset="value = original">
+    <BaseSelect v-model="rawValue" :options="options" :placeholder="placeholder" :has-changed="hasChanged">
       <template #label>
         <span>{{ rawValue?.label }}</span>
       </template>
     </BaseSelect>
-  </UFormField>
+  </BaseField>
 </template>

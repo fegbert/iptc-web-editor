@@ -4,15 +4,17 @@ const props = defineProps<{
   placeholder?: string
   icon?: string
   required?: boolean
+  original: string
 }>()
 
 const value = defineModel<string>()
 
-const formattedTitle = useFieldTitle(props.title)
+const original = computed(() => props.original)
+const hasChanged = useHasChanged(original, value)
 </script>
 
 <template>
-  <UFormField :name="props.title" :label="formattedTitle" :required="required" class="w-full">
-    <UInput v-model="value" :placeholder="placeholder" :icon="icon" class="w-full" />
-  </UFormField>
+  <BaseField :title="title" :required="required" :has-changed="hasChanged" @reset="value = original">
+    <UInput v-model="value" :color="hasChanged ? 'secondary' : undefined" :highlight="hasChanged" :placeholder="placeholder" :icon="icon" class="w-full" />
+  </BaseField>
 </template>

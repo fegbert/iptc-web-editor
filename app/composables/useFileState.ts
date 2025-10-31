@@ -33,6 +33,7 @@ export default function useFileState() {
     const state = iptcIimFields.map(field => ({
       ...field,
       value: '',
+      original: '',
     }))
 
     return state
@@ -58,18 +59,16 @@ export default function useFileState() {
     fileStates.value[fileId]!.map((field) => {
       if (field.key === key) {
         field.value = newValue ?? ''
+        if (!field.original) {
+          field.original = field.value
+        }
       }
       return field
     })
   }
 
-  function hasFieldChanged(fileId: string, key: string, currentValue: string) {
-    const file = loadedFiles.value.find(file => file.id === fileId)
-    if (!file) {
-      return false
-    }
-
-    const originalValue = file.metadata[key] || ''
+  function hasFieldChanged(metadata: Record<string, any>, key: string, currentValue: string) {
+    const originalValue = metadata[key] || ''
     return originalValue !== currentValue
   }
 

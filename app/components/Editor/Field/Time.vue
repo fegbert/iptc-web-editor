@@ -3,6 +3,7 @@ import type { SelectMenuItem } from '@nuxt/ui'
 
 const props = defineProps<{
   title: string
+  original: string
   placeholder?: string
   icon?: string
   required?: boolean
@@ -25,8 +26,6 @@ watch(value, (newValue) => {
     }
   }
 }, { immediate: true })
-
-const formattedTitle = useFieldTitle(props.title)
 
 function updateOffset(offset: string) {
   timeValue.value.offset = offset
@@ -51,14 +50,36 @@ const offsetSelectValues = computed(() => {
     } as SelectMenuItem
   })
 })
+
+const original = computed(() => props.original)
+const hasChanged = useHasChanged(original, value)
+
+function reset() {
+  const originalTime = original.value.slice(0, 6)
+  const originalOffset = original.value.slice(6)
+
+  updateTime(originalTime)
+  updateOffset(originalOffset)
+}
 </script>
 
 <template>
-  <UFormField :name="props.title" :label="formattedTitle" :required="required" class="w-full">
+  <BaseField :title="title" :required="required" :has-changed="hasChanged" @reset="reset">
     <div class="flex gap-2 items-center">
-      <UInput :model-value="timeValue.time" type="time" step="1" class="w-1/2" @update:model-value="updateTime" />
+      <UInput
+        :model-value="timeValue.time"
+        :color="hasChanged ? 'secondary' : undefined"
+        :highlight="hasChanged"
+        type="time"
+        step="1"
+        class="w-1/2"
+        @update:model-value="updateTime"
+      />
       <USelectMenu
         :model-value="timeValue.offset"
+        :disabled="!timeValue.time"
+        :color="hasChanged ? 'secondary' : undefined"
+        :highlight="hasChanged"
         value-key="value"
         :items="offsetSelectValues"
         placeholder="Select Timezone Offset"
@@ -66,5 +87,5 @@ const offsetSelectValues = computed(() => {
         @update:model-value="updateOffset"
       />
     </div>
-  </UFormField>
+  </BaseField>
 </template>
