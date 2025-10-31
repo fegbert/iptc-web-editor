@@ -1,21 +1,26 @@
 <script setup lang="ts">
-import { objectTypes } from '~/utils/iptc-iim/types'
+import { objectAttributes, objectTypes } from '~/utils/iptc-iim/types'
 
 const props = defineProps<{
   title: string
+  type: 'object-type' | 'object-attribute'
   required?: boolean
 }>()
 
 const value = defineModel<string>()
 
-const objectTypeSelectOptions = objectTypes.map(type => ({
-  label: type.name,
-  number: type.number,
-  value: `${type.number}:${type.name}`,
+const objectData = computed(() => {
+  return props.type === 'object-type' ? objectTypes : objectAttributes
+})
+
+const selectOptions = objectData.value.map(data => ({
+  label: data.name,
+  number: data.number,
+  value: `${data.number}:${data.name}`,
 }))
 
 const rawValue = computed({
-  get: () => objectTypeSelectOptions.find(option => option.value === value.value),
+  get: () => selectOptions.find(option => option.value === value.value),
   set: (newValue) => {
     value.value = newValue?.value ?? ''
   },
@@ -33,7 +38,6 @@ function clear() {
 
 <template>
   <UFormField :name="props.title" :label="formattedTitle" :required="required" class="w-full">
-    {{ rawValue }}
     <USelectMenu
       v-model="rawValue"
       v-model:open="openMenu"
@@ -41,7 +45,7 @@ function clear() {
       :ui="{
         trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-100 hover:cursor-pointer',
       }"
-      :items="objectTypeSelectOptions"
+      :items="selectOptions"
     >
       <template #default>
         <div class="flex items-center justify-between w-full">
@@ -49,7 +53,7 @@ function clear() {
             <span class="text-sm text-default/75">{{ `${rawValue.number} ` }}</span>
             <span> {{ rawValue.label }}</span>
           </div>
-          <span v-else class="text-default/50">Select an object type</span>
+          <span v-else class="text-default/50">Select an object {{ props.type === 'object-type' ? 'type' : 'attribute' }}</span>
           <UButton
             v-if="rawValue"
             class="p-0.5 hover:bg-transparent hover:cursor-pointer active:bg-transparent"

@@ -42,6 +42,8 @@ interface IPTCFieldOtherTypes extends IPTCFieldBase {
 
 export type IPTCField = IPTCFieldText | IPTCFieldNumber | IPTCFieldSelect | IPTCFieldOtherTypes
 
+export type IPTCFieldWithValue = IPTCField & { value: string }
+
 /**
  * As per IPTC IIM Specification 4.2 - Appendix G
  * Source: https://www.iptc.org/std/IIM/4.2/specification/IIMV4.2.pdf
