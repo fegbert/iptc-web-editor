@@ -8,6 +8,8 @@ const isLoading = ref(true)
 const fileAmount = ref(0)
 const selectedIndexes = ref<number[]>([])
 
+const ALLOW_MULTIPLE_SELECTION = false
+
 function loadFilesFromIndexedDB() {
   const { data: files, isFinished } = useIDBKeyval<FileWithMetadata[]>('uploaded-images', [])
   const { data: indexes, isFinished: areIndexesFinished } = useIDBKeyval<number[]>('selected-indexes', [])
@@ -60,10 +62,12 @@ async function updateIdb(updatedFiles: FileWithMetadata[]) {
 async function addFiles(files: FileWithHandle[]) {
   const metadataMapping: FileWithMetadata[] = await Promise.all(files.map(async (file) => {
     const buffer = await file.arrayBuffer()
+    const fileId = file.name + file.lastModified + file.size
 
     try {
       const metadata = parseMetadata(new Uint8Array(buffer))
       return {
+        id: fileId,
         file,
         handle: file.handle,
         metadata,
@@ -72,6 +76,7 @@ async function addFiles(files: FileWithHandle[]) {
     catch (e) {
       console.warn('Failed to find metadata for file: ', file.name, ' - ', e)
       return {
+        id: fileId,
         file,
         handle: file.handle,
         metadata: {},
@@ -83,6 +88,42 @@ async function addFiles(files: FileWithHandle[]) {
   const dedupedUpdatedFiles = deduplicateFiles([...rawLoadedFiles, ...metadataMapping])
 
   updateIdb(dedupedUpdatedFiles)
+}
+
+async function reloadFiles() {
+  const rawLoadedFiles = toRaw(loadedFiles.value)
+
+  const filesWithUpdatedMetadata = await Promise.all(rawLoadedFiles.map(async (file) => {
+    const buffer = await file.file.arrayBuffer()
+    try {
+      const metadata = parseMetadata(new Uint8Array(buffer))
+      return {
+        ...file,
+        metadata,
+      }
+    }
+    catch (e) {
+      console.warn('Failed to reload metadata for file: ', file.file.name, ' - ', e)
+      return {
+        ...file,
+        metadata: {},
+      }
+    }
+  }))
+
+  updateIdb(filesWithUpdatedMetadata)
+}
+
+function markAsDownloaded(fileIds: string[]) {
+  loadedFiles.value = loadedFiles.value.map((file) => {
+    if (fileIds.includes(file.id)) {
+      return {
+        ...file,
+        isDownloaded: true,
+      }
+    }
+    return file
+  })
 }
 
 async function removeFile(fileToRemove: FileWithMetadata) {
@@ -105,17 +146,19 @@ async function toggleSelection(file: FileWithMetadata, modifier: 'shift' | 'ctrl
     return
   }
 
-  if (modifier === 'shift') {
-    if (selectedIndexes.value.length === 0) {
-      handleNormalSelect(selectedFileIndex)
+  if (ALLOW_MULTIPLE_SELECTION) {
+    if (modifier === 'shift') {
+      if (selectedIndexes.value.length === 0) {
+        handleNormalSelect(selectedFileIndex)
+      }
+      else {
+        const lastSelectedIndex = selectedIndexes.value[selectedIndexes.value.length - 1] ?? 0
+        handleShiftSelect(selectedFileIndex, lastSelectedIndex)
+      }
     }
-    else {
-      const lastSelectedIndex = selectedIndexes.value[selectedIndexes.value.length - 1] ?? 0
-      handleShiftSelect(selectedFileIndex, lastSelectedIndex)
+    else if (modifier === 'ctrl') {
+      handleCtrlSelect(selectedFileIndex)
     }
-  }
-  else if (modifier === 'ctrl') {
-    handleCtrlSelect(selectedFileIndex)
   }
   else {
     handleNormalSelect(selectedFileIndex)
@@ -226,5 +269,5 @@ export default function () {
 
   loadAmountFromCookies()
 
-  return { loadedFiles, isLoading, loadFilesFromIndexedDB, addFiles, removeFile, fileAmount, toggleSelection, updateMetadata }
+  return { loadedFiles, isLoading, loadFilesFromIndexedDB, addFiles, removeFile, fileAmount, toggleSelection, updateMetadata, reloadFiles, markAsDownloaded }
 }
