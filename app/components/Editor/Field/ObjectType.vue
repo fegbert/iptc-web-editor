@@ -1,18 +1,21 @@
 <script setup lang="ts">
-const props = withDefaults(defineProps<{
+import { objectTypes } from '~/utils/iptc-iim/types'
+
+const props = defineProps<{
   title: string
-  options: { label: string, value: string }[]
-  placeholder?: string
-  icon?: string
   required?: boolean
-}>(), {
-  placeholder: 'Select an option',
-})
+}>()
 
 const value = defineModel<string>()
 
+const objectTypeSelectOptions = objectTypes.map(type => ({
+  label: type.name,
+  number: type.number,
+  value: `${type.number}:${type.name}`,
+}))
+
 const rawValue = computed({
-  get: () => props.options.find(option => option.value === value.value),
+  get: () => objectTypeSelectOptions.find(option => option.value === value.value),
   set: (newValue) => {
     value.value = newValue?.value ?? ''
   },
@@ -30,6 +33,7 @@ function clear() {
 
 <template>
   <UFormField :name="props.title" :label="formattedTitle" :required="required" class="w-full">
+    {{ rawValue }}
     <USelectMenu
       v-model="rawValue"
       v-model:open="openMenu"
@@ -37,14 +41,15 @@ function clear() {
       :ui="{
         trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-100 hover:cursor-pointer',
       }"
-      :items="props.options"
-      :placeholder="props.placeholder"
-      :icon="props.icon"
+      :items="objectTypeSelectOptions"
     >
       <template #default>
         <div class="flex items-center justify-between w-full">
-          <span v-if="rawValue?.value">{{ rawValue.label }}</span>
-          <span v-else class="text-default/50">{{ props.placeholder }}</span>
+          <div v-if="rawValue?.value">
+            <span class="text-sm text-default/75">{{ `${rawValue.number} ` }}</span>
+            <span> {{ rawValue.label }}</span>
+          </div>
+          <span v-else class="text-default/50">Select an object type</span>
           <UButton
             v-if="rawValue"
             class="p-0.5 hover:bg-transparent hover:cursor-pointer active:bg-transparent"
@@ -55,6 +60,9 @@ function clear() {
             @click.stop="clear"
           />
         </div>
+      </template>
+      <template #item-leading="{ item }">
+        <span class="text-sm text-default/75">{{ item.number }}</span>
       </template>
     </USelectMenu>
   </UFormField>
