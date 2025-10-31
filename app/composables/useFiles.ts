@@ -136,7 +136,7 @@ async function removeFile(fileToRemove: FileWithMetadata) {
   }
 
   const updatedFiles = loadedFiles.value.filter(file => file.file !== fileToRemove.file).map(file => toRaw(file))
-  updateIdb(updatedFiles)
+  await updateIdb(updatedFiles)
 }
 
 async function toggleSelection(file: FileWithMetadata, modifier: 'shift' | 'ctrl' | undefined = undefined) {

@@ -2,12 +2,18 @@
 import type { FileWithMetadata } from '~/shared/types'
 
 const { loadedFiles, isLoading, fileAmount, removeFile, toggleSelection } = useFiles()
+const { removeFileState } = useFileState()
 
 const { shift, ctrl } = useMagicKeys()
 
 function toggleFileSelection(file: FileWithMetadata) {
   const modifier = shift?.value ? 'shift' : ctrl?.value ? 'ctrl' : undefined
   toggleSelection(file, modifier)
+}
+
+async function remove(file: FileWithMetadata) {
+  await removeFile(file)
+  removeFileState(file.id)
 }
 </script>
 
@@ -28,7 +34,7 @@ function toggleFileSelection(file: FileWithMetadata) {
         class="FileContainer"
         :class="{ DisableSelection: shift }"
         @select="toggleFileSelection"
-        @remove="removeFile"
+        @remove="remove"
       />
       <div v-else class="flex flex-col items-center text-center gap-1">
         <span class="font-semibold">No files loaded yet.</span>

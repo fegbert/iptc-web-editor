@@ -12,4 +12,5 @@ export interface Field {
   key: string
   title: string
   value?: string
+  options?: { label: string, value: string }[]
 }

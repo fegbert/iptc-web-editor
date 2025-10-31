@@ -30,12 +30,11 @@ export default function useFileState() {
   }
 
   function setupState() {
-    const editableFields = iptcIimMapping.filter(field => field.key.startsWith('2'))
-
-    const state = editableFields.map(field => ({
+    const state = iptcIimMapping.map(field => ({
       key: field.key,
       title: field.title,
       value: '',
+      options: field.type === 'select' ? field.options : undefined,
     }))
 
     return state

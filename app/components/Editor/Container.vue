@@ -57,6 +57,7 @@ watch(selectedFile, (newFile) => {
           <template #content>
             <div class="py-4">
               <UForm :state="selectedState">
+                <EditorFieldSelect v-if="selectedState[19] && selectedState[19].options" v-model="selectedState[19].value" class="w-1/4" :title="selectedState[19].title" :options="selectedState[19].options" />
                 <div v-for="field in selectedState" :key="field.key">
                   <EditorField v-model="field.value" :name="field.title" type="text" class="w-1/4" />
                 </div>
