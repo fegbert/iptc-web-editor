@@ -37,7 +37,11 @@ function toggleFileSelection(file: FileWithMetadata) {
     </UDashboardSidebar>
     <UDashboardPanel>
       <template #header>
-        <UDashboardNavbar title="Edit Metadata" />
+        <UDashboardNavbar title="Edit Metadata">
+          <template #right>
+            <EditorSaveButton />
+          </template>
+        </UDashboardNavbar>
       </template>
 
       <template #body>
