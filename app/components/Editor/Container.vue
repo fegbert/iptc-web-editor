@@ -59,6 +59,7 @@ watch(selectedFile, (newFile) => {
               <UForm :state="selectedState">
                 <EditorFieldObjectTypeOrAttribute v-if="selectedState[1] && selectedState[1].type === 'object-type'" v-model="selectedState[1].value" :type="selectedState[1].type" class="w-1/4" :title="selectedState[1].title" />
                 <EditorFieldObjectTypeOrAttribute v-if="selectedState[2] && selectedState[2].type === 'object-attribute'" v-model="selectedState[2].value" :type="selectedState[2].type" class="w-1/4" :title="selectedState[2].title" />
+                <EditorFieldSubject v-if="selectedState[7]" v-model="selectedState[7].value" class="w-1/4" />
                 <EditorFieldSelect v-if="selectedState[19] && selectedState[19].type === 'select'" v-model="selectedState[19].value" class="w-1/4" :title="selectedState[19].title" :options="selectedState[19].options" />
                 <div v-for="field in selectedState" :key="field.key">
                   <EditorField v-model="field.value" :name="field.title" type="text" class="w-1/4" />

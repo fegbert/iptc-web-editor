@@ -1,7 +1,7 @@
 import type { IPTCFieldWithValue } from '~/utils/iptc-iim/types'
 import { useIDBKeyval } from '@vueuse/integrations/useIDBKeyval.mjs'
 import { supported } from 'browser-fs-access'
-import { iptcIimMapping } from '~/utils/iptc-iim/mapping'
+import { iptcIimFields } from '~/utils/iptc-iim/mapping'
 
 type FileState = Record<string, IPTCFieldWithValue[]>
 
@@ -30,7 +30,7 @@ export default function useFileState() {
   }
 
   function setupState() {
-    const state = iptcIimMapping.map(field => ({
+    const state = iptcIimFields.map(field => ({
       ...field,
       value: '',
     }))

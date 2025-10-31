@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { objectAttributes, objectTypes } from '~/utils/iptc-iim/types'
+import { objectAttributes, objectTypes } from '~/utils/iptc-iim/mapping'
 
 const props = defineProps<{
   title: string
@@ -27,47 +27,24 @@ const rawValue = computed({
 })
 
 const formattedTitle = useFieldTitle(props.title)
-
-const openMenu = ref(false)
-
-function clear() {
-  rawValue.value = undefined
-  openMenu.value = false
-}
 </script>
 
 <template>
-  <UFormField :name="props.title" :label="formattedTitle" :required="required" class="w-full">
-    <USelectMenu
+  <UFormField :name="title" :label="formattedTitle" :required="required" class="w-full">
+    <BaseSelect
       v-model="rawValue"
-      v-model:open="openMenu"
-      class="w-full"
-      :ui="{
-        trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-100 hover:cursor-pointer',
-      }"
-      :items="selectOptions"
+      :options="selectOptions"
+      :placeholder="`Select an object ${type === 'object-type' ? 'type' : 'attribute'}`"
     >
-      <template #default>
-        <div class="flex items-center justify-between w-full">
-          <div v-if="rawValue?.value">
-            <span class="text-sm text-default/75">{{ `${rawValue.number} ` }}</span>
-            <span> {{ rawValue.label }}</span>
-          </div>
-          <span v-else class="text-default/50">Select an object {{ props.type === 'object-type' ? 'type' : 'attribute' }}</span>
-          <UButton
-            v-if="rawValue"
-            class="p-0.5 hover:bg-transparent hover:cursor-pointer active:bg-transparent"
-            size="sm"
-            icon="i-lucide-x"
-            color="neutral"
-            variant="ghost"
-            @click.stop="clear"
-          />
+      <template #label>
+        <div v-if="rawValue?.value">
+          <span class="text-sm text-default/75">{{ `${rawValue.number} ` }}</span>
+          <span> {{ rawValue.label }}</span>
         </div>
       </template>
       <template #item-leading="{ item }">
         <span class="text-sm text-default/75">{{ item.number }}</span>
       </template>
-    </USelectMenu>
+    </BaseSelect>
   </UFormField>
 </template>
