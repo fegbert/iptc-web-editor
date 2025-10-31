@@ -486,15 +486,6 @@ export const iptcIimFields: IPTCField[] = [
     repeatable: false,
   },
   {
-    key: '2:130',
-    title: 'Image Type',
-    description: '??? TODO figure out typing. The numeric characters 1 to 4 indicate the number of components in an image, in single or multiple envelopes. The numeric character 0 indicates Record 2 caption for a specific image.',
-    type: 'image-type',
-    octets: 2,
-    mandatory: false,
-    repeatable: false,
-  },
-  {
     key: '2:131',
     title: 'Image Orientation',
     description: 'Indicates the layout of the image area.',
