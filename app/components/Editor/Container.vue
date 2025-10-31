@@ -7,9 +7,17 @@ const selectedFiles = computed(() => {
 
 const selectedFile = computed(() => selectedFiles.value[0] || null)
 
-const { updateFileData, getFileState, setupFileState } = useFileState()
+const { updateFileData, getFileState, setupFileState, fileChanges } = useFileState()
 
 const selectedState = computed(() => getFileState(selectedFile.value?.id || ''))
+
+const amountOfChanges = computed(() => {
+  if (!selectedFile.value) {
+    return 0
+  }
+
+  return fileChanges(selectedFile.value?.id)
+})
 
 watch(selectedFile, (newFile) => {
   if (newFile) {
@@ -39,7 +47,12 @@ watch(selectedFile, (newFile) => {
             }"
             block
           >
-            <span>IPTC-IIM</span>
+            <div class="flex w-full items-center justify-between">
+              <span>IPTC-IIM</span>
+              <span v-if="amountOfChanges && selectedFile && !selectedFile.isDownloaded" class="text-sm text-gray-400">
+                {{ amountOfChanges }} unsaved change{{ amountOfChanges === 1 ? '' : 's' }}
+              </span>
+            </div>
           </UButton>
           <template #content>
             <div class="py-4">

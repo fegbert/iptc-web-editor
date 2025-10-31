@@ -90,6 +90,42 @@ async function addFiles(files: FileWithHandle[]) {
   updateIdb(dedupedUpdatedFiles)
 }
 
+async function reloadFiles() {
+  const rawLoadedFiles = toRaw(loadedFiles.value)
+
+  const filesWithUpdatedMetadata = await Promise.all(rawLoadedFiles.map(async (file) => {
+    const buffer = await file.file.arrayBuffer()
+    try {
+      const metadata = parseMetadata(new Uint8Array(buffer))
+      return {
+        ...file,
+        metadata,
+      }
+    }
+    catch (e) {
+      console.warn('Failed to reload metadata for file: ', file.file.name, ' - ', e)
+      return {
+        ...file,
+        metadata: {},
+      }
+    }
+  }))
+
+  updateIdb(filesWithUpdatedMetadata)
+}
+
+function markAsDownloaded(fileIds: string[]) {
+  loadedFiles.value = loadedFiles.value.map((file) => {
+    if (fileIds.includes(file.id)) {
+      return {
+        ...file,
+        isDownloaded: true,
+      }
+    }
+    return file
+  })
+}
+
 async function removeFile(fileToRemove: FileWithMetadata) {
   if (fileToRemove.isSelected) {
     const indexToRemove = loadedFiles.value.findIndex(file => file.file === fileToRemove.file)
@@ -233,5 +269,5 @@ export default function () {
 
   loadAmountFromCookies()
 
-  return { loadedFiles, isLoading, loadFilesFromIndexedDB, addFiles, removeFile, fileAmount, toggleSelection, updateMetadata }
+  return { loadedFiles, isLoading, loadFilesFromIndexedDB, addFiles, removeFile, fileAmount, toggleSelection, updateMetadata, reloadFiles, markAsDownloaded }
 }

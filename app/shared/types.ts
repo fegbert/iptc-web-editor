@@ -4,6 +4,7 @@ export interface FileWithMetadata {
   file: File
   handle?: FileSystemFileHandle
   metadata: Record<string, any>
+  isDownloaded?: boolean
   isSelected?: boolean
 }
 

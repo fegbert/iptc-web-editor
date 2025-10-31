@@ -1,5 +1,6 @@
 import type { Field } from '~/shared/types'
 import { useIDBKeyval } from '@vueuse/integrations/useIDBKeyval.mjs'
+import { supported } from 'browser-fs-access'
 import { iptcIimMapping } from '~/utils/iptc-iim/mapping'
 
 type FileState = Record<string, Field[]>
@@ -8,7 +9,7 @@ const fileStates = ref<FileState>({})
 const isLoading = ref(true)
 
 export default function useFileState() {
-  const { loadedFiles, updateMetadata } = useFiles()
+  const { loadedFiles, updateMetadata, reloadFiles, markAsDownloaded } = useFiles()
 
   if (!import.meta.env.SSR) {
     loadFileStatesFromIndexedDB()
@@ -114,6 +115,23 @@ export default function useFileState() {
 
       updateMetadata(file, state)
     })
+
+    const toast = useToast()
+
+    const toastTitle = supported ? `${statesToSave.length} file${statesToSave.length === 1 ? '' : 's'} saved successfully.` : ` ${statesToSave.length} file${statesToSave.length === 1 ? ' has' : 's have'} been downloaded with updated metadata.`
+
+    toast.add({
+      title: toastTitle,
+      duration: 3000,
+      color: 'success',
+    })
+
+    if (supported) {
+      reloadFiles()
+    }
+    else {
+      markAsDownloaded(statesToSave.map(s => s.fileId))
+    }
   }
 
   watchDeep(() => fileStates.value, async (updatedStates) => {
