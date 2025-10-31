@@ -1,10 +1,13 @@
 <script setup lang="ts">
-defineProps<{
+withDefaults(defineProps<{
   options: { label: string, value: string, number?: string }[]
   placeholder?: string
   icon?: string
   disabled?: boolean
-}>()
+  clearable?: boolean
+}>(), {
+  clearable: true,
+})
 
 const value = defineModel<{ label: string, value: string, number?: string }>()
 
@@ -34,7 +37,7 @@ function clear() {
         <span v-else-if="placeholder" class="text-default/50">{{ placeholder }}</span>
         <slot v-else name="placeholder" />
         <UButton
-          v-if="value"
+          v-if="value && clearable"
           class="p-0.5 hover:bg-transparent hover:cursor-pointer active:bg-transparent"
           size="sm"
           icon="i-lucide-x"
