@@ -1,9 +1,5 @@
 <script setup lang="ts">
-const { loadedFiles } = useFiles()
-
-const selectedFiles = computed(() => {
-  return loadedFiles.value.filter(file => file.isSelected)
-})
+const { selectedFiles } = useFiles()
 
 const selectedFile = computed(() => selectedFiles.value[0] || null)
 
@@ -56,9 +52,9 @@ watch(selectedFile, (newFile) => {
           </UButton>
           <template #content>
             <div class="py-4">
-              <UForm :state="selectedState">
+              <UForm v-if="selectedFile" :state="selectedState">
                 <div v-for="field in selectedState" :key="field.key">
-                  <EditorField v-model="field.value" :name="field.title" type="text" class="w-1/4" />
+                  <EditorField v-model="field.value" :field="field" class="w-1/4" />
                 </div>
               </UForm>
             </div>

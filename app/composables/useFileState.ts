@@ -1,9 +1,9 @@
-import type { Field } from '~/shared/types'
+import type { IPTCFieldWithValue } from '~/utils/iptc-iim/types'
 import { useIDBKeyval } from '@vueuse/integrations/useIDBKeyval.mjs'
 import { supported } from 'browser-fs-access'
-import { iptcIimMapping } from '~/utils/iptc-iim/mapping'
+import { iptcIimFields } from '~/utils/iptc-iim/mapping'
 
-type FileState = Record<string, Field[]>
+type FileState = Record<string, IPTCFieldWithValue[]>
 
 const fileStates = ref<FileState>({})
 const isLoading = ref(true)
@@ -30,12 +30,10 @@ export default function useFileState() {
   }
 
   function setupState() {
-    const editableFields = iptcIimMapping.filter(field => field.key.startsWith('2'))
-
-    const state = editableFields.map(field => ({
-      key: field.key,
-      title: field.title,
+    const state = iptcIimFields.map(field => ({
+      ...field,
       value: '',
+      original: '',
     }))
 
     return state
@@ -60,19 +58,17 @@ export default function useFileState() {
 
     fileStates.value[fileId]!.map((field) => {
       if (field.key === key) {
-        field.value = newValue
+        field.value = newValue ?? ''
+        if (!field.original) {
+          field.original = field.value
+        }
       }
       return field
     })
   }
 
-  function hasFieldChanged(fileId: string, key: string, currentValue: string) {
-    const file = loadedFiles.value.find(file => file.id === fileId)
-    if (!file) {
-      return false
-    }
-
-    const originalValue = file.metadata[key] || ''
+  function hasFieldChanged(metadata: Record<string, any>, key: string, currentValue: string) {
+    const originalValue = metadata[key] || ''
     return originalValue !== currentValue
   }
 

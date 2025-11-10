@@ -37,7 +37,9 @@ interface IPTCFieldSelect extends IPTCFieldBase {
 }
 
 interface IPTCFieldOtherTypes extends IPTCFieldBase {
-  type: 'date' | 'time' | 'datetime' | 'binary' | 'object-type' | 'object-attribute' | 'subject-reference' | 'image-type'
+  type: 'date' | 'time' | 'datetime' | 'object-type' | 'object-attribute' | 'subject-reference'
 }
 
 export type IPTCField = IPTCFieldText | IPTCFieldNumber | IPTCFieldSelect | IPTCFieldOtherTypes
+
+export type IPTCFieldWithValue = IPTCField & { value: string, original: string }

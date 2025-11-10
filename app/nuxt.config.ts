@@ -11,4 +11,12 @@ export default defineNuxtConfig({
     '@nuxt/image',
   ],
   css: ['~/assets/css/main.css'],
+  imports: {
+    presets: [
+      {
+        from: 'zod',
+        imports: ['z'],
+      },
+    ],
+  },
 })

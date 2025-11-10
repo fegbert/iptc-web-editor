@@ -7,9 +7,3 @@ export interface FileWithMetadata {
   isDownloaded?: boolean
   isSelected?: boolean
 }
-
-export interface Field {
-  key: string
-  title: string
-  value?: string
-}
