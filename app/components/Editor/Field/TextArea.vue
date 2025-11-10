@@ -1,9 +1,12 @@
 <script setup lang="ts">
+import type { CharacterTypes } from '~/utils/iptc-iim/types'
+
 const props = defineProps<{
   title: string
   original: string
   placeholder?: string
   required?: boolean
+  allowedCharacters?: CharacterTypes[]
 }>()
 
 const value = defineModel<string>()
@@ -13,7 +16,7 @@ const hasChanged = useHasChanged(original, value)
 </script>
 
 <template>
-  <BaseField :title="title" :original="original" :has-changed="hasChanged" :required="required" @reset="value = original">
+  <BaseField v-model="value" :title="title" :original="original" :allowed-characters="allowedCharacters" :has-changed="hasChanged" :required="required" @reset="value = original">
     <UTextarea
       v-model="value"
       :placeholder="placeholder"

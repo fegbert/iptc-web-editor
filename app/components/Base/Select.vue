@@ -44,8 +44,8 @@ function clear() {
           class="p-0.5 hover:bg-transparent hover:cursor-pointer active:bg-transparent"
           :color="hasChanged ? 'secondary' : 'neutral'"
           size="sm"
-          icon="i-lucide-x"
-          variant="ghost"
+          icon="i-lucide-circle-x"
+          variant="link"
           @click.stop="clear"
         />
       </div>

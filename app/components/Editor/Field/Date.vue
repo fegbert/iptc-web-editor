@@ -60,7 +60,7 @@ const hasChanged = useHasChanged(original, value)
     <UPopover arrow :content="{ side: 'top' }">
       <UButton :color="hasChanged ? 'secondary' : 'neutral'" variant="subtle" icon="i-lucide-calendar" class="w-full h-8">
         <template #trailing>
-          <UButton v-if="dateValue" icon="i-lucide-x" variant="ghost" :color="hasChanged ? 'secondary' : 'neutral'" size="sm" @click.stop="updateDate(undefined)" />
+          <UButton v-if="dateValue" icon="i-lucide-circle-x" variant="link" :color="hasChanged ? 'secondary' : 'neutral'" size="sm" @click.stop="updateDate(undefined)" />
         </template>
 
         <div class="w-full text-start">
