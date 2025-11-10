@@ -1,9 +1,5 @@
 <script setup lang="ts">
-const { loadedFiles } = useFiles()
-
-const selectedFiles = computed(() => {
-  return loadedFiles.value.filter(file => file.isSelected)
-})
+const { selectedFiles } = useFiles()
 
 const selectedFile = computed(() => selectedFiles.value[0] || null)
 

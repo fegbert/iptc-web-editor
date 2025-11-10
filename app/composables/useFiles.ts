@@ -262,6 +262,10 @@ async function updateMetadata(file: FileWithMetadata, metadata: Array<{ key: str
   updateIdb(updatedFiles)
 }
 
+const selectedFiles = computed(() => {
+  return loadedFiles.value.filter(file => file.isSelected)
+})
+
 export default function () {
   if (!import.meta.env.SSR) {
     loadFilesFromIndexedDB()
@@ -269,5 +273,5 @@ export default function () {
 
   loadAmountFromCookies()
 
-  return { loadedFiles, isLoading, loadFilesFromIndexedDB, addFiles, removeFile, fileAmount, toggleSelection, updateMetadata, reloadFiles, markAsDownloaded }
+  return { loadedFiles, selectedFiles, isLoading, loadFilesFromIndexedDB, addFiles, removeFile, fileAmount, toggleSelection, updateMetadata, reloadFiles, markAsDownloaded }
 }
