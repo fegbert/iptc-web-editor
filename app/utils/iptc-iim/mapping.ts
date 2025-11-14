@@ -453,7 +453,7 @@ export const iptcIimFields: IPTCField[] = [
     description: 'A textual description of the objectdata, particularly used where the object is not text.',
     octets: { max: 2000 },
     allowedCharacterTypes: [CharacterTypes.graphic, CharacterTypes.space, CharacterTypes.return, CharacterTypes.linefeed],
-    type: 'text',
+    type: 'textarea',
     mandatory: false,
     repeatable: false,
   },
@@ -466,14 +466,6 @@ export const iptcIimFields: IPTCField[] = [
     type: 'text',
     mandatory: false,
     repeatable: true,
-  },
-  {
-    key: '2:125',
-    title: 'Rasterized Caption',
-    description: '??? Have to figure it out',
-    type: 'text',
-    mandatory: false,
-    repeatable: false,
   },
   {
     key: '2:131',
