@@ -67,7 +67,7 @@ export const iptcIimFields: IPTCField[] = [
     key: '2:10',
     title: 'Urgency',
     description: `
-    Specifies the editorial urgency of content and not necessarily the envelope handling priority (see 1:60, Envelope Priority). 
+    Specifies the editorial urgency of content and not necessarily the envelope handling priority (see 1:60, Envelope Priority).
     The '1' is most urgent, '5' normal and '8' denotes the least-urgent copy. The numerals '9' and '0' are reserved for future use.`,
     type: 'number',
     minValue: 1,
@@ -132,7 +132,7 @@ export const iptcIimFields: IPTCField[] = [
     key: '2:26',
     title: 'Content Location Code',
     description: `
-    Indicates the code of a country/geographical location referenced by the content of the object. Where ISO has established an appropriate country code under ISO 3166, that code will be used. 
+    Indicates the code of a country/geographical location referenced by the content of the object. Where ISO has established an appropriate country code under ISO 3166, that code will be used.
     When ISO3166 does not adequately provide for identification of a location or a country, e.g. ships at sea, space, IPTC will assign an appropriate threecharacter code under the provisions of ISO3166 to avoid conflicts.
     If used in the same object with DataSet 2:27, must immediately precede and correspond to it.`,
     octets: { max: 3 },
@@ -452,7 +452,7 @@ export const iptcIimFields: IPTCField[] = [
     description: 'A textual description of the objectdata, particularly used where the object is not text.',
     octets: { max: 2000 },
     allowedCharacterTypes: [CharacterTypes.graphic, CharacterTypes.space, CharacterTypes.return, CharacterTypes.linefeed],
-    type: 'text',
+    type: 'textarea',
     mandatory: false,
     repeatable: false,
   },
@@ -465,14 +465,6 @@ export const iptcIimFields: IPTCField[] = [
     type: 'text',
     mandatory: false,
     repeatable: true,
-  },
-  {
-    key: '2:125',
-    title: 'Rasterized Caption',
-    description: '??? Have to figure it out',
-    type: 'text',
-    mandatory: false,
-    repeatable: false,
   },
   {
     key: '2:131',
@@ -492,7 +484,7 @@ export const iptcIimFields: IPTCField[] = [
     key: '2:135',
     title: 'Language Identifier',
     description: `
-    Describes the major national language of the object, according to the 2-letter codes of ISO 639:1988. 
+    Describes the major national language of the object, according to the 2-letter codes of ISO 639:1988.
     Does not define or imply any coded character set, but is used for internal routing, e.g. to various editorial desks.`,
     octets: { min: 2, max: 3 },
     allowedCharacterTypes: [CharacterTypes.alphabetic],

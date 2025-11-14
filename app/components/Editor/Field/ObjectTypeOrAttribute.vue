@@ -32,7 +32,7 @@ const hasChanged = useHasChanged(original, value)
 </script>
 
 <template>
-  <BaseField :title="title" :required="required" :has-changed="hasChanged" @reset="value = original">
+  <BaseField v-model="value" :title="title" :required="required" :has-changed="hasChanged" @reset="value = original">
     <BaseSelect
       v-model="rawValue"
       :options="selectOptions"

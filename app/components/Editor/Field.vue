@@ -20,6 +20,6 @@ const formattedTitle = computed(() => {
   <EditorFieldSelect v-else-if="field.type === 'select'" v-model="value" :title="formattedTitle" :placeholder="placeholder" :options="field.options" :original="field.original" />
   <EditorFieldObjectTypeOrAttribute v-else-if="field.type === 'object-type' || field.type === 'object-attribute'" v-model="value" :title="formattedTitle" :type="field.type" :original="field.original" />
   <EditorFieldSubject v-else-if="field.type === 'subject-reference'" v-model="value" :original="field.original" />
-  <EditorFieldTextArea v-else-if="field.type === 'textarea'" v-model="value" :title="formattedTitle" :placeholder="placeholder" :original="field.original" />
-  <EditorFieldText v-else v-model="value" :title="formattedTitle" :placeholder="placeholder" :original="field.original" />
+  <EditorFieldTextArea v-else-if="field.type === 'textarea'" v-model="value" :title="formattedTitle" :placeholder="placeholder" :original="field.original" :octets="field.octets" :allowed-characters="field.allowedCharacterTypes" />
+  <EditorFieldText v-else-if="field.type === 'text'" v-model="value" :title="formattedTitle" :placeholder="placeholder" :original="field.original" :octets="field.octets" :allowed-characters="field.allowedCharacterTypes" />
 </template>

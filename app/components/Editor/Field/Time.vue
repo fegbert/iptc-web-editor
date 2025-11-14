@@ -34,7 +34,16 @@ function updateOffset(offset: string) {
 
 function updateTime(time: string) {
   timeValue.value.time = time
-  value.value = `${time.replace(/:/g, '')}${timeValue.value.offset}`
+
+  if (!time) {
+    value.value = ''
+    timeValue.value.offset = ''
+    return
+  }
+
+  if (time.split(':').length > 2) {
+    value.value = `${time.replace(/:/g, '')}${timeValue.value.offset ? timeValue.value.offset : '+0000'}`
+  }
 }
 
 const offsets = ['-1200', '-1100', '-1000', '-0930', '-0900', '-0800', '-0700', '-0600', '-0500', '-0430', '-0400', '-0330', '-0300', '-0200', '-0100', '+0000', '+0100', '+0200', '+0300', '+0330', '+0400', '+0430', '+0500', '+0530', '+0545', '+0600', '+0630', '+0700', '+0800', '+0845', '+0900', '+0930', '+1000', '+1030', '+1100', '+1200', '+1245', '+1300', '+1400']
@@ -64,7 +73,7 @@ function reset() {
 </script>
 
 <template>
-  <BaseField :title="title" :required="required" :has-changed="hasChanged" @reset="reset">
+  <BaseField v-model="value" :title="title" :required="required" :has-changed="hasChanged" @reset="reset">
     <div class="flex gap-2 items-center">
       <UInput
         :model-value="timeValue.time"

@@ -169,14 +169,14 @@ async function resetSubjectDetail() {
 
 <template>
   <div>
-    <BaseField title="Subject" :required="required" :has-changed="hasSubjectChanged" @reset="resetSubject">
+    <BaseField v-model="value" title="Subject" :required="required" :has-changed="hasSubjectChanged" @reset="resetSubject">
       <BaseSelect v-model="selectedSubject" :options="subjectSelectOptions" :has-changed="hasSubjectChanged" placeholder="Select a subject">
         <template #label>
           {{ selectedSubject?.label }}
         </template>
       </BaseSelect>
     </BaseField>
-    <BaseField title="Subject Matter" :required="required" :has-changed="hasSubjectMatterChanged" class="w-full" @reset="resetSubjectMatter">
+    <BaseField v-model="value" title="Subject Matter" :required="required" :has-changed="hasSubjectMatterChanged" class="w-full" @reset="resetSubjectMatter">
       <BaseSelect v-model="selectedSubjectMatter" :disabled="subjectMatterSelectOptions.length < 1" :options="subjectMatterSelectOptions" :has-changed="hasSubjectMatterChanged">
         <template #label>
           {{ selectedSubjectMatter?.label }}
@@ -190,7 +190,7 @@ async function resetSubjectDetail() {
         </template>
       </BaseSelect>
     </BaseField>
-    <BaseField title="Subject Detail" :required="required" :has-changed="hasSubjectDetailChanged" class="w-full" @reset="resetSubjectDetail">
+    <BaseField v-model="value" title="Subject Detail" :required="required" :has-changed="hasSubjectDetailChanged" class="w-full" @reset="resetSubjectDetail">
       <BaseSelect v-model="selectedSubjectDetail" :disabled="subjectDetailSelectOptions.length < 1" :options="subjectDetailSelectOptions" :has-changed="hasSubjectDetailChanged">
         <template #label>
           {{ selectedSubjectDetail?.label }}
