@@ -1,4 +1,3 @@
-import type { ZodType } from 'zod'
 import type { IPTCField } from './types'
 import { CharacterTypes } from './types'
 
