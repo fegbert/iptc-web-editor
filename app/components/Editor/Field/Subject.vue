@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { subjectDetails, subjectMatters, subjects } from '~/utils/iptc-iim/mapping'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   original: string
   required?: boolean
-}>()
+  alignment?: 'horizontal' | 'vertical'
+}>(), {
+  alignment: 'horizontal',
+})
 
 const value = defineModel<string>()
 
@@ -168,7 +171,7 @@ async function resetSubjectDetail() {
 </script>
 
 <template>
-  <div>
+  <div class="flex gap-2 w-full" :class="alignment === 'vertical' ? 'flex-col' : ''">
     <BaseField v-model="value" title="Subject" :required="required" :has-changed="hasSubjectChanged" @reset="resetSubject">
       <BaseSelect v-model="selectedSubject" :options="subjectSelectOptions" :has-changed="hasSubjectChanged" placeholder="Select a subject">
         <template #label>
