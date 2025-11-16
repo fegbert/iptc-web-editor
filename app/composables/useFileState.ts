@@ -93,6 +93,16 @@ export default function useFileState() {
 
   const filesChanged = ref(0)
 
+  function stateIndexByKey(state: IPTCFieldWithValue[], key: string) {
+    const field = state.find(f => f.key === key)
+
+    if (!field) {
+      throw new Error(`Field with key ${key} not found in state`)
+    }
+
+    return state.indexOf(field)
+  }
+
   function saveAll() {
     if (!filesChanged.value) {
       return
@@ -147,5 +157,6 @@ export default function useFileState() {
     fileChanges,
     filesChanged,
     saveAll,
+    stateIndexByKey,
   }
 }

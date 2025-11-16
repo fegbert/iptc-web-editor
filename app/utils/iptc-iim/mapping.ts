@@ -1,6 +1,11 @@
 import type { IPTCField } from './types'
 import { CharacterTypes } from './types'
 
+// TODO: Add originating program and version to save, remove them from here
+// TODO: Change language identifier to select with options from ISO 639:1988
+// TODO: check supplement category description
+// TODO: check every field tbh
+
 /**
  * Based on the IPTC IIM Specification Version 4.2
  * Source: https://www.iptc.org/std/IIM/4.2/specification/IIMV4.2.pdf
