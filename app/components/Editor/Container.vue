@@ -2,17 +2,9 @@
 const { selectedFiles } = useFiles()
 const selectedFile = computed(() => selectedFiles.value[0] || null)
 
-const { updateFileData, getFileState, setupFileState, fileChanges } = useFileState()
+const { updateFileData, getFileState, setupFileState } = useFileState()
 
 const selectedState = computed(() => getFileState(selectedFile.value?.id || ''))
-
-const amountOfChanges = computed(() => {
-  if (!selectedFile.value) {
-    return 0
-  }
-
-  return fileChanges(selectedFile.value?.id)
-})
 
 watch(selectedFile, (newFile) => {
   if (newFile) {
