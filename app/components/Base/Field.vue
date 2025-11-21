@@ -38,7 +38,7 @@ const formattedTitle = computed(() => {
     <template #label>
       <div class="flex items-center w-full h-7 gap-1">
         <span>{{ title ?? formattedTitle }}</span>
-        <UButton v-if="hasChanged" size="sm" color="secondary" variant="link" icon="i-lucide-timer-reset" @click="emit('reset')" />
+        <UButton v-if="hasChanged" size="sm" color="secondary" variant="link" icon="i-lucide-timer-reset" @click.prevent="emit('reset')" />
       </div>
     </template>
     <slot />

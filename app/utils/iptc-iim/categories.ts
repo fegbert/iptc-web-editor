@@ -19,7 +19,7 @@ export const categories: Category[] = [
   },
   {
     title: 'Content & Origin Locations',
-    rows: [[{ key: '2:27', width: 66 }, { key: '2:26', width: 33 }], [{ key: '2:90' }, { key: '2:92' }, { key: '2:95' }]],
+    rows: [[{ key: '2:27' }, { key: '2:26' }, { key: '2:100' }, { key: '2:101' }], [{ key: '2:90' }, { key: '2:92' }, { key: '2:95' }]],
   },
   {
     title: 'Lifecycle & Creation Times',

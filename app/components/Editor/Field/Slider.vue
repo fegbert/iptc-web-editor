@@ -15,7 +15,7 @@ const hasChanged = useHasChanged(field)
 
 <template>
   <BaseField v-model="field" :has-changed="hasChanged" @reset="field.value = field.original">
-    <div class="flex flex-nowrap text-nowrap gap-2 items-center w-full h-[32px]">
+    <div class="flex flex-nowrap text-nowrap gap-2 items-center w-full h-[32px] ring ring-inset ring-accented px-2.5 py-1.5 text-sm rounded-md bg-default">
       <span>{{ field.minLabel }}</span>
       <USlider
         v-model="rawValue"
@@ -24,6 +24,13 @@ const hasChanged = useHasChanged(field)
         :step="field.step"
         :color="hasChanged ? 'secondary' : 'neutral'"
         size="xs"
+        :tooltip="{
+          content: {
+            side: 'top',
+          },
+          delayDuration: 0,
+          text: rawValue !== undefined ? String(rawValue) : 'Not Set',
+        }"
       />
       <span>{{ field.maxLabel }}</span>
       <UButton
