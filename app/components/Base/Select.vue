@@ -6,6 +6,7 @@ withDefaults(defineProps<{
   icon?: string
   disabled?: boolean
   clearable?: boolean
+  virtualize?: boolean
 }>(), {
   clearable: true,
 })
@@ -27,16 +28,22 @@ function clear() {
     :disabled="disabled"
     :color="hasChanged ? 'secondary' : undefined"
     :highlight="hasChanged"
-    class="w-full"
+    class="BaseSelectMenuParentClass w-full"
     :ui="{
       trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-100 hover:cursor-pointer',
     }"
     :items="options"
     :icon="icon"
+    :virtualize="virtualize"
   >
+    <template #leading="{ modelValue, ui }">
+      <Icon v-if="icon" :name="icon" :class="ui.leadingIcon()" />
+      <slot class="test" name="leading" :model-value="modelValue" :ui="ui" />
+    </template>
+
     <template #default>
       <div class="flex items-center justify-between w-full">
-        <slot v-if="value && value.label" name="label" />
+        <slot v-if="value && value.label" name="label" :model-value="value" />
         <span v-else-if="placeholder" class="text-default/50">{{ placeholder }}</span>
         <slot v-else name="placeholder" />
         <UButton
@@ -56,3 +63,11 @@ function clear() {
     </template>
   </USelectMenu>
 </template>
+
+<style>
+@reference "tailwindcss";
+
+.BaseSelectMenuParentClass:has(> span:empty) {
+  @apply ps-2.5;
+}
+</style>

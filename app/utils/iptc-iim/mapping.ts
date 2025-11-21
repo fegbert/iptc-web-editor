@@ -5,6 +5,8 @@ import { CharacterTypes } from './types'
 // TODO: Change language identifier to select with options from ISO 639:1988
 // TODO: check supplement category description
 // TODO: check every field tbh
+// TODO: Update date and other fields better handling
+// TODO: Update BaseField to use prop isntead of model as it doesnt modify
 
 /**
  * Based on the IPTC IIM Specification Version 4.2
@@ -143,8 +145,8 @@ export const iptcIimFields: IPTCField[] = [
     When ISO3166 does not adequately provide for identification of a location or a country, e.g. ships at sea, space, IPTC will assign an appropriate threecharacter code under the provisions of ISO3166 to avoid conflicts.
     If used in the same object with DataSet 2:27, must immediately precede and correspond to it.`,
     octets: { max: 3 },
-    type: 'location-code',
-    identifier: 'content',
+    type: 'location',
+    nameKey: '2:27',
     mandatory: false,
     repeatable: true,
   },
@@ -155,8 +157,7 @@ export const iptcIimFields: IPTCField[] = [
     description: `
     Provides a full, publishable name of a country/geographical location referenced by the content of the object, according to guidelines of the provider.
     If used in the same object with DataSet 2:26, must immediately follow and correspond to it.`,
-    type: 'location-name',
-    identifier: 'content',
+    type: 'extra',
     mandatory: false,
     repeatable: true,
   },

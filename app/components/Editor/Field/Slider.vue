@@ -1,53 +1,38 @@
 <script setup lang="ts">
-import type { IPTCField } from '~/utils/iptc-iim/types'
+import type { IPTCFieldWithValue } from '~/utils/iptc-iim/types'
 
-const props = defineProps<{
-  title: string
-  placeholder?: string
-  icon?: string
-  required?: boolean
-  octets?: IPTCField['octets']
-  original: string
-  minValue: number
-  maxValue: number
-  minLabel: string
-  maxLabel: string
-  step?: number
-}>()
-
-const value = defineModel<string>()
+const field = defineModel<IPTCFieldWithValue & { type: 'slider' }>({ required: true })
 
 const rawValue = computed({
-  get: () => value.value ? Number(value.value) : undefined,
+  get: () => field.value.value ? Number(field.value.value) : undefined,
   set: (val: number) => {
-    value.value = String(val)
+    field.value.value = String(val)
   },
 })
 
-const original = computed(() => props.original)
-const hasChanged = useHasChanged(original, value)
+const hasChanged = useHasChanged(field)
 </script>
 
 <template>
-  <BaseField v-model="value" :title="title" :required="required" :has-changed="hasChanged" @reset="value = original">
+  <BaseField v-model="field" :has-changed="hasChanged" @reset="field.value = field.original">
     <div class="flex flex-nowrap text-nowrap gap-2 items-center w-full h-[32px]">
-      <span>{{ minLabel }}</span>
+      <span>{{ field.minLabel }}</span>
       <USlider
         v-model="rawValue"
-        :min="minValue"
-        :max="maxValue"
-        :step="step"
+        :min="field.minValue"
+        :max="field.maxValue"
+        :step="field.step"
         :color="hasChanged ? 'secondary' : 'neutral'"
         size="xs"
       />
-      <span>{{ maxLabel }}</span>
+      <span>{{ field.maxLabel }}</span>
       <UButton
-        v-if="value"
+        v-if="field.value"
         :color="hasChanged ? 'secondary' : 'neutral'"
         size="xs"
         variant="link"
         icon="i-lucide-circle-x"
-        @click="value = undefined"
+        @click="field.value = ''"
       />
     </div>
   </BaseField>

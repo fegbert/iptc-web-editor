@@ -1,26 +1,20 @@
 <script setup lang="ts">
 import type { IPTCFieldWithValue } from '~/utils/iptc-iim/types'
 
-const props = defineProps<{
-  field: IPTCFieldWithValue
-  placeholder?: string
-}>()
+const field = defineModel<IPTCFieldWithValue>({ required: true })
 
-const value = defineModel<string>()
-
-const formattedTitle = computed(() => {
-  return props.field.title.charAt(0).toUpperCase() + props.field.title.slice(1)
-})
+const extra = defineModel<(IPTCFieldWithValue & { type: 'extra' })[]>('extra', { required: true })
 </script>
 
 <template>
-  <EditorFieldDate v-if="['date', 'datetime'].includes(field.type)" v-model="value" :title="formattedTitle" :placeholder="placeholder" :original="field.original" />
-  <EditorFieldNumber v-else-if="field.type === 'number'" v-model="value" :title="formattedTitle" :placeholder="placeholder" :original="field.original" :min="field.minValue" :max="field.maxValue" />
-  <EditorFieldTime v-else-if="field.type === 'time'" v-model="value" :title="formattedTitle" :placeholder="placeholder" :original="field.original" />
-  <EditorFieldSelect v-else-if="field.type === 'select'" v-model="value" :title="formattedTitle" :placeholder="placeholder" :options="field.options" :original="field.original" />
-  <EditorFieldObjectTypeOrAttribute v-else-if="field.type === 'object-type' || field.type === 'object-attribute'" v-model="value" :title="formattedTitle" :type="field.type" :original="field.original" />
-  <EditorFieldSubject v-else-if="field.type === 'subject-reference'" v-model="value" :original="field.original" />
-  <EditorFieldTextArea v-else-if="field.type === 'textarea'" v-model="value" :title="formattedTitle" :placeholder="placeholder" :original="field.original" :octets="field.octets" :allowed-characters="field.allowedCharacterTypes" />
-  <EditorFieldText v-else-if="field.type === 'text'" v-model="value" :title="formattedTitle" :placeholder="placeholder" :original="field.original" :octets="field.octets" :allowed-characters="field.allowedCharacterTypes" />
-  <EditorFieldSlider v-else-if="field.type === 'slider'" v-model="value" :title="formattedTitle" :placeholder="placeholder" :original="field.original" :octets="field.octets" :min-value="field.minValue" :max-value="field.maxValue" :min-label="field.minLabel" :max-label="field.maxLabel" :step="field.step" />
+  <EditorFieldDate v-if="isFieldType('date', field)" v-model="field" />
+  <EditorFieldNumber v-else-if="isFieldType('number', field)" v-model="field" />
+  <EditorFieldTime v-else-if="isFieldType('time', field)" v-model="field" />
+  <EditorFieldSelect v-else-if="isFieldType('select', field)" v-model="field" />
+  <EditorFieldObjectTypeOrAttribute v-else-if="isFieldType('object-type', field) || isFieldType('object-attribute', field)" v-model="field" />
+  <EditorFieldSubject v-else-if="isFieldType('subject-reference', field)" v-model="field" />
+  <EditorFieldTextArea v-else-if="isFieldType('textarea', field)" v-model="field" />
+  <EditorFieldText v-else-if="isFieldType('text', field)" v-model="field" />
+  <EditorFieldSlider v-else-if="isFieldType('slider', field)" v-model="field" />
+  <EditorFieldLocation v-else-if="isFieldType('location', field) && extra[0] && isFieldType('extra', extra[0])" v-model:code="field" v-model:name="extra[0]" />
 </template>

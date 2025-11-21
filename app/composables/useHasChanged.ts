@@ -1,9 +1,14 @@
-export default function useHasChanged(original: Ref<string | undefined>, current: Ref<string | undefined>) {
+import type { IPTCFieldWithValue } from '~/utils/iptc-iim/types'
+
+export default function useHasChanged(field: Ref<IPTCFieldWithValue>) {
+  const originalValue = computed(() => field.value.original)
+  const currentValue = computed(() => field.value.value)
+
   return computed(() => {
-    if (!original.value && !current.value) {
+    if (!originalValue.value && !currentValue.value) {
       return false
     }
 
-    return original.value !== current.value
+    return originalValue.value !== currentValue.value
   })
 }

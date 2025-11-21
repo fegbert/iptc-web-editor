@@ -1,41 +1,43 @@
 <script setup lang="ts">
-import type { CharacterTypes } from '~/utils/iptc-iim/types'
+import type { IPTCFieldWithValue } from '~/utils/iptc-iim/types'
 
-const props = defineProps<{
-  title: string
+defineProps<{
   hasChanged: boolean
-  required?: boolean
-  allowedCharacters?: CharacterTypes[]
+  title?: string
 }>()
 
 const emit = defineEmits<{
   (e: 'reset'): void
 }>()
 
-const value = defineModel<string>()
+const field = defineModel<IPTCFieldWithValue>({ required: true })
 
 const isValueValid = computed(() => {
-  if (!props.allowedCharacters || !value.value) {
+  if (!('allowedCharacterTypes' in field.value) || !field.value.allowedCharacterTypes || !field.value.value) {
     return true
   }
 
-  return isValid(value.value, props.allowedCharacters)
+  return isValid(field.value.value, field.value.allowedCharacterTypes)
 })
 
 const errorMessage = computed(() => {
-  if (isValueValid.value) {
+  if (isValueValid.value || !('allowedCharacterTypes' in field.value)) {
     return undefined
   }
 
-  return `Only the following characters are allowed: ${props.allowedCharacters?.join(', ')}`
+  return `Only the following characters are allowed: ${field.value.allowedCharacterTypes?.join(', ')}`
+})
+
+const formattedTitle = computed(() => {
+  return field.value.title.charAt(0).toUpperCase() + field.value.title.slice(1)
 })
 </script>
 
 <template>
-  <UFormField :name="title" :required="required" :error="errorMessage" class="FormField w-full">
+  <UFormField :name="title ?? formattedTitle" :error="errorMessage" class="FormField w-full">
     <template #label>
       <div class="flex items-center w-full h-7 gap-1">
-        <span>{{ title }}</span>
+        <span>{{ title ?? formattedTitle }}</span>
         <UButton v-if="hasChanged" size="sm" color="secondary" variant="link" icon="i-lucide-timer-reset" @click="emit('reset')" />
       </div>
     </template>

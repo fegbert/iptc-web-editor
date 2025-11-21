@@ -1,33 +1,23 @@
 <script setup lang="ts">
-import type { CharacterTypes, IPTCField } from '~/utils/iptc-iim/types'
+import type { IPTCFieldWithValue } from '~/utils/iptc-iim/types'
 
-const props = defineProps<{
-  title: string
-  placeholder?: string
-  icon?: string
-  required?: boolean
-  octets?: IPTCField['octets']
-  original: string
-  allowedCharacters?: CharacterTypes[]
-}>()
+const field = defineModel<IPTCFieldWithValue & { type: 'text' }>({ required: true })
 
-const value = defineModel<string>()
+const hasChanged = useHasChanged(field)
 
-const original = computed(() => props.original)
-const hasChanged = useHasChanged(original, value)
-
-const { limits, characterCountWidth, characterCountText } = useCharacterLimit(value, props.octets)
+const currentValue = computed(() => field.value.value || '')
+const { limits, characterCountWidth, characterCountText } = useCharacterLimit(currentValue, field.value.octets)
 </script>
 
 <template>
-  <BaseField v-model="value" :title="title" :required="required" :allowed-characters="allowedCharacters" :has-changed="hasChanged" @reset="value = original">
+  <BaseField v-model="field" :has-changed="hasChanged" @reset="field.value = field.original">
     <UInput
-      v-model="value"
+      v-model="field.value"
       :color="hasChanged ? 'secondary' : undefined"
       :highlight="hasChanged"
-      :placeholder="placeholder"
+      :placeholder="field.placeholder"
       :maxlength="limits?.max"
-      :icon="icon"
+      :icon="field.icon"
       :ui="{ trailing: 'pointer-events-none' }"
       :style="{ paddingRight: characterCountWidth }"
       class="w-full"

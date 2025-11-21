@@ -18,6 +18,8 @@ interface IPTCFieldBase {
   repeatable: boolean
   parent?: IPTCFieldKey
   deprecated?: boolean
+  placeholder?: string
+  icon?: string
 }
 
 interface IPTCFieldText extends IPTCFieldBase {
@@ -46,17 +48,18 @@ interface IPTCFieldSelect extends IPTCFieldBase {
 }
 
 interface IPTCFieldLocation extends IPTCFieldBase {
-  type: 'location-code' | 'location-name'
-  identifier: string
+  type: 'location'
+  nameKey: IPTCFieldKey
 }
 
 interface IPTCFieldReference extends IPTCFieldBase {
-  type: 'reference-service' | 'reference-date' | 'reference-number'
-  identifier: string
+  type: 'reference-service'
+  dateKey: IPTCFieldKey
+  numberKey: IPTCFieldKey
 }
 
 interface IPTCFieldOtherTypes extends IPTCFieldBase {
-  type: 'date' | 'time' | 'object-type' | 'object-attribute' | 'subject-reference' | 'language'
+  type: 'date' | 'time' | 'object-type' | 'object-attribute' | 'subject-reference' | 'language' | 'extra'
 }
 
 export type IPTCField = IPTCFieldText | IPTCFieldNumber | IPTCFieldSelect | IPTCFieldSlider | IPTCFieldLocation | IPTCFieldReference | IPTCFieldOtherTypes

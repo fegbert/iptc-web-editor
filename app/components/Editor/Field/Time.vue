@@ -1,19 +1,12 @@
 <script setup lang="ts">
 import type { SelectMenuItem } from '@nuxt/ui'
+import type { IPTCFieldWithValue } from '~/utils/iptc-iim/types'
 
-const props = defineProps<{
-  title: string
-  original: string
-  placeholder?: string
-  icon?: string
-  required?: boolean
-}>()
-
-const value = defineModel<string>()
+const field = defineModel<IPTCFieldWithValue & { type: 'time' }>({ required: true })
 
 const timeValue = ref<{ time: string, offset: string }>({ time: '', offset: '' })
 
-watch(value, (newValue) => {
+watch(() => field.value.value, (newValue) => {
   if (newValue) {
     const time = newValue.slice(0, 6) // HHMMSS
     const offset = newValue.slice(6) // +HHMM or -HHMM
@@ -29,20 +22,20 @@ watch(value, (newValue) => {
 
 function updateOffset(offset: string) {
   timeValue.value.offset = offset
-  value.value = `${timeValue.value.time.replace(/:/g, '')}${offset}`
+  field.value.value = `${timeValue.value.time.replace(/:/g, '')}${offset}`
 }
 
 function updateTime(time: string) {
   timeValue.value.time = time
 
   if (!time) {
-    value.value = ''
+    field.value.value = ''
     timeValue.value.offset = ''
     return
   }
 
   if (time.split(':').length > 2) {
-    value.value = `${time.replace(/:/g, '')}${timeValue.value.offset ? timeValue.value.offset : '+0000'}`
+    field.value.value = `${time.replace(/:/g, '')}${timeValue.value.offset ? timeValue.value.offset : '+0000'}`
   }
 }
 
@@ -60,12 +53,11 @@ const offsetSelectValues = computed(() => {
   })
 })
 
-const original = computed(() => props.original)
-const hasChanged = useHasChanged(original, value)
+const hasChanged = useHasChanged(field)
 
 function reset() {
-  const originalTime = original.value.slice(0, 6)
-  const originalOffset = original.value.slice(6)
+  const originalTime = field.value.original.slice(0, 6)
+  const originalOffset = field.value.original.slice(6)
 
   updateTime(originalTime)
   updateOffset(originalOffset)
@@ -73,7 +65,7 @@ function reset() {
 </script>
 
 <template>
-  <BaseField v-model="value" :title="title" :required="required" :has-changed="hasChanged" @reset="reset">
+  <BaseField v-model="field" :has-changed="hasChanged" @reset="reset">
     <div class="flex gap-2 items-center">
       <UInput
         :model-value="timeValue.time"

@@ -1,17 +1,8 @@
 <script setup lang="ts">
+import type { IPTCFieldWithValue } from '~/utils/iptc-iim/types'
 import { CalendarDate } from '@internationalized/date'
 
-const props = withDefaults(defineProps<{
-  title: string
-  placeholder?: string
-  icon?: string
-  required?: boolean
-  original: string
-}>(), {
-  placeholder: 'Select a date',
-})
-
-const value = defineModel<string>()
+const field = defineModel<IPTCFieldWithValue & { type: 'date' }>({ required: true })
 
 const dateValue = ref<CalendarDate | undefined>()
 
@@ -27,7 +18,7 @@ function parseDate(value?: string): CalendarDate | undefined {
   return undefined
 }
 
-watch(value, (newValue) => {
+watch(() => field.value.value, (newValue) => {
   if (newValue) {
     const date = parseDate(newValue)
 
@@ -45,26 +36,26 @@ function updateDate(newDate?: CalendarDate) {
     const day = newDate.day.toString().padStart(2, '0')
     const year = newDate.year.toString().padStart(4, '0')
 
-    value.value = `${year}${month}${day}`
+    field.value.value = `${year}${month}${day}`
   }
   else {
-    value.value = ''
+    field.value.value = ''
   }
 }
-const original = computed(() => props.original)
-const hasChanged = useHasChanged(original, value)
+
+const hasChanged = useHasChanged(field)
 </script>
 
 <template>
-  <BaseField v-model="value" :title="title" :required="required" :has-changed="hasChanged" @reset="updateDate(parseDate(original))">
+  <BaseField v-model="field" :has-changed="hasChanged" @reset="updateDate(parseDate(field.original))">
     <UPopover arrow :content="{ side: 'top' }">
-      <UButton :color="hasChanged ? 'secondary' : 'neutral'" variant="subtle" icon="i-lucide-calendar" class="w-full h-8">
+      <UButton :color="hasChanged ? 'secondary' : 'neutral'" variant="subtle" :icon="field.icon ?? 'i-lucide-calendar'" class="w-full h-8">
         <template #trailing>
           <UButton v-if="dateValue" icon="i-lucide-circle-x" variant="link" :color="hasChanged ? 'secondary' : 'neutral'" size="sm" @click.stop="updateDate(undefined)" />
         </template>
 
         <div class="w-full text-start">
-          {{ dateValue ? formatDate(dateValue.toString(), 'DD MMMM YYYY') : placeholder }}
+          {{ dateValue ? formatDate(dateValue.toString(), 'DD MMMM YYYY') : (field.placeholder || 'Select a date') }}
         </div>
       </UButton>
 
