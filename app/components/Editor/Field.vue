@@ -22,4 +22,5 @@ const formattedTitle = computed(() => {
   <EditorFieldSubject v-else-if="field.type === 'subject-reference'" v-model="value" :original="field.original" />
   <EditorFieldTextArea v-else-if="field.type === 'textarea'" v-model="value" :title="formattedTitle" :placeholder="placeholder" :original="field.original" :octets="field.octets" :allowed-characters="field.allowedCharacterTypes" />
   <EditorFieldText v-else-if="field.type === 'text'" v-model="value" :title="formattedTitle" :placeholder="placeholder" :original="field.original" :octets="field.octets" :allowed-characters="field.allowedCharacterTypes" />
+  <EditorFieldSlider v-else-if="field.type === 'slider'" v-model="value" :title="formattedTitle" :placeholder="placeholder" :original="field.original" :octets="field.octets" :min-value="field.minValue" :max-value="field.maxValue" :min-label="field.minLabel" :max-label="field.maxLabel" :step="field.step" />
 </template>
