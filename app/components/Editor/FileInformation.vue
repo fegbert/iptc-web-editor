@@ -1,28 +1,30 @@
 <script setup lang="ts">
 const props = defineProps<{
-  fileIds: Set<string>
+  fileIds: string[]
 }>()
 
-const { fileById } = useFiles()
+const { loadedFiles } = useFiles()
 
 const fileToShow = computed(() => {
-  if (props.fileIds.size === 0) {
+  if (props.fileIds.length === 0) {
     return null
   }
 
-  const firstFileId: string = Array.from(props.fileIds)[0]!
-  return fileById(firstFileId)
+  const firstFileId: string = props.fileIds[0]!
+  return loadedFiles.value[firstFileId]
 })
 
 const file = computed(() => fileToShow.value ? URL.createObjectURL(fileToShow.value?.file) : undefined)
 </script>
 
 <template>
-  <div v-if="fileToShow" class="flex gap-4">
-    <div class="max-w-[20rem]">
-      <NuxtImg :src="file" class="rounded-l-lg" />
-    </div>
-    <div class="flex flex-col w-full justify-center">
+  <div v-if="fileToShow" class="flex h-[22rem] gap-4">
+    <NuxtImg
+      :src="file"
+      :alt="fileToShow.file.name"
+      :style="{ height: '22rem' }"
+    />
+    <div class="flex flex-col w-full justify-center py-4">
       <h1 class="text-lg font-bold">
         File Properties
       </h1>

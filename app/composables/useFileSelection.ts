@@ -1,25 +1,30 @@
 import type { FileWithMetadata } from '~/shared/types'
 
+type FileSelection = Record<string, boolean>
+
 const ALLOW_MULTIPLE_SELECTION = false
 const IDB_KEY_SELECTED_FILES = 'selected-files'
 
-const selectedFileIds = ref<Set<string>>(new Set())
+const selections = ref<FileSelection>({})
 
 export default function useFileSelection() {
-  async function loadselectedFileIdsFromIndexedDB() {
-    const files = await loadFromIdb<string[]>(IDB_KEY_SELECTED_FILES, [])
-    selectedFileIds.value = new Set(files ?? [])
+  async function loadSelectedFileIdsFromIndexedDB() {
+    if (import.meta.env.SSR) {
+      return
+    }
+
+    const files = await loadFromIdb<FileSelection>(IDB_KEY_SELECTED_FILES, {})
+    selections.value = files ?? {}
   }
 
-  async function update(fileIds: Set<string>) {
-    await updateIdb<string[]>(IDB_KEY_SELECTED_FILES, Array.from(fileIds))
-    await loadselectedFileIdsFromIndexedDB()
+  function getSelectedIds(): string[] {
+    return Object.entries(selections.value).filter(([_, isSelected]) => isSelected).map(([fileId, _]) => fileId)
   }
 
-  async function toggleSelection(file: FileWithMetadata, modifier: 'shift' | 'ctrl' | undefined = undefined) {
+  function toggleSelection(file: FileWithMetadata, modifier: 'shift' | 'ctrl' | undefined = undefined) {
     if (ALLOW_MULTIPLE_SELECTION) {
       if (modifier === 'shift') {
-        if (selectedFileIds.value.size === 0) {
+        if (getSelectedIds().length === 0) {
           handleNormalSelect(file.id)
         }
         else {
@@ -35,8 +40,6 @@ export default function useFileSelection() {
     else {
       handleNormalSelect(file.id)
     }
-
-    await update(selectedFileIds.value)
   }
 
   /* TODO: Reimplement shift selection
@@ -47,39 +50,39 @@ export default function useFileSelection() {
   */
 
   function handleCtrlSelect(fileId: string) {
-    isSelected(fileId) ? selectedFileIds.value.add(fileId) : selectedFileIds.value.delete(fileId)
+    selections.value[fileId] = !selections.value[fileId]
   }
 
   function handleNormalSelect(fileId: string) {
-    const areMoreSelected = selectedFileIds.value.size > 1
+    const areMoreSelected = getSelectedIds().length > 1
     const isSelectedBefore = isSelected(fileId)
 
-    if (isSelectedBefore && areMoreSelected) {
-      selectedFileIds.value.clear()
-      selectedFileIds.value.add(fileId)
+    deselectAll()
+
+    if ((isSelectedBefore && areMoreSelected) || !isSelectedBefore) {
+      selections.value[fileId] = true
     }
-    else {
-      if (isSelectedBefore) {
-        selectedFileIds.value.clear()
-      }
-      else {
-        selectedFileIds.value.clear()
-        selectedFileIds.value.add(fileId)
-      }
-    }
+  }
+
+  function deselectAll() {
+    Object.keys(selections.value).forEach((key) => {
+      selections.value[key] = false
+    })
   }
 
   function isSelected(fileId: string): boolean {
-    return selectedFileIds.value.has(fileId)
+    return selections.value[fileId] ?? false
   }
 
-  const firstFileId = computed(() => {
-    if (selectedFileIds.value.size === 0) {
-      return null
-    }
-
-    return selectedFileIds.value.values().next().value
+  const firstSelectedId = computed(() => {
+    const selectedIds = getSelectedIds()
+    return selectedIds.length > 0 ? selectedIds[0] : null
   })
 
-  return { toggleSelection, selectedFileIds, update, isSelected, firstFileId }
+  const firstSelectedFile = computed(() => {
+    const { loadedFiles } = useFiles()
+    return firstSelectedId.value ? loadedFiles.value[firstSelectedId.value] : null
+  })
+
+  return { toggleSelection, selections, isSelected, firstSelectedId, firstSelectedFile, loadSelectedFileIdsFromIndexedDB, getSelectedIds }
 }

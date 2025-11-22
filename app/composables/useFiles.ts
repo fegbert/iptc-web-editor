@@ -2,166 +2,146 @@ import type { FileWithHandle } from 'browser-fs-access'
 import type { FileWithMetadata } from '~/shared/types'
 import { parseMetadata, writeMetadata } from 'iptc-parser'
 
-const loadedFiles = ref<FileWithMetadata[]>([])
+export type FilesIdb = Record<string, FileWithMetadata>
+
+const loadedFiles = ref<FilesIdb>({})
 const isLoading = ref(true)
 const fileAmount = ref(0)
 
 const IDB_KEY_FILES = 'uploaded-images'
 const COOKIE_KEY_FILE_AMOUNT = 'file-amount'
 
-async function loadFilesFromIndexedDB() {
-  const files = await loadFromIdb<FileWithMetadata[]>(IDB_KEY_FILES, [])
-  loadedFiles.value = files ?? []
-  isLoading.value = false
-
-  const amountCookie = useCookie(COOKIE_KEY_FILE_AMOUNT)
-  amountCookie.value = String(loadedFiles.value.length)
-}
-
-function loadAmountFromCookies() {
-  const amountCookie = useCookie(COOKIE_KEY_FILE_AMOUNT)
-  fileAmount.value = Number.parseInt(amountCookie.value ?? '0')
-}
-
-function deduplicateFiles(files: FileWithMetadata[]) {
-  const dedupedIds = new Set()
-
-  return files.filter((file) => {
-    if (dedupedIds.has(file.id)) {
-      return false
+export default function useFiles() {
+  async function loadFilesFromIndexedDB() {
+    if (import.meta.env.SSR) {
+      return
     }
-    dedupedIds.add(file.id)
-    return true
-  })
-}
 
-async function update(updatedFiles: FileWithMetadata[]) {
-  await updateIdb<FileWithMetadata[]>(IDB_KEY_FILES, updatedFiles)
+    const files = await loadFromIdb<FilesIdb>(IDB_KEY_FILES, {})
+    loadedFiles.value = files ?? {}
+    isLoading.value = false
+  }
 
-  await loadFilesFromIndexedDB()
-}
+  function loadAmountFromCookies() {
+    const amountCookie = useCookie(COOKIE_KEY_FILE_AMOUNT)
+    fileAmount.value = Number.parseInt(amountCookie.value ?? '0')
+  }
 
-async function addFiles(files: FileWithHandle[]) {
-  const metadataMapping: FileWithMetadata[] = await Promise.all(files.map(async (file) => {
-    const buffer = await file.arrayBuffer()
-    const fileId = getFileId(file)
+  function deduplicateFiles(files: FileWithMetadata[]) {
+    const dedupedIds = new Set()
 
-    try {
-      const metadata = parseMetadata(new Uint8Array(buffer))
-
-      return {
-        id: fileId,
-        file,
-        handle: file.handle,
-        metadata,
+    return files.filter((file) => {
+      if (dedupedIds.has(file.id)) {
+        return false
       }
-    }
-    catch {
-      return {
-        id: fileId,
-        file,
-        handle: file.handle,
-        metadata: {},
+      dedupedIds.add(file.id)
+      return true
+    })
+  }
+
+  async function addFiles(files: FileWithHandle[]) {
+    const metadataMapping: FileWithMetadata[] = await Promise.all(files.map(async (file) => {
+      const buffer = await file.arrayBuffer()
+      const fileId = getFileId(file)
+
+      try {
+        const metadata = parseMetadata(new Uint8Array(buffer))
+
+        return {
+          id: fileId,
+          file,
+          handle: file.handle,
+          metadata,
+        }
       }
-    }
-  }))
+      catch {
+        return {
+          id: fileId,
+          file,
+          handle: file.handle,
+          metadata: {},
+        }
+      }
+    }))
 
-  const dedupedUpdatedFiles = deduplicateFiles([...loadedFiles.value, ...metadataMapping])
-  update(dedupedUpdatedFiles)
-}
+    const dedupedUpdatedFiles = deduplicateFiles([...Object.values(loadedFiles.value), ...metadataMapping])
 
-function markAsDownloaded(fileIds: string[]) {
-  loadedFiles.value = loadedFiles.value.map((file) => {
-    if (fileIds.includes(file.id)) {
-      return {
-        ...file,
+    const { setupFileState } = useFileState()
+
+    dedupedUpdatedFiles.forEach((file) => {
+      loadedFiles.value[file.id] = file
+      setupFileState(file.id)
+    })
+
+    fileAmount.value = Object.keys(loadedFiles.value).length
+
+    const amountCookie = useCookie(COOKIE_KEY_FILE_AMOUNT)
+    amountCookie.value = String(fileAmount.value)
+  }
+
+  function markAsDownloaded(fileIds: string[]) {
+    fileIds.forEach((fileId) => {
+      if (!loadedFiles.value[fileId]) {
+        return
+      }
+
+      loadedFiles.value[fileId] = {
+        ...loadedFiles.value[fileId],
         isDownloaded: true,
       }
-    }
-    return file
-  })
-}
-
-async function removeFile(fileToRemove: FileWithMetadata) {
-  const { selectedFileIds, update: updateIndexes } = useFileSelection()
-
-  if (selectedFileIds.value.has(fileToRemove.id)) {
-    selectedFileIds.value.delete(fileToRemove.id)
+    })
   }
 
-  const updatedFiles = loadedFiles.value.filter(file => file.file !== fileToRemove.file)
+  function removeFile(fileToRemoveId: string) {
+    const { selections } = useFileSelection()
 
-  await update(updatedFiles)
-  await updateIndexes(selectedFileIds.value)
-}
-
-async function updateMetadata(file: FileWithMetadata, metadata: Array<{ key: string, value?: string }>) {
-  const mappedMetadata = metadata.reduce<Record<string, string | undefined>>((acc, { key, value }) => {
-    acc[key] = value
-    return acc
-  }, {})
-
-  const originatingProgram: string | undefined = import.meta.env.VITE_APP_NAME
-  const programVersion: string | undefined = import.meta.env.VITE_APP_VERSION
-
-  if (!originatingProgram || !programVersion) {
-    console.warn('Could not set originating program and version in metadata update')
+    delete selections.value[fileToRemoveId]
+    delete loadedFiles.value[fileToRemoveId]
   }
 
-  const updatedMetadata = {
-    ...file.metadata,
-    ...mappedMetadata,
-    // Automatically set originating program and version using values from env file if defined
-    ...(originatingProgram ? { '2:65': originatingProgram } : {}),
-    ...(programVersion ? { '2:70': programVersion } : {}),
-  }
+  async function updateMetadata(file: FileWithMetadata, metadata: Array<{ key: string, value?: string }>) {
+    const mappedMetadata = metadata.reduce<Record<string, string | undefined>>((acc, { key, value }) => {
+      acc[key] = value
+      return acc
+    }, {})
 
-  try {
-    await writeMetadata(file.file, updatedMetadata, undefined, file.handle)
-  }
-  catch (e) {
-    console.warn('Failed to save metadata for file: ', file.file.name, ' - ', e)
-  }
+    const originatingProgram: string | undefined = import.meta.env.VITE_APP_NAME
+    const programVersion: string | undefined = import.meta.env.VITE_APP_VERSION
 
-  const updatedFiles = loadedFiles.value.map((loadedFile) => {
-    if (loadedFile.id === file.id) {
-      return {
-        ...loadedFile,
-        metadata: updatedMetadata,
-      }
+    if (!originatingProgram || !programVersion) {
+      console.warn('Could not set originating program and version in metadata update')
     }
 
-    return loadedFile
-  })
+    const updatedMetadata = {
+      ...file.metadata,
+      ...mappedMetadata,
+      // Automatically set originating program and version using values from env file if defined
+      ...(originatingProgram ? { '2:65': originatingProgram } : {}),
+      ...(programVersion ? { '2:70': programVersion } : {}),
+    }
 
-  // Update file state after metadata change
-  const { reloadStates } = useFileState()
-  reloadStates(updatedFiles)
+    try {
+      await writeMetadata(file.file, updatedMetadata, undefined, file.handle)
+    }
+    catch (e) {
+      console.warn('Failed to save metadata for file: ', file.file.name, ' - ', e)
+    }
 
-  await update(updatedFiles)
-}
-
-function fileById(fileId: string) {
-  return loadedFiles.value.find(file => file.id === fileId)
-}
-
-export default function () {
-  if (!import.meta.env.SSR) {
-    loadFilesFromIndexedDB()
+    loadedFiles.value[file.id] = {
+      ...file,
+      metadata: updatedMetadata,
+    }
   }
-
-  loadAmountFromCookies()
 
   return {
     loadedFiles,
     isLoading,
     loadFilesFromIndexedDB,
+    loadAmountFromCookies,
     addFiles,
     removeFile,
     fileAmount,
     updateMetadata,
-    fileById,
     markAsDownloaded,
-    update,
   }
 }

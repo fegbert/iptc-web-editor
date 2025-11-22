@@ -14,7 +14,7 @@ const props = withDefaults(defineProps<{
 
 const emit = defineEmits<{
   (e: 'select', file: FileWithMetadata): void
-  (e: 'remove', file: FileWithMetadata): void
+  (e: 'remove', fileId: string): void
 }>()
 
 const file = computed(() => props.image.file)
@@ -39,6 +39,6 @@ const { isSelected } = useFileSelection()
         <span class="text-default/50 text-sm truncate">{{ formatDate(file.lastModified).value }}</span>
       </UTooltip>
     </div>
-    <UButton color="error" variant="ghost" icon="i-lucide-circle-x" class="absolute top-0 right-0 mt-1 mr-1" @click.stop="emit('remove', image)" />
+    <UButton color="error" variant="ghost" icon="i-lucide-circle-x" class="absolute top-0 right-0 mt-1 mr-1" @click.stop="emit('remove', image.id)" />
   </div>
 </template>

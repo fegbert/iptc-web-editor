@@ -1,4 +1,3 @@
-import type { FileWithMetadata } from '~/shared/types'
 import type { IPTCFieldWithValue } from '~/utils/iptc-iim/types'
 import { supported } from 'browser-fs-access'
 import { iptcIimFields } from '~/utils/iptc-iim/mapping'
@@ -7,22 +6,23 @@ type FileState = Record<string, IPTCFieldWithValue[]>
 
 const fileStates = ref<FileState>({})
 const isLoading = ref(true)
+const filesChanged = ref(0)
 
 export default function useFileState() {
-  const { updateMetadata, markAsDownloaded, fileById } = useFiles()
-
-  if (!import.meta.env.SSR) {
-    loadFileStatesFromIndexedDB()
-  }
+  const { loadedFiles, updateMetadata, markAsDownloaded } = useFiles()
 
   async function loadFileStatesFromIndexedDB() {
+    if (import.meta.env.SSR) {
+      return
+    }
+
     const states = await loadFromIdb<FileState>('file-states', {})
     fileStates.value = states ?? {}
     isLoading.value = false
   }
 
-  async function setupFileState(fileId: string) {
-    const file = fileById(fileId)
+  function setupFileState(fileId: string) {
+    const file = loadedFiles.value[fileId]
 
     if (!file) {
       throw new Error('File not found for setting up state')
@@ -33,8 +33,6 @@ export default function useFileState() {
       value: file.metadata[field.key] || '',
       original: file.metadata[field.key] || '',
     }))
-
-    return updateIdb<FileState>('file-states', fileStates.value)
   }
 
   function removeFileState(fileId: string) {
@@ -53,21 +51,13 @@ export default function useFileState() {
     fileStates.value[fileId]!.map((field) => {
       if (field.key === key) {
         field.value = newValue ?? ''
-        if (!field.original) {
-          field.original = field.value
-        }
       }
       return field
     })
   }
 
-  function hasFieldChanged(metadata: Record<string, any>, key: string, currentValue: string) {
-    const originalValue = metadata[key] || ''
-    return originalValue !== currentValue
-  }
-
   function fileChanges(fileId: string) {
-    const file = fileById(fileId)
+    const file = loadedFiles.value[fileId]
     if (!file) {
       return 0
     }
@@ -76,25 +66,12 @@ export default function useFileState() {
     let changes = 0
 
     state.forEach((field) => {
-      const originalValue = file.metadata[field.key] || ''
-      if (originalValue !== field.value) {
+      if (field.original !== field.value) {
         changes++
       }
     })
 
     return changes
-  }
-
-  const filesChanged = ref(0)
-
-  function stateIndexByKey(state: IPTCFieldWithValue[], key: string) {
-    const field = state.find(f => f.key === key)
-
-    if (!field) {
-      throw new Error(`Field with key ${key} not found in state`)
-    }
-
-    return state.indexOf(field)
   }
 
   async function saveAll() {
@@ -108,7 +85,7 @@ export default function useFileState() {
     }))
 
     statesToSave.forEach(async ({ fileId, state }) => {
-      const file = fileById(fileId)
+      const file = loadedFiles.value[fileId]
       if (!file) {
         throw new Error('File not found for saving metadata')
       }
@@ -131,36 +108,16 @@ export default function useFileState() {
     }
   }
 
-  function reloadStates(files: FileWithMetadata[]) {
-    files.forEach((file) => {
-      removeFileState(file.id)
-
-      Object.entries(file.metadata).forEach(([key, value]) => {
-        updateFileData(file.id, key, value)
-      })
-    })
-  }
-
-  /*
-  watchDeep(() => fileStates.value, async (updatedStates) => {
-    const totalChanges = Object.keys(updatedStates).filter(fileId => fileChanges(fileId) > 0).length
-    filesChanged.value = totalChanges
-
-    await updateIdb()
-  })
-  */
-
   return {
     fileStates,
     setupFileState,
     removeFileState,
     getFileState,
     updateFileData,
-    hasFieldChanged,
     fileChanges,
-    reloadStates,
     filesChanged,
     saveAll,
-    stateIndexByKey,
+    isLoading,
+    loadFileStatesFromIndexedDB,
   }
 }
