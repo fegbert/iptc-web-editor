@@ -5,5 +5,4 @@ export interface FileWithMetadata {
   handle?: FileSystemFileHandle
   metadata: Record<string, string>
   isDownloaded?: boolean
-  isSelected?: boolean
 }

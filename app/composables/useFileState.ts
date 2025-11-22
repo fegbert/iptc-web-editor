@@ -33,8 +33,6 @@ export default function useFileState() {
       return acc
     }, {})
 
-    console.log('Setting value to:', Object.values(rawFileStates)[0]![30]!.original)
-
     await set(rawFileStates)
   }
 
@@ -67,15 +65,8 @@ export default function useFileState() {
 
     fileStates.value[fileId]!.map((field) => {
       if (field.key === key) {
-        if (key === '2:85') {
-          console.log('Updating field 2:85 to ', newValue)
-          console.log('Original field: ', field.original)
-        }
         field.value = newValue ?? ''
         if (!field.original) {
-          if (key === '2:85') {
-            console.log('Setting original field 2:85 to ', field.value)
-          }
           field.original = field.value
         }
       }

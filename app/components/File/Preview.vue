@@ -3,6 +3,7 @@ import type { FileWithMetadata } from '~/shared/types'
 
 const props = withDefaults(defineProps<{
   image: FileWithMetadata
+  index: number
   width?: number
   height?: number
   showDetails?: boolean
@@ -21,10 +22,12 @@ const file = computed(() => props.image.file)
 const fileUrl = URL.createObjectURL(file.value)
 const fileSize = (file.value.size / 1024).toFixed(2)
 const altText = `${file.value.name} - ${fileSize} KB`
+
+const { isSelected } = useFileSelection()
 </script>
 
 <template>
-  <div class="flex relative items-center gap-4 border border-accented rounded-lg p-2 hover:bg-accented/20" :class="{ 'border-primary bg-accented/20': image.isSelected }" @click="emit('select', image)">
+  <div class="flex relative items-center gap-4 border border-accented rounded-lg p-2 hover:bg-accented/20" :class="{ 'border-primary bg-accented/20': isSelected(index) }" @click="emit('select', image)">
     <NuxtImg :src="fileUrl" :alt="altText" :width="width" :height="height" />
     <div v-if="showDetails" class="flex flex-col max-w-[60%]">
       <UTooltip :text="file.name">
