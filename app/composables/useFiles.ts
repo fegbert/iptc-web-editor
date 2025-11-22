@@ -66,6 +66,7 @@ async function addFiles(files: FileWithHandle[]) {
 
     try {
       const metadata = parseMetadata(new Uint8Array(buffer))
+
       return {
         id: fileId,
         file,
@@ -88,30 +89,6 @@ async function addFiles(files: FileWithHandle[]) {
   const dedupedUpdatedFiles = deduplicateFiles([...rawLoadedFiles, ...metadataMapping])
 
   updateIdb(dedupedUpdatedFiles)
-}
-
-async function reloadFiles() {
-  const rawLoadedFiles = toRaw(loadedFiles.value)
-
-  const filesWithUpdatedMetadata = await Promise.all(rawLoadedFiles.map(async (file) => {
-    const buffer = await file.file.arrayBuffer()
-    try {
-      const metadata = parseMetadata(new Uint8Array(buffer))
-      return {
-        ...file,
-        metadata,
-      }
-    }
-    catch (e) {
-      console.warn('Failed to reload metadata for file: ', file.file.name, ' - ', e)
-      return {
-        ...file,
-        metadata: {},
-      }
-    }
-  }))
-
-  updateIdb(filesWithUpdatedMetadata)
 }
 
 function markAsDownloaded(fileIds: string[]) {
@@ -227,11 +204,7 @@ function handleNormalSelect(fileIndex: number) {
 }
 
 async function updateMetadata(file: FileWithMetadata, metadata: Array<{ key: string, value?: string }>) {
-  const mappedMetadata = metadata.reduce<Record<string, any>>((acc, { key, value }) => {
-    if (!value) {
-      return acc
-    }
-
+  const mappedMetadata = metadata.reduce<Record<string, string | undefined>>((acc, { key, value }) => {
     acc[key] = value
     return acc
   }, {})
@@ -246,10 +219,12 @@ async function updateMetadata(file: FileWithMetadata, metadata: Array<{ key: str
   const updatedMetadata = {
     ...file.metadata,
     ...mappedMetadata,
-    // Automatically set originating program and version using values from env file
+    // Automatically set originating program and version using values from env file if defined
     ...(originatingProgram ? { '2:65': originatingProgram } : {}),
     ...(programVersion ? { '2:70': programVersion } : {}),
   }
+
+  console.log(updatedMetadata)
 
   try {
     await writeMetadata(file.file, updatedMetadata, undefined, file.handle)
@@ -259,7 +234,7 @@ async function updateMetadata(file: FileWithMetadata, metadata: Array<{ key: str
   }
 
   const updatedFiles = loadedFiles.value.map((loadedFile) => {
-    if (loadedFile.file === file.file) {
+    if (loadedFile.id === file.id) {
       return {
         ...toRaw(loadedFile),
         metadata: updatedMetadata,
@@ -269,7 +244,17 @@ async function updateMetadata(file: FileWithMetadata, metadata: Array<{ key: str
     return toRaw(loadedFile)
   })
 
-  updateIdb(updatedFiles)
+  console.log(updatedFiles)
+
+  // Update file state after metadata change
+  const { reloadStates } = useFileState()
+  reloadStates(updatedFiles)
+
+  await updateIdb(updatedFiles)
+}
+
+function fileById(fileId: string) {
+  return loadedFiles.value.find(file => file.id === fileId)
 }
 
 const selectedFiles = computed(() => {
@@ -283,5 +268,5 @@ export default function () {
 
   loadAmountFromCookies()
 
-  return { loadedFiles, selectedFiles, isLoading, loadFilesFromIndexedDB, addFiles, removeFile, fileAmount, toggleSelection, updateMetadata, reloadFiles, markAsDownloaded }
+  return { loadedFiles, selectedFiles, isLoading, loadFilesFromIndexedDB, addFiles, removeFile, fileAmount, toggleSelection, updateMetadata, fileById, markAsDownloaded }
 }

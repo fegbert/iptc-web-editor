@@ -1,3 +1,4 @@
+import type { FileWithMetadata } from '~/shared/types'
 import type { IPTCFieldWithValue } from '~/utils/iptc-iim/types'
 import { useIDBKeyval } from '@vueuse/integrations/useIDBKeyval.mjs'
 import { supported } from 'browser-fs-access'
@@ -9,7 +10,7 @@ const fileStates = ref<FileState>({})
 const isLoading = ref(true)
 
 export default function useFileState() {
-  const { loadedFiles, updateMetadata, reloadFiles, markAsDownloaded } = useFiles()
+  const { updateMetadata, markAsDownloaded, fileById } = useFiles()
 
   if (!import.meta.env.SSR) {
     loadFileStatesFromIndexedDB()
@@ -25,8 +26,16 @@ export default function useFileState() {
   }
 
   async function updateIdb() {
-    const { set } = useIDBKeyval<FileState>('file-states', fileStates.value)
-    await set(toRaw(fileStates.value))
+    const { set } = useIDBKeyval<FileState>('file-states', {})
+
+    const rawFileStates = Object.entries(toRaw(fileStates.value)).reduce<FileState>((acc, [fileId, fields]) => {
+      acc[fileId] = toRaw(fields.map(field => toRaw(field)))
+      return acc
+    }, {})
+
+    console.log('Setting value to:', Object.values(rawFileStates)[0]![30]!.original)
+
+    await set(rawFileStates)
   }
 
   function setupState() {
@@ -58,8 +67,15 @@ export default function useFileState() {
 
     fileStates.value[fileId]!.map((field) => {
       if (field.key === key) {
+        if (key === '2:85') {
+          console.log('Updating field 2:85 to ', newValue)
+          console.log('Original field: ', field.original)
+        }
         field.value = newValue ?? ''
         if (!field.original) {
+          if (key === '2:85') {
+            console.log('Setting original field 2:85 to ', field.value)
+          }
           field.original = field.value
         }
       }
@@ -73,7 +89,7 @@ export default function useFileState() {
   }
 
   function fileChanges(fileId: string) {
-    const file = loadedFiles.value.find(file => file.id === fileId)
+    const file = fileById(fileId)
     if (!file) {
       return 0
     }
@@ -114,7 +130,7 @@ export default function useFileState() {
     }))
 
     statesToSave.forEach(async ({ fileId, state }) => {
-      const file = loadedFiles.value.find(file => file.id === fileId)
+      const file = fileById(fileId)
       if (!file) {
         throw new Error('File not found for saving metadata')
       }
@@ -132,12 +148,19 @@ export default function useFileState() {
       color: 'success',
     })
 
-    if (supported) {
-      reloadFiles()
-    }
-    else {
+    if (!supported) {
       markAsDownloaded(statesToSave.map(s => s.fileId))
     }
+  }
+
+  function reloadStates(files: FileWithMetadata[]) {
+    files.forEach((file) => {
+      removeFileState(file.id)
+
+      Object.entries(file.metadata).forEach(([key, value]) => {
+        updateFileData(file.id, key, value)
+      })
+    })
   }
 
   watchDeep(() => fileStates.value, async (updatedStates) => {
@@ -155,6 +178,7 @@ export default function useFileState() {
     updateFileData,
     hasFieldChanged,
     fileChanges,
+    reloadStates,
     filesChanged,
     saveAll,
     stateIndexByKey,

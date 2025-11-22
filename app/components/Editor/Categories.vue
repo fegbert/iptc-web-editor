@@ -85,7 +85,7 @@ function updateExtraField(updatedFields: (IPTCFieldWithValue & { type: 'extra' }
   <div v-if="state" class="flex flex-col gap-5">
     <BaseCategory v-for="category in categories" :key="category.title" :title="category.title">
       <div class="flex flex-col gap-2">
-        <div v-for="(row, index) in category.rows" :key="row.join(':')" class="flex flex-col sm:flex-row items-center gap-2 w-full">
+        <div v-for="(row, index) in category.rows" :key="row.join(':')" class="flex flex-col sm:flex-row gap-2 w-full">
           <template v-for="{ key, width } in category.rows[index]" :key="`${index}-${key}`">
             <EditorField
               v-if="fieldsByKey[key]"
