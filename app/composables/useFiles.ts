@@ -236,9 +236,19 @@ async function updateMetadata(file: FileWithMetadata, metadata: Array<{ key: str
     return acc
   }, {})
 
+  const originatingProgram: string | undefined = import.meta.env.VITE_APP_NAME
+  const programVersion: string | undefined = import.meta.env.VITE_APP_VERSION
+
+  if (!originatingProgram || !programVersion) {
+    console.warn('Could not set originating program and version in metadata update')
+  }
+
   const updatedMetadata = {
     ...file.metadata,
     ...mappedMetadata,
+    // Automatically set originating program and version using values from env file
+    ...(originatingProgram ? { '2:65': originatingProgram } : {}),
+    ...(programVersion ? { '2:70': programVersion } : {}),
   }
 
   try {

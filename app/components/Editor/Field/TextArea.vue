@@ -1,29 +1,20 @@
 <script setup lang="ts">
-import type { CharacterTypes, IPTCField } from '~/utils/iptc-iim/types'
+import type { IPTCFieldWithValue } from '~/utils/iptc-iim/types'
 
-const props = defineProps<{
-  title: string
-  original: string
-  placeholder?: string
-  required?: boolean
-  octets?: IPTCField['octets']
-  allowedCharacters?: CharacterTypes[]
-}>()
+const field = defineModel<IPTCFieldWithValue & { type: 'textarea' }>({ required: true })
 
-const value = defineModel<string>()
+const hasChanged = useHasChanged(field)
 
-const original = computed(() => props.original)
-const hasChanged = useHasChanged(original, value)
-
-const { limits, characterCountWidth, characterCountText } = useCharacterLimit(value, props.octets)
+const currentValue = computed(() => field.value.value || '')
+const { limits, characterCountWidth, characterCountText } = useCharacterLimit(currentValue, field.value.octets)
 </script>
 
 <template>
-  <BaseField v-model="value" :title="title" :original="original" :allowed-characters="allowedCharacters" :has-changed="hasChanged" :required="required" @reset="value = original">
+  <BaseField v-model="field" :has-changed="hasChanged" @reset="field.value = field.original">
     <UTextarea
-      v-model="value"
+      v-model="field.value"
       class="w-full"
-      :placeholder="placeholder"
+      :placeholder="field.placeholder"
       autoresize
       :maxrows="5"
       :color="hasChanged ? 'secondary' : undefined"
@@ -31,6 +22,7 @@ const { limits, characterCountWidth, characterCountText } = useCharacterLimit(va
       :maxlength="limits?.max"
       :ui="{ trailing: 'pointer-events-none' }"
       :style="{ paddingRight: characterCountWidth }"
+      :icon="field.icon"
     >
       <template v-if="limits !== undefined" #trailing>
         <div

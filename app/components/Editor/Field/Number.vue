@@ -1,43 +1,35 @@
 <script setup lang="ts">
-const props = defineProps<{
-  title: string
-  original: string
-  placeholder?: string
-  required?: boolean
-  min?: number
-  max?: number
-}>()
+import type { IPTCFieldWithValue } from '~/utils/iptc-iim/types'
 
-const value = defineModel<string>()
+const field = defineModel<IPTCFieldWithValue & { type: 'number' }>({ required: true })
 
 const rawValue = computed<number | undefined>({
   get() {
-    if (!value.value || value.value === '') {
+    if (!field.value.value) {
       return undefined
     }
 
-    const num = Number(value.value)
+    const num = Number(field.value.value)
     return Number.isNaN(num) ? undefined : num
   },
   set(val: number | undefined) {
-    value.value = val !== undefined ? String(val) : ''
+    field.value.value = val !== undefined ? String(val) : ''
   },
 })
 
-const original = computed(() => props.original)
-const hasChanged = useHasChanged(original, value)
+const hasChanged = useHasChanged(field)
 </script>
 
 <template>
-  <BaseField v-model="value" :title="title" :required="required" :has-changed="hasChanged" @reset="value = original">
+  <BaseField v-model="field" :has-changed="hasChanged" @reset="field.value = field.original">
     <UInputNumber
       v-model="rawValue"
-      :min="min"
-      :max="max"
-      :placeholder="placeholder"
+      :min="field.minValue"
+      :max="field.maxValue"
+      :placeholder="field.placeholder"
       :color="hasChanged ? 'secondary' : undefined"
-      :increment="{ color: 'neutral' }"
-      :decrement="{ color: 'neutral' }"
+      :increment="{ color: hasChanged ? 'secondary' : 'neutral' }"
+      :decrement="{ color: hasChanged ? 'secondary' : 'neutral' }"
       :highlight="hasChanged"
       orientation="vertical"
       class="w-full"

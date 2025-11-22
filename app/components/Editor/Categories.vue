@@ -34,6 +34,51 @@ const fieldsByKey = computed({
     })
   },
 })
+
+function getExtraFields(key: string): (IPTCFieldWithValue & { type: 'extra' })[] {
+  if (!fieldsByKey.value || !fieldsByKey.value[key]) {
+    return []
+  }
+
+  const field = fieldsByKey.value[key]
+
+  if (field.type === 'location') {
+    const nameField = fieldsByKey.value[field.nameKey]
+    return nameField && isFieldType('extra', nameField) ? [nameField] : []
+  }
+
+  if (field.type === 'reference') {
+    const dateField = fieldsByKey.value[field.dateKey]
+    const numberField = fieldsByKey.value[field.numberKey]
+    const extraFields: (IPTCFieldWithValue & { type: 'extra' })[] = []
+
+    if (dateField && isFieldType('extra', dateField)) {
+      extraFields.push(dateField)
+    }
+
+    if (numberField && isFieldType('extra', numberField)) {
+      extraFields.push(numberField)
+    }
+
+    return extraFields
+  }
+
+  return []
+}
+
+function updateExtraField(updatedFields: (IPTCFieldWithValue & { type: 'extra' })[]) {
+  if (!fieldsByKey.value) {
+    return
+  }
+
+  fieldsByKey.value = {
+    ...fieldsByKey.value,
+    ...updatedFields.reduce((acc, field) => {
+      acc[field.key] = field
+      return acc
+    }, {} as Record<string, IPTCFieldWithValue>),
+  }
+}
 </script>
 
 <template>
@@ -43,8 +88,11 @@ const fieldsByKey = computed({
         <div v-for="(row, index) in category.rows" :key="row.join(':')" class="flex flex-col sm:flex-row items-center gap-2 w-full">
           <template v-for="{ key, width } in category.rows[index]" :key="`${index}-${key}`">
             <EditorField
-              v-if="fieldsByKey[key]" v-model="fieldsByKey[key].value" :field="fieldsByKey[key]"
+              v-if="fieldsByKey[key]"
+              v-model="fieldsByKey[key]"
+              :extra="getExtraFields(key)"
               :style="width ? `width: ${width}%` : ''"
+              @update:extra="updateExtraField"
             />
           </template>
         </div>

@@ -5,6 +5,8 @@ import { CharacterTypes } from './types'
 // TODO: Change language identifier to select with options from ISO 639:1988
 // TODO: check supplement category description
 // TODO: check every field tbh
+// TODO: Update date and other fields better handling
+// TODO: Update BaseField to use prop isntead of model as it doesnt modify
 
 /**
  * Based on the IPTC IIM Specification Version 4.2
@@ -74,9 +76,11 @@ export const iptcIimFields: IPTCField[] = [
     description: `
     Specifies the editorial urgency of content and not necessarily the envelope handling priority (see 1:60, Envelope Priority).
     The '1' is most urgent, '5' normal and '8' denotes the least-urgent copy. The numerals '9' and '0' are reserved for future use.`,
-    type: 'number',
+    type: 'slider',
     minValue: 1,
     maxValue: 8,
+    minLabel: 'Most Urgent',
+    maxLabel: 'Least Urgent',
     octets: 1,
     mandatory: false,
     repeatable: false,
@@ -141,8 +145,8 @@ export const iptcIimFields: IPTCField[] = [
     When ISO3166 does not adequately provide for identification of a location or a country, e.g. ships at sea, space, IPTC will assign an appropriate threecharacter code under the provisions of ISO3166 to avoid conflicts.
     If used in the same object with DataSet 2:27, must immediately precede and correspond to it.`,
     octets: { max: 3 },
-    allowedCharacterTypes: [CharacterTypes.alphabetic],
-    type: 'text',
+    type: 'location',
+    nameKey: '2:27',
     mandatory: false,
     repeatable: true,
   },
@@ -153,8 +157,7 @@ export const iptcIimFields: IPTCField[] = [
     description: `
     Provides a full, publishable name of a country/geographical location referenced by the content of the object, according to guidelines of the provider.
     If used in the same object with DataSet 2:26, must immediately follow and correspond to it.`,
-    allowedCharacterTypes: [CharacterTypes.graphic, CharacterTypes.space],
-    type: 'text',
+    type: 'extra',
     mandatory: false,
     repeatable: true,
   },
@@ -225,7 +228,9 @@ export const iptcIimFields: IPTCField[] = [
     description: '',
     octets: { max: 10 },
     allowedCharacterTypes: [CharacterTypes.graphic],
-    type: 'text',
+    type: 'reference',
+    dateKey: '2:47',
+    numberKey: '2:50',
     mandatory: false,
     repeatable: true,
   },
@@ -233,7 +238,7 @@ export const iptcIimFields: IPTCField[] = [
     key: '2:47',
     title: 'Reference Date',
     description: '',
-    type: 'date',
+    type: 'extra',
     octets: 8,
     mandatory: true,
     repeatable: true,
@@ -244,7 +249,7 @@ export const iptcIimFields: IPTCField[] = [
     title: 'Reference Number',
     description: '',
     octets: 8,
-    type: 'text',
+    type: 'extra',
     allowedCharacterTypes: [CharacterTypes.numeric],
     mandatory: true,
     repeatable: true,
@@ -376,8 +381,8 @@ export const iptcIimFields: IPTCField[] = [
     title: 'Country/Primary Location Code',
     description: 'Indicates the code of the country/primary location where the intellectual property of the objectdata was created, e.g. a photo was taken, an event occurred.',
     octets: 3,
-    allowedCharacterTypes: [CharacterTypes.alphabetic],
-    type: 'text',
+    type: 'location',
+    nameKey: '2:101',
     mandatory: false,
     repeatable: false,
   },
@@ -386,8 +391,7 @@ export const iptcIimFields: IPTCField[] = [
     title: 'Country/Primary Location Name',
     description: 'Provides full, publishable, name of the country/primary location where the intellectual property of the objectdata was created, according to guidelines of the provider.',
     octets: { max: 64 },
-    allowedCharacterTypes: [CharacterTypes.graphic, CharacterTypes.space],
-    type: 'text',
+    type: 'extra',
     mandatory: false,
     repeatable: false,
   },
@@ -492,8 +496,7 @@ export const iptcIimFields: IPTCField[] = [
     Describes the major national language of the object, according to the 2-letter codes of ISO 639:1988.
     Does not define or imply any coded character set, but is used for internal routing, e.g. to various editorial desks.`,
     octets: { min: 2, max: 3 },
-    allowedCharacterTypes: [CharacterTypes.alphabetic],
-    type: 'text',
+    type: 'language',
     mandatory: false,
     repeatable: false,
   },

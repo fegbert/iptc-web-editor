@@ -18,10 +18,8 @@ interface IPTCFieldBase {
   repeatable: boolean
   parent?: IPTCFieldKey
   deprecated?: boolean
-}
-
-interface IPTCFieldText extends IPTCFieldBase {
-  type: 'text' | 'textarea'
+  placeholder?: string
+  icon?: string
   allowedCharacterTypes?: CharacterTypes[]
 }
 
@@ -31,15 +29,35 @@ interface IPTCFieldNumber extends IPTCFieldBase {
   maxValue?: number
 }
 
+interface IPTCFieldSlider extends IPTCFieldBase {
+  type: 'slider'
+  minValue: number
+  maxValue: number
+  minLabel: string
+  maxLabel: string
+  step?: number
+}
+
 interface IPTCFieldSelect extends IPTCFieldBase {
   type: 'select'
   options: { value: string, label: string }[]
 }
 
-interface IPTCFieldOtherTypes extends IPTCFieldBase {
-  type: 'date' | 'time' | 'object-type' | 'object-attribute' | 'subject-reference'
+interface IPTCFieldLocation extends IPTCFieldBase {
+  type: 'location'
+  nameKey: IPTCFieldKey
 }
 
-export type IPTCField = IPTCFieldText | IPTCFieldNumber | IPTCFieldSelect | IPTCFieldOtherTypes
+interface IPTCFieldReference extends IPTCFieldBase {
+  type: 'reference'
+  dateKey: IPTCFieldKey
+  numberKey: IPTCFieldKey
+}
+
+interface IPTCFieldOtherTypes extends IPTCFieldBase {
+  type: 'text' | 'textarea' | 'date' | 'time' | 'object-type' | 'object-attribute' | 'subject-reference' | 'language' | 'extra'
+}
+
+export type IPTCField = IPTCFieldNumber | IPTCFieldSelect | IPTCFieldSlider | IPTCFieldLocation | IPTCFieldReference | IPTCFieldOtherTypes
 
 export type IPTCFieldWithValue = IPTCField & { value: string, original: string }

@@ -1,17 +1,13 @@
 <script setup lang="ts">
+import type { IPTCFieldWithValue } from '~/utils/iptc-iim/types'
 import { CalendarDate } from '@internationalized/date'
 
-const props = withDefaults(defineProps<{
-  title: string
-  placeholder?: string
-  icon?: string
+defineProps<{
+  disabled?: boolean
   required?: boolean
-  original: string
-}>(), {
-  placeholder: 'Select a date',
-})
+}>()
 
-const value = defineModel<string>()
+const field = defineModel<IPTCFieldWithValue & { type: 'date' | 'extra' }>({ required: true })
 
 const dateValue = ref<CalendarDate | undefined>()
 
@@ -27,13 +23,16 @@ function parseDate(value?: string): CalendarDate | undefined {
   return undefined
 }
 
-watch(value, (newValue) => {
-  if (newValue) {
-    const date = parseDate(newValue)
+watch(() => field.value.value, (newValue) => {
+  if (!newValue) {
+    dateValue.value = undefined
+    return
+  }
 
-    if (!dateValue.value || (date && !date.compare(dateValue.value))) {
-      dateValue.value = date
-    }
+  const date = parseDate(newValue)
+
+  if (!dateValue.value || (date && !date.compare(dateValue.value))) {
+    dateValue.value = date
   }
 }, { immediate: true })
 
@@ -45,32 +44,34 @@ function updateDate(newDate?: CalendarDate) {
     const day = newDate.day.toString().padStart(2, '0')
     const year = newDate.year.toString().padStart(4, '0')
 
-    value.value = `${year}${month}${day}`
+    field.value.value = `${year}${month}${day}`
   }
   else {
-    value.value = ''
+    field.value.value = ''
   }
 }
-const original = computed(() => props.original)
-const hasChanged = useHasChanged(original, value)
+
+const hasChanged = useHasChanged(field)
 </script>
 
 <template>
-  <BaseField v-model="value" :title="title" :required="required" :has-changed="hasChanged" @reset="updateDate(parseDate(original))">
-    <UPopover arrow :content="{ side: 'top' }">
-      <UButton :color="hasChanged ? 'secondary' : 'neutral'" variant="subtle" icon="i-lucide-calendar" class="w-full h-8">
-        <template #trailing>
-          <UButton v-if="dateValue" icon="i-lucide-circle-x" variant="link" :color="hasChanged ? 'secondary' : 'neutral'" size="sm" @click.stop="updateDate(undefined)" />
+  <BaseField v-model="field" :has-changed="hasChanged" :required="required" @reset="updateDate(parseDate(field.original))">
+    <template #default="{ error }">
+      <UPopover arrow :content="{ side: 'top' }">
+        <UButton :color="error ? 'error' : hasChanged ? 'secondary' : 'neutral'" variant="outline" :icon="field.icon ?? 'i-lucide-calendar'" :disabled="disabled" class="w-full h-8">
+          <template #trailing>
+            <UButton v-if="dateValue" icon="i-lucide-circle-x" variant="link" :color="hasChanged ? 'secondary' : 'neutral'" size="sm" @click.stop="updateDate(undefined)" />
+          </template>
+
+          <div class="w-full text-start">
+            {{ dateValue ? formatDate(dateValue.toString(), 'DD MMMM YYYY') : (field.placeholder || 'Select a date') }}
+          </div>
+        </UButton>
+
+        <template #content>
+          <UCalendar :model-value="dateValue" class="p-2" @update:model-value="$event => $event ? updateDate($event as CalendarDate) : undefined" />
         </template>
-
-        <div class="w-full text-start">
-          {{ dateValue ? formatDate(dateValue.toString(), 'DD MMMM YYYY') : placeholder }}
-        </div>
-      </UButton>
-
-      <template #content>
-        <UCalendar :model-value="dateValue" class="p-2" @update:model-value="$event => $event ? updateDate($event as CalendarDate) : undefined" />
-      </template>
-    </UPopover>
+      </UPopover>
+    </template>
   </BaseField>
 </template>

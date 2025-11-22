@@ -103,7 +103,7 @@ export default function useFileState() {
     return state.indexOf(field)
   }
 
-  function saveAll() {
+  async function saveAll() {
     if (!filesChanged.value) {
       return
     }
@@ -113,13 +113,13 @@ export default function useFileState() {
       state,
     }))
 
-    statesToSave.forEach(({ fileId, state }) => {
+    statesToSave.forEach(async ({ fileId, state }) => {
       const file = loadedFiles.value.find(file => file.id === fileId)
       if (!file) {
         throw new Error('File not found for saving metadata')
       }
 
-      updateMetadata(file, state)
+      await updateMetadata(file, state)
     })
 
     const toast = useToast()

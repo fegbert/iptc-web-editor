@@ -1,17 +1,11 @@
 <script setup lang="ts">
+import type { IPTCFieldWithValue } from '~/utils/iptc-iim/types'
 import { objectAttributes, objectTypes } from '~/utils/iptc-iim/mapping'
 
-const props = defineProps<{
-  title: string
-  original: string
-  type: 'object-type' | 'object-attribute'
-  required?: boolean
-}>()
-
-const value = defineModel<string>()
+const field = defineModel<IPTCFieldWithValue & { type: 'object-type' | 'object-attribute' }>({ required: true })
 
 const objectData = computed(() => {
-  return props.type === 'object-type' ? objectTypes : objectAttributes
+  return field.value.type === 'object-type' ? objectTypes : objectAttributes
 })
 
 const selectOptions = objectData.value.map(data => ({
@@ -21,23 +15,23 @@ const selectOptions = objectData.value.map(data => ({
 }))
 
 const rawValue = computed({
-  get: () => selectOptions.find(option => option.value === value.value),
+  get: () => selectOptions.find(option => option.value === field.value.value),
   set: (newValue) => {
-    value.value = newValue?.value ?? ''
+    field.value.value = newValue?.value ?? ''
   },
 })
 
-const original = computed(() => props.original)
-const hasChanged = useHasChanged(original, value)
+const hasChanged = useHasChanged(field)
 </script>
 
 <template>
-  <BaseField v-model="value" :title="title" :required="required" :has-changed="hasChanged" @reset="value = original">
+  <BaseField v-model="field" :has-changed="hasChanged" @reset="field.value = field.original">
     <BaseSelect
       v-model="rawValue"
       :options="selectOptions"
       :has-changed="hasChanged"
-      :placeholder="`Select an object ${type === 'object-type' ? 'type' : 'attribute'}`"
+      :icon="field.icon"
+      :placeholder="`Select an object ${field.type === 'object-type' ? 'type' : 'attribute'}`"
     >
       <template #label>
         <div v-if="rawValue?.value">
