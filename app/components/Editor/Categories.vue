@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { IPTCField, IPTCFieldWithValue } from '~/utils/iptc-iim/types'
+import type { IPTCFieldWithValue } from '~/utils/iptc-iim/types'
 import { categories } from '~/utils/iptc-iim/categories'
 
 const state = defineModel<IPTCFieldWithValue[]>()
@@ -45,6 +45,22 @@ function getExtraFields(key: string): (IPTCFieldWithValue & { type: 'extra' })[]
   if (field.type === 'location') {
     const nameField = fieldsByKey.value[field.nameKey]
     return nameField && isFieldType('extra', nameField) ? [nameField] : []
+  }
+
+  if (field.type === 'reference') {
+    const dateField = fieldsByKey.value[field.dateKey]
+    const numberField = fieldsByKey.value[field.numberKey]
+    const extraFields: (IPTCFieldWithValue & { type: 'extra' })[] = []
+
+    if (dateField && isFieldType('extra', dateField)) {
+      extraFields.push(dateField)
+    }
+
+    if (numberField && isFieldType('extra', numberField)) {
+      extraFields.push(numberField)
+    }
+
+    return extraFields
   }
 
   return []

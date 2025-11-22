@@ -20,10 +20,6 @@ interface IPTCFieldBase {
   deprecated?: boolean
   placeholder?: string
   icon?: string
-}
-
-interface IPTCFieldText extends IPTCFieldBase {
-  type: 'text' | 'textarea'
   allowedCharacterTypes?: CharacterTypes[]
 }
 
@@ -53,15 +49,15 @@ interface IPTCFieldLocation extends IPTCFieldBase {
 }
 
 interface IPTCFieldReference extends IPTCFieldBase {
-  type: 'reference-service'
+  type: 'reference'
   dateKey: IPTCFieldKey
   numberKey: IPTCFieldKey
 }
 
 interface IPTCFieldOtherTypes extends IPTCFieldBase {
-  type: 'date' | 'time' | 'object-type' | 'object-attribute' | 'subject-reference' | 'language' | 'extra'
+  type: 'text' | 'textarea' | 'date' | 'time' | 'object-type' | 'object-attribute' | 'subject-reference' | 'language' | 'extra'
 }
 
-export type IPTCField = IPTCFieldText | IPTCFieldNumber | IPTCFieldSelect | IPTCFieldSlider | IPTCFieldLocation | IPTCFieldReference | IPTCFieldOtherTypes
+export type IPTCField = IPTCFieldNumber | IPTCFieldSelect | IPTCFieldSlider | IPTCFieldLocation | IPTCFieldReference | IPTCFieldOtherTypes
 
 export type IPTCFieldWithValue = IPTCField & { value: string, original: string }

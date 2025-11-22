@@ -1,7 +1,12 @@
 <script setup lang="ts">
 import type { IPTCFieldWithValue } from '~/utils/iptc-iim/types'
 
-const field = defineModel<IPTCFieldWithValue & { type: 'text' }>({ required: true })
+defineProps<{
+  disabled?: boolean
+  required?: boolean
+}>()
+
+const field = defineModel<IPTCFieldWithValue & { type: 'text' | 'extra' | 'reference' }>({ required: true })
 
 const hasChanged = useHasChanged(field)
 
@@ -10,7 +15,7 @@ const { limits, characterCountWidth, characterCountText } = useCharacterLimit(cu
 </script>
 
 <template>
-  <BaseField v-model="field" :has-changed="hasChanged" @reset="field.value = field.original">
+  <BaseField v-model="field" :has-changed="hasChanged" :required="required" @reset="field.value = field.original">
     <UInput
       v-model="field.value"
       :color="hasChanged ? 'secondary' : undefined"
@@ -18,6 +23,7 @@ const { limits, characterCountWidth, characterCountText } = useCharacterLimit(cu
       :placeholder="field.placeholder"
       :maxlength="limits?.max"
       :icon="field.icon"
+      :disabled="disabled"
       :ui="{ trailing: 'pointer-events-none' }"
       :style="{ paddingRight: characterCountWidth }"
       class="w-full"

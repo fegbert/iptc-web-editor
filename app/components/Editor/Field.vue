@@ -17,4 +17,10 @@ const extra = defineModel<(IPTCFieldWithValue & { type: 'extra' })[]>('extra', {
   <EditorFieldText v-else-if="isFieldType('text', field)" v-model="field" />
   <EditorFieldSlider v-else-if="isFieldType('slider', field)" v-model="field" />
   <EditorFieldLocation v-else-if="isFieldType('location', field) && extra[0] && isFieldType('extra', extra[0])" v-model:code="field" v-model:name="extra[0]" />
+  <EditorFieldReference
+    v-else-if="isFieldType('reference', field) && extra[0] && extra[1] && isFieldType('extra', extra[0]) && isFieldType('extra', extra[1])"
+    v-model="field"
+    v-model:date="extra[0]"
+    v-model:number="extra[1]"
+  />
 </template>
