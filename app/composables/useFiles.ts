@@ -1,6 +1,5 @@
 import type { FileWithHandle } from 'browser-fs-access'
 import type { FileWithMetadata } from '~/shared/types'
-import process from 'node:process'
 import { useIDBKeyval } from '@vueuse/integrations/useIDBKeyval'
 import { parseMetadata, writeMetadata } from 'iptc-parser'
 
