@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { FileWithMetadata } from '~/shared/types'
 
-const { loadedFiles, selectedFiles, isLoading, fileAmount, removeFile } = useFiles()
-const { toggleSelection } = useFileSelection()
+const { loadedFiles, isLoading, fileAmount, removeFile } = useFiles()
+const { selectedFileIds, toggleSelection } = useFileSelection()
 const { removeFileState } = useFileState()
 
 const { shift, ctrl } = useMagicKeys()
@@ -56,14 +56,14 @@ async function remove(file: FileWithMetadata) {
       <template #header>
         <UDashboardNavbar title="Edit Metadata">
           <template #right>
-            <EditorSaveButton v-if="selectedFiles.length > 0" />
+            <EditorSaveButton v-if="selectedFileIds.size > 0" />
           </template>
         </UDashboardNavbar>
       </template>
 
       <template #body>
         <USkeleton v-if="isLoading" class="h-full" />
-        <EditorContainer v-else class="w-full h-full" />
+        <EditorContainer v-else />
       </template>
     </UDashboardPanel>
   </UDashboardGroup>

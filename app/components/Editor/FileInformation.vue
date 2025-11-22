@@ -1,12 +1,17 @@
 <script setup lang="ts">
-import type { FileWithMetadata } from '~/shared/types'
-
 const props = defineProps<{
-  files: FileWithMetadata[]
+  fileIds: Set<string>
 }>()
 
+const { fileById } = useFiles()
+
 const fileToShow = computed(() => {
-  return props.files.length > 0 ? props.files[0] : null
+  if (props.fileIds.size === 0) {
+    return null
+  }
+
+  const firstFileId: string = Array.from(props.fileIds)[0]!
+  return fileById(firstFileId)
 })
 
 const file = computed(() => fileToShow.value ? URL.createObjectURL(fileToShow.value?.file) : undefined)

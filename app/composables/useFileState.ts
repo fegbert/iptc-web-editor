@@ -1,6 +1,5 @@
 import type { FileWithMetadata } from '~/shared/types'
 import type { IPTCFieldWithValue } from '~/utils/iptc-iim/types'
-import { useIDBKeyval } from '@vueuse/integrations/useIDBKeyval.mjs'
 import { supported } from 'browser-fs-access'
 import { iptcIimFields } from '~/utils/iptc-iim/mapping'
 
@@ -17,37 +16,25 @@ export default function useFileState() {
   }
 
   async function loadFileStatesFromIndexedDB() {
-    const { data: states, isFinished } = useIDBKeyval<FileState>('file-states', {})
-
-    await until(isFinished).toBe(true)
-
-    fileStates.value = states.value
+    const states = await loadFromIdb<FileState>('file-states', {})
+    fileStates.value = states ?? {}
     isLoading.value = false
   }
 
-  async function updateIdb() {
-    const { set } = useIDBKeyval<FileState>('file-states', {})
+  async function setupFileState(fileId: string) {
+    const file = fileById(fileId)
 
-    const rawFileStates = Object.entries(toRaw(fileStates.value)).reduce<FileState>((acc, [fileId, fields]) => {
-      acc[fileId] = toRaw(fields.map(field => toRaw(field)))
-      return acc
-    }, {})
+    if (!file) {
+      throw new Error('File not found for setting up state')
+    }
 
-    await set(rawFileStates)
-  }
-
-  function setupState() {
-    const state = iptcIimFields.map(field => ({
+    fileStates.value[fileId] = iptcIimFields.map(field => ({
       ...field,
-      value: '',
-      original: '',
+      value: file.metadata[field.key] || '',
+      original: file.metadata[field.key] || '',
     }))
 
-    return state
-  }
-
-  function setupFileState(fileId: string) {
-    fileStates.value[fileId] = setupState()
+    return updateIdb<FileState>('file-states', fileStates.value)
   }
 
   function removeFileState(fileId: string) {
@@ -154,12 +141,14 @@ export default function useFileState() {
     })
   }
 
+  /*
   watchDeep(() => fileStates.value, async (updatedStates) => {
     const totalChanges = Object.keys(updatedStates).filter(fileId => fileChanges(fileId) > 0).length
     filesChanged.value = totalChanges
 
     await updateIdb()
   })
+  */
 
   return {
     fileStates,

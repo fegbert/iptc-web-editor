@@ -1,80 +1,85 @@
 import type { FileWithMetadata } from '~/shared/types'
 
 const ALLOW_MULTIPLE_SELECTION = false
-const IDB_KEY_INDEXES = 'selected-indexes'
+const IDB_KEY_SELECTED_FILES = 'selected-files'
 
-const selectedIndexes = ref<number[]>([])
+const selectedFileIds = ref<Set<string>>(new Set())
 
 export default function useFileSelection() {
-  async function loadIndexesFromIndexedDB() {
-    const indexes = await loadFromIdb<number[]>(IDB_KEY_INDEXES, [])
-    selectedIndexes.value = indexes ?? []
+  async function loadselectedFileIdsFromIndexedDB() {
+    const files = await loadFromIdb<string[]>(IDB_KEY_SELECTED_FILES, [])
+    selectedFileIds.value = new Set(files ?? [])
   }
 
-  async function update(indexes: number[]) {
-    await updateIdb<number[]>(IDB_KEY_INDEXES, indexes)
-    await loadIndexesFromIndexedDB()
+  async function update(fileIds: Set<string>) {
+    await updateIdb<string[]>(IDB_KEY_SELECTED_FILES, Array.from(fileIds))
+    await loadselectedFileIdsFromIndexedDB()
   }
 
   async function toggleSelection(file: FileWithMetadata, modifier: 'shift' | 'ctrl' | undefined = undefined) {
-    const { loadedFiles, update: updateFiles } = useFiles()
-    const selectedFileIndex = loadedFiles.value.findIndex(f => f.file === file.file)
-
-    if (selectedFileIndex === -1) {
-      return
-    }
-
     if (ALLOW_MULTIPLE_SELECTION) {
       if (modifier === 'shift') {
-        if (selectedIndexes.value.length === 0) {
-          handleNormalSelect(selectedFileIndex)
+        if (selectedFileIds.value.size === 0) {
+          handleNormalSelect(file.id)
         }
         else {
-          const lastSelectedIndex = selectedIndexes.value[selectedIndexes.value.length - 1] ?? 0
-          handleShiftSelect(selectedFileIndex, lastSelectedIndex)
+          // TODO: reimplement shift selection
+          // const lastSelectedIndex = selectedIndexes.value[selectedIndexes.value.length - 1] ?? 0
+          // handleShiftSelect(selectedFileIndex, lastSelectedIndex)
         }
       }
       else if (modifier === 'ctrl') {
-        handleCtrlSelect(selectedFileIndex)
+        handleCtrlSelect(file.id)
       }
     }
     else {
-      handleNormalSelect(selectedFileIndex)
+      handleNormalSelect(file.id)
     }
 
-    await updateFiles(loadedFiles.value)
-    await update(selectedIndexes.value)
+    await update(selectedFileIds.value)
   }
 
+  /* TODO: Reimplement shift selection
   function handleShiftSelect(fileIndex: number, lastSelectedIndex: number) {
     const [start, end] = fileIndex < lastSelectedIndex ? [fileIndex, lastSelectedIndex] : [lastSelectedIndex, fileIndex]
     selectedIndexes.value.push(...Array.from({ length: end - start + 1 }, (_, i) => start + i))
   }
+  */
 
-  function handleCtrlSelect(fileIndex: number) {
-    if (!isSelected(fileIndex)) {
-      selectedIndexes.value.push(fileIndex)
+  function handleCtrlSelect(fileId: string) {
+    isSelected(fileId) ? selectedFileIds.value.add(fileId) : selectedFileIds.value.delete(fileId)
+  }
+
+  function handleNormalSelect(fileId: string) {
+    const areMoreSelected = selectedFileIds.value.size > 1
+    const isSelectedBefore = isSelected(fileId)
+
+    if (isSelectedBefore && areMoreSelected) {
+      selectedFileIds.value.clear()
+      selectedFileIds.value.add(fileId)
     }
     else {
-      selectedIndexes.value = selectedIndexes.value.filter(i => i !== fileIndex)
+      if (isSelectedBefore) {
+        selectedFileIds.value.clear()
+      }
+      else {
+        selectedFileIds.value.clear()
+        selectedFileIds.value.add(fileId)
+      }
     }
   }
 
-  function handleNormalSelect(fileIndex: number) {
-    const otherIndexes = selectedIndexes.value.filter(i => i !== fileIndex)
-    const isSelectedBefore = isSelected(fileIndex)
-
-    if (isSelectedBefore && otherIndexes.length > 0) {
-      selectedIndexes.value = [fileIndex]
-    }
-    else {
-      selectedIndexes.value = isSelectedBefore ? [] : [fileIndex]
-    }
+  function isSelected(fileId: string): boolean {
+    return selectedFileIds.value.has(fileId)
   }
 
-  function isSelected(fileIndex: number): boolean {
-    return selectedIndexes.value.includes(fileIndex)
-  }
+  const firstFileId = computed(() => {
+    if (selectedFileIds.value.size === 0) {
+      return null
+    }
 
-  return { toggleSelection, selectedIndexes, update, isSelected }
+    return selectedFileIds.value.values().next().value
+  })
+
+  return { toggleSelection, selectedFileIds, update, isSelected, firstFileId }
 }

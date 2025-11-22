@@ -83,20 +83,16 @@ function markAsDownloaded(fileIds: string[]) {
 }
 
 async function removeFile(fileToRemove: FileWithMetadata) {
-  const { selectedIndexes, update: updateIndexes } = useFileSelection()
+  const { selectedFileIds, update: updateIndexes } = useFileSelection()
 
-  if (fileToRemove.isSelected) {
-    const indexToRemove = loadedFiles.value.findIndex(file => file.file === fileToRemove.file)
-    if (indexToRemove === -1) {
-      return
-    }
-    selectedIndexes.value = selectedIndexes.value.filter(index => index !== indexToRemove)
+  if (selectedFileIds.value.has(fileToRemove.id)) {
+    selectedFileIds.value.delete(fileToRemove.id)
   }
 
   const updatedFiles = loadedFiles.value.filter(file => file.file !== fileToRemove.file)
 
   await update(updatedFiles)
-  await updateIndexes(selectedIndexes.value)
+  await updateIndexes(selectedFileIds.value)
 }
 
 async function updateMetadata(file: FileWithMetadata, metadata: Array<{ key: string, value?: string }>) {
@@ -130,12 +126,12 @@ async function updateMetadata(file: FileWithMetadata, metadata: Array<{ key: str
   const updatedFiles = loadedFiles.value.map((loadedFile) => {
     if (loadedFile.id === file.id) {
       return {
-        ...toRaw(loadedFile),
+        ...loadedFile,
         metadata: updatedMetadata,
       }
     }
 
-    return toRaw(loadedFile)
+    return loadedFile
   })
 
   // Update file state after metadata change
@@ -149,11 +145,6 @@ function fileById(fileId: string) {
   return loadedFiles.value.find(file => file.id === fileId)
 }
 
-const selectedFiles = computed(() => {
-  const { isSelected } = useFileSelection()
-  return loadedFiles.value.filter((_, index) => isSelected(index))
-})
-
 export default function () {
   if (!import.meta.env.SSR) {
     loadFilesFromIndexedDB()
@@ -163,7 +154,6 @@ export default function () {
 
   return {
     loadedFiles,
-    selectedFiles,
     isLoading,
     loadFilesFromIndexedDB,
     addFiles,

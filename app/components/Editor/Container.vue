@@ -1,26 +1,23 @@
 <script setup lang="ts">
-const { selectedFiles } = useFiles()
-const selectedFile = computed(() => selectedFiles.value[0] || null)
+const { selectedFileIds, firstFileId } = useFileSelection()
+const { fileById } = useFiles()
+const { getFileState, setupFileState } = useFileState()
 
-const { updateFileData, getFileState, setupFileState } = useFileState()
+const firstFile = computed(() => firstFileId.value ? fileById(firstFileId.value) : undefined)
 
-const selectedState = computed(() => getFileState(selectedFile.value?.id || ''))
+const selectedState = computed(() => getFileState(firstFile.value?.id || ''))
 
-watch(selectedFile, (newFile) => {
-  if (newFile) {
-    if (getFileState(newFile.id).length === 0) {
-      setupFileState(newFile.id)
-      return
-    }
-    Object.entries(newFile.metadata).forEach(([key, value]) => updateFileData(newFile.id, key, value))
+watch(firstFile, (newFile) => {
+  if (newFile && getFileState(newFile.id).length === 0) {
+    setupFileState(newFile.id)
   }
 }, { immediate: true })
 </script>
 
 <template>
   <div class="w-full h-full">
-    <template v-if="selectedFiles.length > 0">
-      <EditorFileInformation class="bg-accented/20 rounded-lg" :files="selectedFiles" />
+    <template v-if="firstFileId">
+      <EditorFileInformation class="bg-accented/20 rounded-lg" :file-ids="selectedFileIds" />
       <div class="pt-8 pb-14">
         <BaseCollapsible>
           <template #title>
@@ -29,7 +26,7 @@ watch(selectedFile, (newFile) => {
 
           <template #content>
             <div class="py-4">
-              <UForm v-if="selectedFile" :state="selectedState">
+              <UForm v-if="firstFile" :state="selectedState">
                 <EditorCategories v-model="selectedState" />
               </UForm>
             </div>
