@@ -23,4 +23,5 @@ const extra = defineModel<(IPTCFieldWithValue & { type: 'extra' })[]>('extra', {
     v-model:date="extra[0]"
     v-model:number="extra[1]"
   />
+  <EditorFieldLanguage v-else-if="isFieldType('language', field)" v-model="field" />
 </template>
