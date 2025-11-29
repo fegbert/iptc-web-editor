@@ -10,7 +10,8 @@ const props = defineProps<{
 const code = defineModel<IPTCFieldWithValue & { type: 'location' }>('code', { required: true })
 const name = defineModel<IPTCFieldWithValue & { type: 'extra' }>('name', { required: true })
 
-const hasChanged = useHasChanged(props.fileId, code)
+const fileId = computed(() => props.fileId)
+const hasChanged = useHasChanged(fileId, code)
 
 const selectedCountry = computed({
   get: () => ({

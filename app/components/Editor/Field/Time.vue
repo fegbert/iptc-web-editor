@@ -58,7 +58,8 @@ const offsetSelectValues = computed(() => {
   })
 })
 
-const hasChanged = useHasChanged(props.fileId, field)
+const fileId = computed(() => props.fileId)
+const hasChanged = useHasChanged(fileId, field)
 
 function reset() {
   const originalTime = props.original?.slice(0, 6) ?? ''

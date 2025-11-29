@@ -8,7 +8,8 @@ const props = defineProps<{
 
 const field = defineModel<IPTCFieldWithValue & { type: 'textarea' }>({ required: true })
 
-const hasChanged = useHasChanged(props.fileId, field)
+const fileId = computed(() => props.fileId)
+const hasChanged = useHasChanged(fileId, field)
 
 const currentValue = computed(() => field.value.value || '')
 const { limits, characterCountWidth, characterCountText } = useCharacterLimit(currentValue, field.value.octets)

@@ -10,7 +10,8 @@ const props = defineProps<{
 
 const field = defineModel<IPTCFieldWithValue & { type: 'text' | 'extra' | 'reference' }>({ required: true })
 
-const hasChanged = useHasChanged(props.fileId, field)
+const fileId = computed(() => props.fileId)
+const hasChanged = useHasChanged(fileId, field)
 
 const currentValue = computed(() => field.value.value || '')
 const { limits, characterCountWidth, characterCountText } = useCharacterLimit(currentValue, field.value.octets)
@@ -18,6 +19,7 @@ const { limits, characterCountWidth, characterCountText } = useCharacterLimit(cu
 
 <template>
   <BaseField v-model="field" :has-changed="hasChanged" :required="required" @reset="field.value = original ?? ''">
+    {{ original }} {{ fileId }}
     <UInput
       v-model="field.value"
       :color="hasChanged ? 'secondary' : undefined"

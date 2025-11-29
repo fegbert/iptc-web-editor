@@ -3,6 +3,7 @@ const { getSelectedIds, firstSelectedFile } = useFileSelection()
 const { getFileState } = useFileState()
 
 const selectedState = computed(() => getFileState(firstSelectedFile.value?.id || ''))
+const fileId = computed(() => firstSelectedFile.value?.id || '')
 </script>
 
 <template>
@@ -17,7 +18,7 @@ const selectedState = computed(() => getFileState(firstSelectedFile.value?.id ||
         <template #content>
           <div class="py-4">
             <UForm v-if="firstSelectedFile" :state="selectedState">
-              <EditorCategories v-model="selectedState" :file-id="firstSelectedFile.id" />
+              <EditorCategories v-model="selectedState" :file-id="fileId" />
             </UForm>
           </div>
         </template>

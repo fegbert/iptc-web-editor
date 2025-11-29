@@ -8,7 +8,8 @@ const props = defineProps<{
 
 const field = defineModel<IPTCFieldWithValue & { type: 'language' }>({ required: true })
 
-const hasChanged = useHasChanged(props.fileId, field)
+const fileId = computed(() => props.fileId)
+const hasChanged = useHasChanged(fileId, field)
 
 const selectedLanguage = computed({
   get: () => languages.find(lang => lang.value === field.value.value),

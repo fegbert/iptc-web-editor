@@ -26,7 +26,8 @@ const rawValue = computed({
   },
 })
 
-const hasChanged = useHasChanged(props.fileId, field)
+const fileId = computed(() => props.fileId)
+const hasChanged = useHasChanged(fileId, field)
 </script>
 
 <template>
