@@ -19,7 +19,6 @@ const { limits, characterCountWidth, characterCountText } = useCharacterLimit(cu
 
 <template>
   <BaseField v-model="field" :has-changed="hasChanged" :required="required" @reset="field.value = original ?? ''">
-    {{ original }} {{ fileId }}
     <UInput
       v-model="field.value"
       :color="hasChanged ? 'secondary' : undefined"
