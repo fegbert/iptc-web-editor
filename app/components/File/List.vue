@@ -8,6 +8,7 @@ defineProps<{
 const emit = defineEmits<{
   (e: 'select', file: FileWithMetadata): void
   (e: 'remove', fileId: string): void
+  (e: 'reset', fileId: string): void
 }>()
 </script>
 
@@ -21,6 +22,7 @@ const emit = defineEmits<{
         show-details
         @select="emit('select', $event)"
         @remove="emit('remove', $event)"
+        @reset="emit('reset', $event)"
       />
     </div>
   </div>

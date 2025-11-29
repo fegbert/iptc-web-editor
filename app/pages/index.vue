@@ -3,7 +3,7 @@ import type { FileWithMetadata } from '~/shared/types'
 
 const { loadedFiles, removeFile, fileAmount, loadAmountFromCookies, loadFilesFromIndexedDB } = useFiles()
 const { getSelectedIds, toggleSelection, loadSelectedFileIdsFromIndexedDB } = useFileSelection()
-const { removeFileState, loadFileStatesFromIndexedDB } = useFileState()
+const { removeFileState, setupFileState, loadFileStatesFromIndexedDB } = useFileState()
 
 const isLoading = ref(true)
 
@@ -26,6 +26,11 @@ function remove(fileId: string) {
   removeFile(fileId)
   removeFileState(fileId)
 }
+
+function reset(fileId: string) {
+  removeFileState(fileId)
+  setupFileState(fileId)
+}
 </script>
 
 <template>
@@ -45,6 +50,7 @@ function remove(fileId: string) {
           :class="{ DisableSelection: shift }"
           @select="toggleFileSelection"
           @remove="remove"
+          @reset="reset"
         />
 
         <UEmpty
