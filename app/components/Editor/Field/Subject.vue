@@ -2,7 +2,9 @@
 import type { IPTCFieldWithValue } from '~/utils/iptc-iim/types'
 import { subjectDetails, subjectMatters, subjects } from '~/utils/iptc-iim/mapping'
 
-withDefaults(defineProps<{
+const props = withDefaults(defineProps<{
+  fileId: string
+  original?: string
   alignment?: 'horizontal' | 'vertical'
 }>(), {
   alignment: 'horizontal',
@@ -100,21 +102,33 @@ const selectedSubjectDetail = computed({
 })
 
 const originalSubject = computed(() => {
-  const parts = field.value.original.split(':')
+  if (!props.original) {
+    return undefined
+  }
+
+  const parts = props.original.split(':')
   const original = parts.length === 4 ? parts[1] : ''
 
   return original === '00' ? undefined : original
 })
 
 const originalSubjectMatter = computed(() => {
-  const parts = field.value.original.split(':')
+  if (!props.original) {
+    return undefined
+  }
+
+  const parts = props.original.split(':')
   const original = parts.length === 4 ? parts[2] : ''
 
   return original === '000' ? undefined : original
 })
 
 const originalSubjectDetail = computed(() => {
-  const parts = field.value.original.split(':')
+  if (!props.original) {
+    return undefined
+  }
+
+  const parts = props.original.split(':')
   const original = parts.length === 4 ? parts[3] : ''
 
   return original === '000' ? undefined : original

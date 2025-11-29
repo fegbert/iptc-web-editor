@@ -2,6 +2,10 @@
 import type { IPTCFieldWithValue } from '~/utils/iptc-iim/types'
 import { categories } from '~/utils/iptc-iim/categories'
 
+defineProps<{
+  fileId: string
+}>()
+
 const state = defineModel<IPTCFieldWithValue[]>()
 
 const categoryKeys = new Set(categories.map((category) => {
@@ -85,13 +89,14 @@ function updateExtraField(updatedFields: (IPTCFieldWithValue & { type: 'extra' }
   <div v-if="state" class="flex flex-col gap-5">
     <BaseCategory v-for="category in categories" :key="category.title" :title="category.title">
       <div class="flex flex-col gap-2">
-        <div v-for="(row, index) in category.rows" :key="row.join(':')" class="flex flex-col sm:flex-row items-center gap-2 w-full">
+        <div v-for="(row, index) in category.rows" :key="row.join(':')" class="flex flex-col sm:flex-row gap-2 w-full">
           <template v-for="{ key, width } in category.rows[index]" :key="`${index}-${key}`">
             <EditorField
               v-if="fieldsByKey[key]"
               v-model="fieldsByKey[key]"
               :extra="getExtraFields(key)"
               :style="width ? `width: ${width}%` : ''"
+              :file-id="fileId"
               @update:extra="updateExtraField"
             />
           </template>

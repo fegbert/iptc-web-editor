@@ -1,23 +1,37 @@
 <script setup lang="ts">
-import type { FileWithMetadata } from '~/shared/types'
-
 const props = defineProps<{
-  files: FileWithMetadata[]
+  fileIds: string[]
 }>()
 
+const { loadedFiles } = useFiles()
+
 const fileToShow = computed(() => {
-  return props.files.length > 0 ? props.files[0] : null
+  if (props.fileIds.length === 0) {
+    return null
+  }
+
+  const firstFileId: string = props.fileIds[0]!
+  return loadedFiles.value[firstFileId]
 })
 
-const file = computed(() => fileToShow.value ? URL.createObjectURL(fileToShow.value?.file) : undefined)
+const file = computedAsync(async () => {
+  if (!fileToShow.value) {
+    return undefined
+  }
+  return await loadImageForPreview(fileToShow.value.file)
+})
 </script>
 
 <template>
-  <div v-if="fileToShow" class="flex gap-4">
-    <div class="max-w-[20rem]">
-      <NuxtImg :src="file" class="rounded-l-lg" />
-    </div>
-    <div class="flex flex-col w-full justify-center">
+  <div v-if="fileToShow" class="flex h-[22rem] gap-4">
+    <NuxtImg
+      v-if="file"
+      :src="file"
+      :alt="fileToShow.file.name"
+      :style="{ height: '22rem' }"
+    />
+    <USkeleton v-else class="h-full w-1/4" />
+    <div class="flex flex-col w-full justify-center py-4">
       <h1 class="text-lg font-bold">
         File Properties
       </h1>

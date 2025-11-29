@@ -2,6 +2,11 @@
 import type { IPTCFieldWithValue } from '~/utils/iptc-iim/types'
 import { objectAttributes, objectTypes } from '~/utils/iptc-iim/mapping'
 
+const props = defineProps<{
+  fileId: string
+  original?: string
+}>()
+
 const field = defineModel<IPTCFieldWithValue & { type: 'object-type' | 'object-attribute' }>({ required: true })
 
 const objectData = computed(() => {
@@ -21,11 +26,12 @@ const rawValue = computed({
   },
 })
 
-const hasChanged = useHasChanged(field)
+const fileId = computed(() => props.fileId)
+const hasChanged = useHasChanged(fileId, field)
 </script>
 
 <template>
-  <BaseField v-model="field" :has-changed="hasChanged" @reset="field.value = field.original">
+  <BaseField v-model="field" :has-changed="hasChanged" @reset="field.value = original ?? ''">
     <BaseSelect
       v-model="rawValue"
       :options="selectOptions"

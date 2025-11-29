@@ -1,15 +1,13 @@
 <script setup lang="ts">
-const { selectedFiles } = useFiles()
-const selectedFile = computed(() => selectedFiles.value[0] || null)
-
+const { firstSelectedFile } = useFileSelection()
 const { fileChanges } = useFileState()
 
 const amountOfChanges = computed(() => {
-  if (!selectedFile.value) {
+  if (!firstSelectedFile.value) {
     return 0
   }
 
-  return fileChanges(selectedFile.value?.id)
+  return fileChanges(firstSelectedFile.value.id)
 })
 </script>
 
@@ -30,7 +28,7 @@ const amountOfChanges = computed(() => {
         <div>
           <slot name="title" />
         </div>
-        <span v-if="amountOfChanges && selectedFile && !selectedFile.isDownloaded" class="text-sm text-gray-400">
+        <span v-if="amountOfChanges && firstSelectedFile && !firstSelectedFile.isDownloaded" class="text-sm text-gray-400">
           {{ amountOfChanges }} unsaved change{{ amountOfChanges === 1 ? '' : 's' }}
         </span>
       </div>

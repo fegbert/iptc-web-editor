@@ -1,287 +1,159 @@
 import type { FileWithHandle } from 'browser-fs-access'
 import type { FileWithMetadata } from '~/shared/types'
-import { useIDBKeyval } from '@vueuse/integrations/useIDBKeyval'
 import { parseMetadata, writeMetadata } from 'iptc-parser'
 
-const loadedFiles = ref<FileWithMetadata[]>([])
+export type FilesIdb = Record<string, FileWithMetadata>
+
+const loadedFiles = ref<FilesIdb>({})
 const isLoading = ref(true)
 const fileAmount = ref(0)
-const selectedIndexes = ref<number[]>([])
 
-const ALLOW_MULTIPLE_SELECTION = false
+const IDB_KEY_FILES = 'uploaded-images'
+const COOKIE_KEY_FILE_AMOUNT = 'file-amount'
 
-function loadFilesFromIndexedDB() {
-  const { data: files, isFinished } = useIDBKeyval<FileWithMetadata[]>('uploaded-images', [])
-  const { data: indexes, isFinished: areIndexesFinished } = useIDBKeyval<number[]>('selected-indexes', [])
-
-  watch(() => isFinished.value, (newVal) => {
-    if (newVal) {
-      loadedFiles.value = files.value
-      isLoading.value = false
-
-      const amountCookie = useCookie('file-amount')
-      amountCookie.value = String(loadedFiles.value.length)
-    }
-  })
-
-  watch(() => areIndexesFinished.value, (newVal) => {
-    if (newVal) {
-      selectedIndexes.value = indexes.value
-    }
-  })
-}
-
-function loadAmountFromCookies() {
-  const amountCookie = useCookie('file-amount')
-  fileAmount.value = Number.parseInt(amountCookie.value ?? '0')
-}
-
-function deduplicateFiles(files: FileWithMetadata[]) {
-  const dedupedIds = new Set()
-
-  return files.filter((file) => {
-    const id = file.file.name + file.file.lastModified + file.file.size
-    if (dedupedIds.has(id)) {
-      return false
-    }
-    dedupedIds.add(id)
-    return true
-  })
-}
-
-async function updateIdb(updatedFiles: FileWithMetadata[]) {
-  const { set } = useIDBKeyval<FileWithMetadata[]>('uploaded-images', loadedFiles.value)
-  await set(updatedFiles)
-
-  const { set: setIndexes } = useIDBKeyval<number[]>('selected-indexes', selectedIndexes.value)
-  await setIndexes(toRaw(selectedIndexes.value))
-
-  loadFilesFromIndexedDB()
-}
-
-async function addFiles(files: FileWithHandle[]) {
-  const metadataMapping: FileWithMetadata[] = await Promise.all(files.map(async (file) => {
-    const buffer = await file.arrayBuffer()
-    const fileId = file.name + file.lastModified + file.size
-
-    try {
-      const metadata = parseMetadata(new Uint8Array(buffer))
-      return {
-        id: fileId,
-        file,
-        handle: file.handle,
-        metadata,
-      }
-    }
-    catch (e) {
-      console.warn('Failed to find metadata for file: ', file.name, ' - ', e)
-      return {
-        id: fileId,
-        file,
-        handle: file.handle,
-        metadata: {},
-      }
-    }
-  }))
-
-  const rawLoadedFiles = toRaw(loadedFiles.value)
-  const dedupedUpdatedFiles = deduplicateFiles([...rawLoadedFiles, ...metadataMapping])
-
-  updateIdb(dedupedUpdatedFiles)
-}
-
-async function reloadFiles() {
-  const rawLoadedFiles = toRaw(loadedFiles.value)
-
-  const filesWithUpdatedMetadata = await Promise.all(rawLoadedFiles.map(async (file) => {
-    const buffer = await file.file.arrayBuffer()
-    try {
-      const metadata = parseMetadata(new Uint8Array(buffer))
-      return {
-        ...file,
-        metadata,
-      }
-    }
-    catch (e) {
-      console.warn('Failed to reload metadata for file: ', file.file.name, ' - ', e)
-      return {
-        ...file,
-        metadata: {},
-      }
-    }
-  }))
-
-  updateIdb(filesWithUpdatedMetadata)
-}
-
-function markAsDownloaded(fileIds: string[]) {
-  loadedFiles.value = loadedFiles.value.map((file) => {
-    if (fileIds.includes(file.id)) {
-      return {
-        ...file,
-        isDownloaded: true,
-      }
-    }
-    return file
-  })
-}
-
-async function removeFile(fileToRemove: FileWithMetadata) {
-  if (fileToRemove.isSelected) {
-    const indexToRemove = loadedFiles.value.findIndex(file => file.file === fileToRemove.file)
-    if (indexToRemove === -1) {
+export default function useFiles() {
+  async function loadFilesFromIndexedDB() {
+    if (import.meta.env.SSR) {
       return
     }
-    selectedIndexes.value = selectedIndexes.value.filter(index => index !== indexToRemove)
+
+    const files = await loadFromIdb<FilesIdb>(IDB_KEY_FILES, {})
+    loadedFiles.value = files ?? {}
+    isLoading.value = false
   }
 
-  const updatedFiles = loadedFiles.value.filter(file => file.file !== fileToRemove.file).map(file => toRaw(file))
-  await updateIdb(updatedFiles)
-}
-
-async function toggleSelection(file: FileWithMetadata, modifier: 'shift' | 'ctrl' | undefined = undefined) {
-  const selectedFileIndex = loadedFiles.value.findIndex(f => f.file === file.file)
-
-  if (selectedFileIndex === -1) {
-    return
+  function loadAmountFromCookies() {
+    const amountCookie = useCookie(COOKIE_KEY_FILE_AMOUNT)
+    fileAmount.value = Number.parseInt(amountCookie.value ?? '0')
   }
 
-  if (ALLOW_MULTIPLE_SELECTION) {
-    if (modifier === 'shift') {
-      if (selectedIndexes.value.length === 0) {
-        handleNormalSelect(selectedFileIndex)
+  function deduplicateFiles(files: FileWithMetadata[]) {
+    const dedupedIds = new Set()
+
+    return files.filter((file) => {
+      if (dedupedIds.has(file.id)) {
+        return false
       }
-      else {
-        const lastSelectedIndex = selectedIndexes.value[selectedIndexes.value.length - 1] ?? 0
-        handleShiftSelect(selectedFileIndex, lastSelectedIndex)
+      dedupedIds.add(file.id)
+      return true
+    })
+  }
+
+  async function addFiles(files: FileWithHandle[]) {
+    const metadataMapping: FileWithMetadata[] = await Promise.all(files.map(async (file) => {
+      const buffer = await file.arrayBuffer()
+      const fileId = getFileId(file)
+
+      try {
+        const metadata = parseMetadata(new Uint8Array(buffer))
+
+        return {
+          id: fileId,
+          file,
+          handle: file.handle,
+          metadata,
+        }
       }
-    }
-    else if (modifier === 'ctrl') {
-      handleCtrlSelect(selectedFileIndex)
-    }
-  }
-  else {
-    handleNormalSelect(selectedFileIndex)
-  }
+      catch {
+        return {
+          id: fileId,
+          file,
+          handle: file.handle,
+          metadata: {
+            '2:00': '\u0000\u0004',
+          },
+        }
+      }
+    }))
 
-  const rawFiles = loadedFiles.value.map(file => toRaw(file))
-  await updateIdb(rawFiles)
-}
+    const dedupedUpdatedFiles = deduplicateFiles([...Object.values(loadedFiles.value), ...metadataMapping])
 
-function handleShiftSelect(fileIndex: number, lastSelectedIndex: number) {
-  const [start, end] = fileIndex < lastSelectedIndex ? [fileIndex, lastSelectedIndex] : [lastSelectedIndex, fileIndex]
+    const { setupFileState } = useFileState()
 
-  loadedFiles.value = loadedFiles.value.map((loadedFile, index) => {
-    loadedFile.isSelected = index >= start && index <= end
-    return loadedFile
-  })
-}
+    dedupedUpdatedFiles.forEach((file) => {
+      loadedFiles.value[file.id] = file
+      setupFileState(file.id)
+    })
 
-function handleCtrlSelect(fileIndex: number) {
-  if (!loadedFiles.value[fileIndex]) {
-    return
-  }
+    fileAmount.value = Object.keys(loadedFiles.value).length
 
-  const isSelected = loadedFiles.value[fileIndex].isSelected
-
-  if (!isSelected) {
-    selectedIndexes.value.push(fileIndex)
-  }
-  else {
-    selectedIndexes.value = selectedIndexes.value.filter(i => i !== fileIndex)
+    const amountCookie = useCookie(COOKIE_KEY_FILE_AMOUNT)
+    amountCookie.value = String(fileAmount.value)
   }
 
-  loadedFiles.value[fileIndex].isSelected = !isSelected
-}
+  function markAsDownloaded(fileIds: string[]) {
+    fileIds.forEach((fileId) => {
+      if (!loadedFiles.value[fileId]) {
+        return
+      }
 
-function handleNormalSelect(fileIndex: number) {
-  if (!loadedFiles.value[fileIndex]) {
-    return
+      loadedFiles.value[fileId] = {
+        ...loadedFiles.value[fileId],
+        isDownloaded: true,
+      }
+    })
   }
 
-  const otherIndexes = selectedIndexes.value.filter(i => i !== fileIndex)
-  const isSelectedBefore = !loadedFiles.value[fileIndex].isSelected
+  function removeFile(fileToRemoveId: string) {
+    const { selections } = useFileSelection()
 
-  loadedFiles.value = loadedFiles.value.map((loadedFile, index) => {
-    if (index !== fileIndex) {
-      loadedFile.isSelected = false
-      return loadedFile
-    }
-
-    if (otherIndexes.length > 0) {
-      loadedFile.isSelected = true
-    }
-    else {
-      loadedFile.isSelected = !loadedFile.isSelected
-    }
-
-    return loadedFile
-  })
-
-  if (isSelectedBefore || otherIndexes.length > 0) {
-    selectedIndexes.value = [fileIndex]
+    delete selections.value[fileToRemoveId]
+    delete loadedFiles.value[fileToRemoveId]
   }
-  else {
-    selectedIndexes.value = []
-  }
-}
 
-async function updateMetadata(file: FileWithMetadata, metadata: Array<{ key: string, value?: string }>) {
-  const mappedMetadata = metadata.reduce<Record<string, any>>((acc, { key, value }) => {
-    if (!value) {
+  async function updateMetadata(file: FileWithMetadata, metadata: Array<{ key: string, value?: string }>) {
+    const mappedMetadata = metadata.reduce<Record<string, string | undefined>>((acc, { key, value }) => {
+      acc[key] = value
       return acc
+    }, {})
+
+    const originatingProgram: string | undefined = import.meta.env.VITE_APP_NAME
+    const programVersion: string | undefined = import.meta.env.VITE_APP_VERSION
+
+    if (!originatingProgram || !programVersion) {
+      console.warn('Could not set originating program and version in metadata update')
     }
 
-    acc[key] = value
-    return acc
-  }, {})
-
-  const originatingProgram: string | undefined = import.meta.env.VITE_APP_NAME
-  const programVersion: string | undefined = import.meta.env.VITE_APP_VERSION
-
-  if (!originatingProgram || !programVersion) {
-    console.warn('Could not set originating program and version in metadata update')
-  }
-
-  const updatedMetadata = {
-    ...file.metadata,
-    ...mappedMetadata,
-    // Automatically set originating program and version using values from env file
-    ...(originatingProgram ? { '2:65': originatingProgram } : {}),
-    ...(programVersion ? { '2:70': programVersion } : {}),
-  }
-
-  try {
-    await writeMetadata(file.file, updatedMetadata, undefined, file.handle)
-  }
-  catch (e) {
-    console.warn('Failed to save metadata for file: ', file.file.name, ' - ', e)
-  }
-
-  const updatedFiles = loadedFiles.value.map((loadedFile) => {
-    if (loadedFile.file === file.file) {
-      return {
-        ...toRaw(loadedFile),
-        metadata: updatedMetadata,
-      }
+    const updatedMetadata = {
+      ...file.metadata,
+      ...mappedMetadata,
+      // Automatically set originating program and version using values from env file if defined
+      ...(originatingProgram ? { '2:65': originatingProgram } : {}),
+      ...(programVersion ? { '2:70': programVersion } : {}),
     }
 
-    return toRaw(loadedFile)
-  })
+    try {
+      await writeMetadata(file.file, updatedMetadata, undefined, file.handle)
+    }
+    catch (e) {
+      console.warn('Failed to save metadata for file: ', file.file.name, ' - ', e)
+    }
 
-  updateIdb(updatedFiles)
-}
-
-const selectedFiles = computed(() => {
-  return loadedFiles.value.filter(file => file.isSelected)
-})
-
-export default function () {
-  if (!import.meta.env.SSR) {
-    loadFilesFromIndexedDB()
+    loadedFiles.value[file.id] = {
+      ...file,
+      metadata: updatedMetadata,
+    }
   }
 
-  loadAmountFromCookies()
+  function getOriginal(fileId: string, key: string): string | undefined {
+    const file = loadedFiles.value[fileId]
+    if (!file) {
+      return undefined
+    }
 
-  return { loadedFiles, selectedFiles, isLoading, loadFilesFromIndexedDB, addFiles, removeFile, fileAmount, toggleSelection, updateMetadata, reloadFiles, markAsDownloaded }
+    return file.metadata[key]
+  }
+
+  return {
+    loadedFiles,
+    isLoading,
+    loadFilesFromIndexedDB,
+    loadAmountFromCookies,
+    addFiles,
+    removeFile,
+    fileAmount,
+    updateMetadata,
+    markAsDownloaded,
+    getOriginal,
+  }
 }

@@ -58,7 +58,7 @@ export function parseIIM(buffer: Uint8Array): Record<string, any> {
     const dataset = iimBlock[offset + 2]
     const length = view.getUint16(offset + 3)
 
-    const tag = `${record}:${dataset}`
+    const tag = `${record}:${dataset.toString().padStart(2, '0')}`
 
     const start = offset + 5
     const end = start + length
