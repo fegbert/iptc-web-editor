@@ -15,11 +15,16 @@ Promise.all([
 
 loadAmountFromCookies()
 
+const editorContainer = ref(null)
+
+const { y: scrollY } = useScroll(editorContainer, { behavior: 'smooth' })
+
 const { shift, ctrl } = useMagicKeys()
 
 function toggleFileSelection(file: FileWithMetadata) {
   const modifier = shift?.value ? 'shift' : ctrl?.value ? 'ctrl' : undefined
   toggleSelection(file, modifier)
+  scrollY.value = 0
 }
 
 function remove(fileId: string) {
@@ -86,7 +91,7 @@ function reset() {
         <USkeleton v-for="file in fileAmount" :key="file" class="w-full h-20 mb-2 rounded-lg" />
       </div>
     </UDashboardSidebar>
-    <UDashboardPanel>
+    <UDashboardPanel :ui="{ body: 'pr-0!' }" class="min-h-min!">
       <template #header>
         <UDashboardNavbar title="Edit Metadata">
           <template #right>
@@ -96,8 +101,10 @@ function reset() {
       </template>
 
       <template #body>
-        <EditorContainer v-if="!isLoading" />
-        <USkeleton v-else class="w-full h-full rounded-lg" />
+        <div ref="editorContainer" class="overflow-y-auto">
+          <EditorContainer v-if="!isLoading" />
+          <USkeleton v-else class="w-full h-full rounded-lg" />
+        </div>
       </template>
     </UDashboardPanel>
   </UDashboardGroup>

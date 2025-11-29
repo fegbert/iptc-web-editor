@@ -7,10 +7,10 @@ const fileId = computed(() => firstSelectedFile.value?.id || '')
 </script>
 
 <template>
-  <div v-if="firstSelectedFile" class="w-full h-full">
+  <div v-if="firstSelectedFile && selectedState.length > 0" class="w-full h-full pr-4 sm:pr-6">
     <EditorFileInformation class="bg-accented/20 rounded-lg" :file-ids="getSelectedIds()" />
-    <div class="pt-8 pb-14">
-      <BaseCollapsible v-if="selectedState.length > 0">
+    <div class="flex flex-col w-full gap-4 pt-8">
+      <BaseCollapsible :default-open="true">
         <template #title>
           <span>IPTC-IIM</span>
         </template>
@@ -20,6 +20,16 @@ const fileId = computed(() => firstSelectedFile.value?.id || '')
             <UForm v-if="firstSelectedFile" :state="selectedState">
               <EditorCategories v-model="selectedState" :file-id="fileId" />
             </UForm>
+          </div>
+        </template>
+      </BaseCollapsible>
+      <BaseCollapsible :disabled="true">
+        <template #title>
+          <div class="flex items-center gap-2">
+            <span>IPTC Core & Extension</span>
+            <UBadge color="warning" variant="subtle" size="sm">
+              COMING SOON
+            </UBadge>
           </div>
         </template>
       </BaseCollapsible>
