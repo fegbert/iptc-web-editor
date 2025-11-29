@@ -9,7 +9,7 @@ describe('jPEG IIM Reader', () => {
 
     expect(metaData).toMatchObject({
       '1:90': '\x1B%G',
-      '2:0': '\x00\x04',
+      '2:00': '\x00\x04',
       '2:55': '20110403',
       '2:62': '20110403',
       '2:63': '131634+0200',
@@ -42,7 +42,7 @@ describe('parsing of JPEG IPTC-IIM-Metadata', () => {
 
     expect(metaData).toMatchObject({
       '1:90': '\x1B%G',
-      '2:0': '\x00\x04',
+      '2:00': '\x00\x04',
       '2:55': '20110403',
       '2:62': '20110403',
       '2:63': '131634+0200',
