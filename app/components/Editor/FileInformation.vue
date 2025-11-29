@@ -14,7 +14,12 @@ const fileToShow = computed(() => {
   return loadedFiles.value[firstFileId]
 })
 
-const file = computed(() => fileToShow.value ? URL.createObjectURL(fileToShow.value?.file) : undefined)
+const file = computedAsync(async () => {
+  if (!fileToShow.value) {
+    return undefined
+  }
+  return await loadImageForPreview(fileToShow.value.file)
+})
 </script>
 
 <template>
