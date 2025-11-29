@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import type { IPTCFieldWithValue } from '~/utils/iptc-iim/types'
 
+const props = defineProps<{
+  fileId: string
+  original?: string
+}>()
+
 const field = defineModel<IPTCFieldWithValue & { type: 'slider' }>({ required: true })
 
 const rawValue = computed({
@@ -10,11 +15,11 @@ const rawValue = computed({
   },
 })
 
-const hasChanged = useHasChanged(field)
+const hasChanged = useHasChanged(props.fileId, field)
 </script>
 
 <template>
-  <BaseField v-model="field" :has-changed="hasChanged" @reset="field.value = field.original">
+  <BaseField v-model="field" :has-changed="hasChanged" @reset="field.value = original ?? ''">
     <div class="flex flex-nowrap text-nowrap gap-2 items-center w-full h-[32px] ring ring-inset ring-accented px-2.5 py-1.5 text-sm rounded-md bg-default">
       <span>{{ field.minLabel }}</span>
       <USlider

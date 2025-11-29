@@ -17,7 +17,7 @@ const selectedState = computed(() => getFileState(firstSelectedFile.value?.id ||
         <template #content>
           <div class="py-4">
             <UForm v-if="firstSelectedFile" :state="selectedState">
-              <EditorCategories v-model="selectedState" />
+              <EditorCategories v-model="selectedState" :file-id="firstSelectedFile.id" />
             </UForm>
           </div>
         </template>

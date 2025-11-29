@@ -1,16 +1,21 @@
 <script setup lang="ts">
 import type { IPTCFieldWithValue } from '~/utils/iptc-iim/types'
 
+const props = defineProps<{
+  fileId: string
+  original?: string
+}>()
+
 const field = defineModel<IPTCFieldWithValue & { type: 'textarea' }>({ required: true })
 
-const hasChanged = useHasChanged(field)
+const hasChanged = useHasChanged(props.fileId, field)
 
 const currentValue = computed(() => field.value.value || '')
 const { limits, characterCountWidth, characterCountText } = useCharacterLimit(currentValue, field.value.octets)
 </script>
 
 <template>
-  <BaseField v-model="field" :has-changed="hasChanged" @reset="field.value = field.original">
+  <BaseField v-model="field" :has-changed="hasChanged" @reset="field.value = original ?? ''">
     <UTextarea
       v-model="field.value"
       class="w-full"

@@ -1,9 +1,14 @@
 <script setup lang="ts">
 import type { IPTCFieldWithValue } from '~/utils/iptc-iim/types'
 
+const props = defineProps<{
+  fileId: string
+  original?: string
+}>()
+
 const field = defineModel<IPTCFieldWithValue & { type: 'language' }>({ required: true })
 
-const hasChanged = useHasChanged(field)
+const hasChanged = useHasChanged(props.fileId, field)
 
 const selectedLanguage = computed({
   get: () => languages.find(lang => lang.value === field.value.value),
@@ -14,7 +19,7 @@ const selectedLanguage = computed({
 </script>
 
 <template>
-  <BaseField v-model="field" :has-changed="hasChanged" @reset="field.value = field.original">
+  <BaseField v-model="field" :has-changed="hasChanged" @reset="field.value = props.original ?? ''">
     <BaseSelect
       v-model="selectedLanguage"
       :options="languages"

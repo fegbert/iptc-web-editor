@@ -2,6 +2,10 @@
 import type { IPTCFieldWithValue } from '~/utils/iptc-iim/types'
 import { categories } from '~/utils/iptc-iim/categories'
 
+defineProps<{
+  fileId: string
+}>()
+
 const state = defineModel<IPTCFieldWithValue[]>()
 
 const categoryKeys = new Set(categories.map((category) => {
@@ -92,6 +96,7 @@ function updateExtraField(updatedFields: (IPTCFieldWithValue & { type: 'extra' }
               v-model="fieldsByKey[key]"
               :extra="getExtraFields(key)"
               :style="width ? `width: ${width}%` : ''"
+              :file-id="fileId"
               @update:extra="updateExtraField"
             />
           </template>

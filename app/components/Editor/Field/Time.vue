@@ -2,6 +2,11 @@
 import type { SelectMenuItem } from '@nuxt/ui'
 import type { IPTCFieldWithValue } from '~/utils/iptc-iim/types'
 
+const props = defineProps<{
+  fileId: string
+  original?: string
+}>()
+
 const field = defineModel<IPTCFieldWithValue & { type: 'time' }>({ required: true })
 
 const timeValue = ref<{ time: string, offset: string }>({ time: '', offset: '' })
@@ -53,11 +58,11 @@ const offsetSelectValues = computed(() => {
   })
 })
 
-const hasChanged = useHasChanged(field)
+const hasChanged = useHasChanged(props.fileId, field)
 
 function reset() {
-  const originalTime = field.value.original.slice(0, 6)
-  const originalOffset = field.value.original.slice(6)
+  const originalTime = props.original?.slice(0, 6) ?? ''
+  const originalOffset = props.original?.slice(6) ?? ''
 
   updateTime(originalTime)
   updateOffset(originalOffset)

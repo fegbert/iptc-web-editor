@@ -1,10 +1,16 @@
 <script setup lang="ts">
 import type { IPTCFieldWithValue } from '~/utils/iptc-iim/types'
 
+const props = defineProps<{
+  fileId: string
+  originalCode?: string
+  originalName?: string
+}>()
+
 const code = defineModel<IPTCFieldWithValue & { type: 'location' }>('code', { required: true })
 const name = defineModel<IPTCFieldWithValue & { type: 'extra' }>('name', { required: true })
 
-const hasChanged = useHasChanged(code)
+const hasChanged = useHasChanged(props.fileId, code)
 
 const selectedCountry = computed({
   get: () => ({
@@ -29,7 +35,7 @@ const formattedTitle = computed(() => {
 </script>
 
 <template>
-  <BaseField v-model="code" class="w-full" :title="formattedTitle" :has-changed="hasChanged" @reset="selectedCountry = { label: code.original, value: name.original }">
+  <BaseField v-model="code" class="w-full" :title="formattedTitle" :has-changed="hasChanged" @reset="selectedCountry = { label: originalCode ?? '', value: originalName ?? '' }">
     <BaseSelect
       v-model="selectedCountry"
       :options="countries"

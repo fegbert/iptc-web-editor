@@ -2,7 +2,9 @@
 import type { IPTCFieldWithValue } from '~/utils/iptc-iim/types'
 import { CalendarDate } from '@internationalized/date'
 
-defineProps<{
+const props = defineProps<{
+  fileId: string
+  original?: string
   disabled?: boolean
   required?: boolean
 }>()
@@ -51,11 +53,11 @@ function updateDate(newDate?: CalendarDate) {
   }
 }
 
-const hasChanged = useHasChanged(field)
+const hasChanged = useHasChanged(props.fileId, field)
 </script>
 
 <template>
-  <BaseField v-model="field" :has-changed="hasChanged" :required="required" @reset="updateDate(parseDate(field.original))">
+  <BaseField v-model="field" :has-changed="hasChanged" :required="required" @reset="updateDate(parseDate(props.original))">
     <template #default="{ error }">
       <UPopover arrow :content="{ side: 'top' }">
         <UButton :color="error ? 'error' : hasChanged ? 'secondary' : 'neutral'" variant="outline" :icon="field.icon ?? 'i-lucide-calendar'" :disabled="disabled" class="w-full h-8">

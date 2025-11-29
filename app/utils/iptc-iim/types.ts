@@ -60,4 +60,4 @@ interface IPTCFieldOtherTypes extends IPTCFieldBase {
 
 export type IPTCField = IPTCFieldNumber | IPTCFieldSelect | IPTCFieldSlider | IPTCFieldLocation | IPTCFieldReference | IPTCFieldOtherTypes
 
-export type IPTCFieldWithValue = IPTCField & { value: string, original: string }
+export type IPTCFieldWithValue = IPTCField & { value: string }

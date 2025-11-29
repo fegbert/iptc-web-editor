@@ -2,6 +2,10 @@
 import type { IPTCFieldWithValue } from '~/utils/iptc-iim/types'
 
 withDefaults(defineProps<{
+  fileId: string
+  originalService?: string
+  originalDate?: string
+  originalNumber?: string
   alignment?: 'vertical' | 'horizontal'
 }>(), {
   alignment: 'horizontal',
@@ -21,8 +25,24 @@ watchEffect(() => {
 
 <template>
   <div class="flex w-full gap-2" :class="alignment === 'vertical' ? 'flex-col' : ''">
-    <EditorFieldText v-model="service" />
-    <EditorFieldDate v-model="date" :disabled="!service.value" :required="Boolean(service.value)" />
-    <EditorFieldText v-model="number" :disabled="!service.value" :required="Boolean(service.value)" />
+    <EditorFieldText
+      v-model="service"
+      :file-id="fileId"
+      :original="originalService"
+    />
+    <EditorFieldDate
+      v-model="date"
+      :file-id="fileId"
+      :original="originalDate"
+      :disabled="!service.value"
+      :required="Boolean(service.value)"
+    />
+    <EditorFieldText
+      v-model="number"
+      :file-id="fileId"
+      :original="originalNumber"
+      :disabled="!service.value"
+      :required="Boolean(service.value)"
+    />
   </div>
 </template>

@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import type { IPTCFieldWithValue } from '~/utils/iptc-iim/types'
 
+const props = defineProps<{
+  fileId: string
+  original?: string
+}>()
+
 const field = defineModel<IPTCFieldWithValue & { type: 'number' }>({ required: true })
 
 const rawValue = computed<number | undefined>({
@@ -17,11 +22,11 @@ const rawValue = computed<number | undefined>({
   },
 })
 
-const hasChanged = useHasChanged(field)
+const hasChanged = useHasChanged(props.fileId, field)
 </script>
 
 <template>
-  <BaseField v-model="field" :has-changed="hasChanged" @reset="field.value = field.original">
+  <BaseField v-model="field" :has-changed="hasChanged" @reset="field.value = original ?? ''">
     <UInputNumber
       v-model="rawValue"
       :min="field.minValue"

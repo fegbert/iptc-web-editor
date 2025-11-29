@@ -43,8 +43,10 @@ function toRawDeep(obj: any): any {
  * @param data The data to be stored.
  */
 export async function updateIdb<T>(key: string, data: T) {
-  const { set } = useIDBKeyval<T>(key, data)
+  const { set, data: storedData } = useIDBKeyval<T>(key, data)
   const rawData = toRawDeep(data)
 
   await set(rawData)
+
+  return storedData
 }

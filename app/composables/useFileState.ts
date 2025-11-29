@@ -6,7 +6,6 @@ type FileState = Record<string, IPTCFieldWithValue[]>
 
 const fileStates = ref<FileState>({})
 const isLoading = ref(true)
-const filesChanged = ref(0)
 
 export default function useFileState() {
   const { loadedFiles, updateMetadata, markAsDownloaded } = useFiles()
@@ -31,7 +30,6 @@ export default function useFileState() {
     fileStates.value[fileId] = iptcIimFields.map(field => ({
       ...field,
       value: file.metadata[field.key] || '',
-      original: file.metadata[field.key] || '',
     }))
   }
 
@@ -66,13 +64,15 @@ export default function useFileState() {
     let changes = 0
 
     state.forEach((field) => {
-      if (field.original !== field.value) {
+      if (file.metadata[field.key] !== field.value) {
         changes++
       }
     })
 
     return changes
   }
+
+  const filesChanged = computed(() => Object.keys(fileStates.value).filter(fileId => fileChanges(fileId) > 0).length)
 
   async function saveAll() {
     if (!filesChanged.value) {

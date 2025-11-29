@@ -133,6 +133,15 @@ export default function useFiles() {
     }
   }
 
+  function getOriginal(fileId: string, key: string): string | undefined {
+    const file = loadedFiles.value[fileId]
+    if (!file) {
+      return undefined
+    }
+
+    return file.metadata[key]
+  }
+
   return {
     loadedFiles,
     isLoading,
@@ -143,5 +152,6 @@ export default function useFiles() {
     fileAmount,
     updateMetadata,
     markAsDownloaded,
+    getOriginal,
   }
 }
