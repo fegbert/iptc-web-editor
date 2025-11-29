@@ -27,13 +27,27 @@ function remove(fileId: string) {
   removeFileState(fileId)
 }
 
-function reset(fileId: string) {
-  removeFileState(fileId)
-  setupFileState(fileId)
+const showResetModal = ref<{ fileId: string } | null>(null)
+
+function reset() {
+  if (!showResetModal.value) {
+    return
+  }
+
+  removeFileState(showResetModal.value.fileId)
+  setupFileState(showResetModal.value.fileId)
+  showResetModal.value = null
 }
 </script>
 
 <template>
+  <ModalConfirm
+    v-model="showResetModal"
+    title="Are you sure you want to revert the file?"
+    description="This will discard all unsaved changes made to the file's metadata."
+    :labels="{ confirm: 'Revert', cancel: 'Cancel' }"
+    @confirm="reset()"
+  />
   <UDashboardGroup class="Dashboard">
     <UDashboardSidebar class="Sidebar" :default-size="20">
       <template #header>
@@ -50,7 +64,7 @@ function reset(fileId: string) {
           :class="{ DisableSelection: shift }"
           @select="toggleFileSelection"
           @remove="remove"
-          @reset="reset"
+          @reset="fileId => showResetModal = { fileId }"
         />
 
         <UEmpty
