@@ -25,10 +25,12 @@ const file = computedAsync(async () => {
 <template>
   <div v-if="fileToShow" class="flex h-[22rem] gap-4">
     <NuxtImg
+      v-if="file"
       :src="file"
       :alt="fileToShow.file.name"
       :style="{ height: '22rem' }"
     />
+    <USkeleton v-else class="h-full w-1/4" />
     <div class="flex flex-col w-full justify-center py-4">
       <h1 class="text-lg font-bold">
         File Properties
