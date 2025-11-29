@@ -59,7 +59,9 @@ export default function useFiles() {
           id: fileId,
           file,
           handle: file.handle,
-          metadata: {},
+          metadata: {
+            '2:00': '\u0000\u0004',
+          },
         }
       }
     }))
