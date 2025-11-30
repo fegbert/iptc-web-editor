@@ -107,8 +107,10 @@ export default function useFiles() {
       return acc
     }, {})
 
-    const originatingProgram: string | undefined = import.meta.env.VITE_APP_NAME
-    const programVersion: string | undefined = import.meta.env.VITE_APP_VERSION
+    const config = useRuntimeConfig()
+
+    const originatingProgram = config.public.appName as string | undefined
+    const programVersion = config.public.appVersion as string | undefined
 
     if (!originatingProgram || !programVersion) {
       console.warn('Could not set originating program and version in metadata update')
@@ -117,7 +119,7 @@ export default function useFiles() {
     const updatedMetadata = {
       ...file.metadata,
       ...mappedMetadata,
-      // Automatically set originating program and version using values from env file if defined
+      // Automatically set originating program and version using values from package.json
       ...(originatingProgram ? { '2:65': originatingProgram } : {}),
       ...(programVersion ? { '2:70': programVersion } : {}),
     }

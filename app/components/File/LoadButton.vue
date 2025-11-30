@@ -16,7 +16,7 @@ async function openFiles() {
 
 <template>
   <div>
-    <UButton icon="i-lucide-folder-open" class="justify-center w-full" @click="openFiles">
+    <UButton icon="i-lucide-folder-open" class="justify-center w-full font-semibold" @click="openFiles">
       Load Files
     </UButton>
   </div>

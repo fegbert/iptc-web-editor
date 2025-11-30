@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import type { FileWithMetadata } from '~/shared/types'
+import { supported } from 'browser-fs-access'
 
 const { loadedFiles, removeFile, fileAmount, loadAmountFromCookies, loadFilesFromIndexedDB } = useFiles()
 const { getSelectedIds, toggleSelection, loadSelectedFileIdsFromIndexedDB } = useFileSelection()
-const { removeFileState, loadFileStatesFromIndexedDB } = useFileState()
+const { removeFileState, setupFileState, loadFileStatesFromIndexedDB } = useFileState()
 
 const isLoading = ref(true)
 
@@ -15,20 +16,60 @@ Promise.all([
 
 loadAmountFromCookies()
 
+const hasSeenSupportedBrowserModal = useCookie('hasSeenSupportedBrowserModal', { default: () => false })
+const showSupportedBrowserModal = ref(false)
+
+if (!supported && !hasSeenSupportedBrowserModal.value) {
+  showSupportedBrowserModal.value = true
+}
+
+function acceptSupportedBrowserNotice() {
+  hasSeenSupportedBrowserModal.value = true
+  showSupportedBrowserModal.value = false
+}
+
+const editorContainer = ref(null)
+
+const { y: scrollY } = useScroll(editorContainer, { behavior: 'smooth' })
+
 const { shift, ctrl } = useMagicKeys()
 
 function toggleFileSelection(file: FileWithMetadata) {
   const modifier = shift?.value ? 'shift' : ctrl?.value ? 'ctrl' : undefined
   toggleSelection(file, modifier)
+  scrollY.value = 0
 }
 
 function remove(fileId: string) {
   removeFile(fileId)
   removeFileState(fileId)
 }
+
+const showResetModal = ref<{ fileId: string } | null>(null)
+
+function reset() {
+  if (!showResetModal.value) {
+    return
+  }
+
+  removeFileState(showResetModal.value.fileId)
+  setupFileState(showResetModal.value.fileId)
+  showResetModal.value = null
+}
 </script>
 
 <template>
+  <ModalConfirm
+    v-model="showResetModal"
+    title="Are you sure you want to revert the file?"
+    description="This will discard all unsaved changes made to the file's metadata."
+    :labels="{ confirm: 'Revert', cancel: 'Cancel' }"
+    @confirm="reset()"
+  />
+  <ModalSupportedBrowserNotice
+    v-model="showSupportedBrowserModal"
+    @close="acceptSupportedBrowserNotice()"
+  />
   <UDashboardGroup class="Dashboard">
     <UDashboardSidebar class="Sidebar" :default-size="20">
       <template #header>
@@ -45,6 +86,7 @@ function remove(fileId: string) {
           :class="{ DisableSelection: shift }"
           @select="toggleFileSelection"
           @remove="remove"
+          @reset="fileId => showResetModal = { fileId }"
         />
 
         <UEmpty
@@ -66,7 +108,7 @@ function remove(fileId: string) {
         <USkeleton v-for="file in fileAmount" :key="file" class="w-full h-20 mb-2 rounded-lg" />
       </div>
     </UDashboardSidebar>
-    <UDashboardPanel>
+    <UDashboardPanel :ui="{ body: 'pr-0!' }" class="min-h-min!">
       <template #header>
         <UDashboardNavbar title="Edit Metadata">
           <template #right>
@@ -76,8 +118,10 @@ function remove(fileId: string) {
       </template>
 
       <template #body>
-        <EditorContainer v-if="!isLoading" />
-        <USkeleton v-else class="w-full h-full rounded-lg" />
+        <div ref="editorContainer" class="overflow-y-auto">
+          <EditorContainer v-if="!isLoading" />
+          <USkeleton v-else class="w-full h-full rounded-lg" />
+        </div>
       </template>
     </UDashboardPanel>
   </UDashboardGroup>

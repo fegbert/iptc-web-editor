@@ -1,7 +1,8 @@
 <template>
   <div class="HeaderHeight px-16 flex justify-between items-center bg-default/75 border-default border-b">
-    <div>
-      <h1 class="font-bold text-lg">
+    <div class="flex items-center gap-2">
+      <Icon name="i-lucide-clipboard-pen" size="24" />
+      <h1 class="font-bold text-lg font-sans">
         IPTC Web Editor
       </h1>
     </div>
