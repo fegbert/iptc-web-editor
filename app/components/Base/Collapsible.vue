@@ -34,7 +34,7 @@ const amountOfChanges = computed(() => {
         <div>
           <slot name="title" />
         </div>
-        <span v-if="amountOfChanges && firstSelectedFile && !firstSelectedFile.isDownloaded" class="text-sm text-gray-400">
+        <span v-if="amountOfChanges && firstSelectedFile && !firstSelectedFile.isDownloaded && !disabled" class="text-sm text-gray-400">
           {{ amountOfChanges }} unsaved change{{ amountOfChanges === 1 ? '' : 's' }}
         </span>
       </div>

@@ -6,7 +6,7 @@ defineProps<{
 </script>
 
 <template>
-  <UCard variant="subtle" class="BaseCategory">
+  <UCard variant="subtle" class="mx-2">
     <template #header>
       <h2 class="font-semibold">
         {{ title }}
