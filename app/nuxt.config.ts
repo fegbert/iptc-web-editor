@@ -1,7 +1,16 @@
+import { defineNuxtConfig } from 'nuxt/config'
+import { name, version } from './package.json'
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  compatibilityDate: '2025-05-15',
+  compatibilityDate: '2025-11-30',
   devtools: { enabled: true },
+  runtimeConfig: {
+    public: {
+      appName: name,
+      appVersion: version,
+    },
+  },
   modules: [
     '@nuxt/ui',
     '@nuxt/icon',
