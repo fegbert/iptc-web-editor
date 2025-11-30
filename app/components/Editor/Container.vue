@@ -35,7 +35,7 @@ const fileId = computed(() => firstSelectedFile.value?.id || '')
       </BaseCollapsible>
     </div>
   </div>
-  <div v-else>
-    <p>No files selected!</p>
+  <div v-else class="w-full h-[80vh] flex items-center justify-center">
+    <UEmpty size="xl" variant="naked" title="No file selected" description="Select a file to begin editing its metadata" icon="i-lucide-file-minus" />
   </div>
 </template>
