@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { FileWithMetadata } from '~/shared/types'
+import { supported } from 'browser-fs-access'
 
 const { loadedFiles, removeFile, fileAmount, loadAmountFromCookies, loadFilesFromIndexedDB } = useFiles()
 const { getSelectedIds, toggleSelection, loadSelectedFileIdsFromIndexedDB } = useFileSelection()
@@ -14,6 +15,18 @@ Promise.all([
 ]).then(() => isLoading.value = false)
 
 loadAmountFromCookies()
+
+const hasSeenSupportedBrowserModal = useCookie('hasSeenSupportedBrowserModal', { default: () => false })
+const showSupportedBrowserModal = ref(false)
+
+if (!supported && !hasSeenSupportedBrowserModal.value) {
+  showSupportedBrowserModal.value = true
+}
+
+function acceptSupportedBrowserNotice() {
+  hasSeenSupportedBrowserModal.value = true
+  showSupportedBrowserModal.value = false
+}
 
 const editorContainer = ref(null)
 
@@ -52,6 +65,10 @@ function reset() {
     description="This will discard all unsaved changes made to the file's metadata."
     :labels="{ confirm: 'Revert', cancel: 'Cancel' }"
     @confirm="reset()"
+  />
+  <ModalSupportedBrowserNotice
+    v-model="showSupportedBrowserModal"
+    @close="acceptSupportedBrowserNotice()"
   />
   <UDashboardGroup class="Dashboard">
     <UDashboardSidebar class="Sidebar" :default-size="20">

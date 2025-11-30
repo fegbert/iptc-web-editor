@@ -31,7 +31,7 @@ const amountOfChanges = computed(() => {
       :disabled="disabled"
     >
       <div class="flex w-full items-center justify-between">
-        <div>
+        <div class="font-semibold">
           <slot name="title" />
         </div>
         <span v-if="amountOfChanges && firstSelectedFile && !firstSelectedFile.isDownloaded && !disabled" class="text-sm text-gray-400">
