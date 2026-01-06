@@ -64,7 +64,8 @@ export default function useFileState() {
     let changes = 0
 
     state.forEach((field) => {
-      if (file.metadata[field.key] !== field.value) {
+      const originalValue = file.metadata[field.key] ?? ''
+      if (originalValue !== field.value) {
         changes++
       }
     })
