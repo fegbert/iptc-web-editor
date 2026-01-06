@@ -10,17 +10,56 @@ function encodeData(fields: Record<string, string>) {
 
     const [prefix, id] = key.split(':')
 
-    const field = new Uint8Array(5 + length)
+    // Standard DataSet uses 2-byte length; max is 32767 (0x7FFF) since bit 7 flags extended mode
+    if (length <= 32767) {
+      // Standard length encoding
+      const field = new Uint8Array(5 + length)
 
-    field[0] = IPTC_TAG_MARKER
-    field[1] = Number(prefix)
-    field[2] = Number(id)
-    field[3] = (length >> 8) & 0xFF
-    field[4] = length & 0xFF
+      field[0] = IPTC_TAG_MARKER
+      field[1] = Number(prefix)
+      field[2] = Number(id)
+      field[3] = (length >> 8) & 0xFF
+      field[4] = length & 0xFF
 
-    field.set(encodedData, 5)
+      field.set(encodedData, 5)
 
-    return field
+      return field
+    }
+    else {
+      let descriptorLength = 1
+      let modifiableLength = Number(length)
+      while (modifiableLength > 255) {
+        modifiableLength >>= 8
+        descriptorLength++
+      }
+
+      // Octet 4: high bit set + upper 7 bits of descriptor length
+      // Octet 5: lower 8 bits of descriptor length
+      const octet4 = 0x80 | ((descriptorLength >> 8) & 0x7F)
+      const octet5 = descriptorLength & 0xFF
+
+      // Build the descriptor bytes (big-endian, length encoded)
+      const descriptor = new Uint8Array(descriptorLength)
+      let dataLength = length
+      for (let i = descriptorLength - 1; i >= 0; i--) {
+        descriptor[i] = dataLength & 0xFF
+        dataLength >>= 8
+      }
+
+      // Field = marker + record + dataset + octet4 + octet5 + descriptor + data
+      const field = new Uint8Array(5 + descriptorLength + encodedData.length)
+
+      field[0] = IPTC_TAG_MARKER
+      field[1] = Number(prefix)
+      field[2] = Number(id)
+      field[3] = octet4
+      field[4] = octet5
+
+      field.set(descriptor, 5)
+      field.set(encodedData, 5 + descriptorLength)
+
+      return field
+    }
   })
 
   return concatUint8Arrays(encodedFields)

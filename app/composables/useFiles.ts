@@ -27,6 +27,12 @@ export default function useFiles() {
     fileAmount.value = Number.parseInt(amountCookie.value ?? '0')
   }
 
+  function updateFileAmountCookie() {
+    fileAmount.value = Object.keys(loadedFiles.value).length
+    const amountCookie = useCookie(COOKIE_KEY_FILE_AMOUNT)
+    amountCookie.value = String(fileAmount.value)
+  }
+
   function deduplicateFiles(files: FileWithMetadata[]) {
     const dedupedIds = new Set()
 
@@ -75,10 +81,7 @@ export default function useFiles() {
       setupFileState(file.id)
     })
 
-    fileAmount.value = Object.keys(loadedFiles.value).length
-
-    const amountCookie = useCookie(COOKIE_KEY_FILE_AMOUNT)
-    amountCookie.value = String(fileAmount.value)
+    updateFileAmountCookie()
   }
 
   function markAsDownloaded(fileIds: string[]) {
@@ -99,6 +102,8 @@ export default function useFiles() {
 
     delete selections.value[fileToRemoveId]
     delete loadedFiles.value[fileToRemoveId]
+
+    updateFileAmountCookie()
   }
 
   async function updateMetadata(file: FileWithMetadata, metadata: Array<{ key: string, value?: string }>) {
@@ -116,9 +121,17 @@ export default function useFiles() {
       console.warn('Could not set originating program and version in metadata update')
     }
 
+    // Strip out empty keys and values
+    const strippedMappedMetadata = Object.entries(mappedMetadata).reduce<Record<string, string>>((acc, [key, value]) => {
+      if (key && value) {
+        acc[key] = value
+      }
+      return acc
+    }, {})
+
     const updatedMetadata = {
       ...file.metadata,
-      ...mappedMetadata,
+      ...strippedMappedMetadata,
       // Automatically set originating program and version using values from package.json
       ...(originatingProgram ? { '2:65': originatingProgram } : {}),
       ...(programVersion ? { '2:70': programVersion } : {}),

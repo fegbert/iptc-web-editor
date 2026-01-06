@@ -56,17 +56,45 @@ export function parseIIM(buffer: Uint8Array): Record<string, any> {
 
     const record = iimBlock[offset + 1]
     const dataset = iimBlock[offset + 2]
-    const length = view.getUint16(offset + 3)
-
     const tag = `${record}:${dataset.toString().padStart(2, '0')}`
 
-    const start = offset + 5
-    const end = start + length
+    // Parse data length: support standard (2-byte) and extended-length descriptor
+    const octet4 = iimBlock[offset + 3]
+    const octet5 = iimBlock[offset + 4]
+
+    let dataLength = 0
+    let dataStart = 0
+
+    // Extended-length flag is bit 7 of octet 4
+    const isExtended = (octet4 & 0x80) !== 0
+    if (isExtended) {
+      // Length Descriptor length is the 15 LSB across octet4 (lower 7 bits) and octet5 taken together
+      const descriptorLength = ((octet4 & 0x7F) << 8) | octet5
+      dataStart = offset + 5 + descriptorLength
+
+      const descriptorEnd = offset + 5 + descriptorLength
+      if (descriptorEnd > iimBlock.length) {
+        break
+      }
+
+      // Parse actual data length from descriptor bytes (big-endian integer)
+      dataLength = 0
+      for (let i = 0; i < descriptorLength; i++) {
+        dataLength = (dataLength << 8) | iimBlock[offset + 5 + i]
+      }
+    }
+    else {
+      // Standard 2-byte big-endian length
+      dataLength = view.getUint16(offset + 3)
+      dataStart = offset + 5
+    }
+
+    const end = dataStart + dataLength
     if (end > iimBlock.length) {
       break
     }
 
-    const value = new TextDecoder().decode(iimBlock.subarray(start, end))
+    const value = new TextDecoder().decode(iimBlock.subarray(dataStart, end))
 
     if (tag in result) {
       const existing = result[tag]
