@@ -1,0 +1,50 @@
+# Dependencies
+node_modules
+**/node_modules
+
+# Build outputs
+.nuxt
+.output
+dist
+app/.nuxt
+app/.output
+app/dist
+parser/dist
+
+# Git
+.git
+.gitignore
+.github
+
+# Development files
+*.md
+!README.md
+.vscode
+.idea
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage
+.nyc_output
+tests/assets/*.jpg
+!tests/assets/test01.jpg
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yml
