@@ -19,7 +19,7 @@ const open = defineModel<boolean>({ required: true })
       >
         <template #description>
           <div class="text-center space-y-4">
-            <p>The browser you are using currently does not support directly reading and saving files directly to your local file system. For the best experience with this application, please consider using a supported browser such as Google Chrome.</p>
+            <p>The browser you are using currently does not support directly reading and saving files to your local file system. For the best experience with this application, please consider using a supported browser such as Google Chrome.</p>
             <p>
               For more information about which browsers are supported, please visit
               <ULink class="text-blue-400 hover:text-blue-300 underline" href="https://developer.mozilla.org/en-US/docs/Web/API/Window/showOpenFilePicker#browser_compatibility" target="_blank">
