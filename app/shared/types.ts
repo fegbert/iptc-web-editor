@@ -1,4 +1,3 @@
-// TODO: Improve this typing when adding full metadata mapping
 export interface FileWithMetadata {
   id: string
   file: File
