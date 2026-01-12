@@ -4,13 +4,18 @@ import { fileOpen } from 'browser-fs-access'
 const { addFiles } = useFiles()
 
 async function openFiles() {
-  const blob = await fileOpen({
-    mimeTypes: ['image/jpeg'],
-    startIn: 'pictures',
-    multiple: true,
-  })
+  try {
+    const blob = await fileOpen({
+      mimeTypes: ['image/jpeg'],
+      startIn: 'pictures',
+      multiple: true,
+    })
 
-  await addFiles(blob)
+    await addFiles(blob)
+  }
+  catch {
+    // User cancelled the file selection
+  }
 }
 </script>
 

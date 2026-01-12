@@ -98,11 +98,7 @@ export default function useFiles() {
       if (!loadedFiles.value[fileId]) {
         return
       }
-
-      loadedFiles.value[fileId] = {
-        ...loadedFiles.value[fileId],
-        isDownloaded: true,
-      }
+      loadedFiles.value[fileId].isDownloaded = true
     })
   }
 
