@@ -14,9 +14,9 @@ const emit = defineEmits<{
 
 <template>
   <div class="flex flex-col gap-2 overflow-y-auto pb-2">
-    <div v-for="file in Object.values(files)" :key="`${file.file.name}-${file.file.size}`">
+    <div v-for="file in Object.values(files)" :key="`${file.data.name}-${file.data.size}`">
       <FilePreview
-        :image="file"
+        :file="file"
         :width="64"
         :height="64"
         show-details
