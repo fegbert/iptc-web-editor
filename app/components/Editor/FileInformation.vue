@@ -18,7 +18,7 @@ const file = computedAsync(async () => {
   if (!fileToShow.value) {
     return undefined
   }
-  return await loadImageForPreview(fileToShow.value.file)
+  return await loadImageForPreview(fileToShow.value.buffer)
 })
 </script>
 
@@ -27,7 +27,7 @@ const file = computedAsync(async () => {
     <NuxtImg
       v-if="file"
       :src="file"
-      :alt="fileToShow.file.name"
+      :alt="fileToShow.data.name"
       :style="{ height: '22rem' }"
     />
     <USkeleton v-else class="h-full w-1/4" />
@@ -41,26 +41,26 @@ const file = computedAsync(async () => {
             <td class="PropertyColumn">
               Filename:
             </td>
-            <td>{{ fileToShow.file.name }}</td>
+            <td>{{ fileToShow.data.name }}</td>
           </tr>
           <tr>
             <td class="PropertyColumn">
               File Size:
             </td>
-            <td>{{ (fileToShow.file.size / 1024 / 1024).toFixed(2) }} MB</td>
+            <td>{{ (fileToShow.data.size / 1024 / 1024).toFixed(2) }} MB</td>
           </tr>
           <tr>
             <td class="PropertyColumn">
               File Type:
             </td>
-            <td>{{ fileToShow.file.type }}</td>
+            <td>{{ fileToShow.data.type }}</td>
           </tr>
           <tr>
             <td class="PropertyColumn">
               Last Modified:
             </td>
             <td>
-              {{ formatDate(fileToShow.file.lastModified) }}
+              {{ formatDate(fileToShow.data.lastModified) }}
             </td>
           </tr>
         </tbody>
