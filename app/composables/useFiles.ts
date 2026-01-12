@@ -98,11 +98,7 @@ export default function useFiles() {
       if (!loadedFiles.value[fileId]) {
         return
       }
-
-      loadedFiles.value[fileId] = {
-        ...loadedFiles.value[fileId],
-        isDownloaded: true,
-      }
+      loadedFiles.value[fileId].isDownloaded = true
     })
   }
 
@@ -147,7 +143,7 @@ export default function useFiles() {
     }
 
     try {
-      await writeMetadata(new Uint8Array(file.buffer), updatedMetadata, undefined, file.handle)
+      await writeMetadata(new Uint8Array(file.buffer), updatedMetadata, undefined, file.handle, file.data.name)
     }
     catch (e) {
       console.warn('Failed to save metadata for file: ', file.data.name, ' - ', e)

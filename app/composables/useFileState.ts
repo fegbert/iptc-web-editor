@@ -107,21 +107,20 @@ export default function useFileState() {
     if (!supported) {
       markAsDownloaded(statesToSave.map(s => s.fileId))
     }
-    else {
-      const config = useRuntimeConfig()
 
-      const originatingProgram = config.public.appName as string | undefined
-      const programVersion = config.public.appVersion as string | undefined
+    const config = useRuntimeConfig()
 
-      if (!originatingProgram || !programVersion) {
-        return
-      }
+    const originatingProgram = config.public.appName as string | undefined
+    const programVersion = config.public.appVersion as string | undefined
 
-      statesToSave.forEach(({ fileId }) => {
-        updateFileData(fileId, '2:65', originatingProgram)
-        updateFileData(fileId, '2:70', programVersion)
-      })
+    if (!originatingProgram || !programVersion) {
+      return
     }
+
+    statesToSave.forEach(({ fileId }) => {
+      updateFileData(fileId, '2:65', originatingProgram)
+      updateFileData(fileId, '2:70', programVersion)
+    })
   }
 
   return {

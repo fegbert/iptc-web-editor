@@ -9,7 +9,7 @@ const { filesChanged, saveAll } = useFileState()
     <UTooltip v-if="!supported" :content="{ align: 'center', side: 'left' }" :ui="{ content: 'h-auto' }" :delay-duration="0">
       <template #content>
         <p class="max-w-sm text-wrap">
-          Your browser does not support saving files directly. For the best experience, please consider using a chromium-based browser.
+          Your browser does not support saving files directly to your local file system. For the best experience, please consider using a chromium-based browser.
         </p>
       </template>
 
