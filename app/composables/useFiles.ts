@@ -50,12 +50,20 @@ export default function useFiles() {
       const buffer = await file.arrayBuffer()
       const fileId = getFileId(file)
 
+      const fileData = {
+        name: file.name,
+        type: file.type,
+        lastModified: file.lastModified,
+        size: file.size,
+      }
+
       try {
         const metadata = parseMetadata(new Uint8Array(buffer))
 
         return {
           id: fileId,
-          file,
+          buffer,
+          data: fileData,
           handle: file.handle,
           metadata,
         }
@@ -63,7 +71,8 @@ export default function useFiles() {
       catch {
         return {
           id: fileId,
-          file,
+          buffer,
+          data: fileData,
           handle: file.handle,
           metadata: {
             '2:00': '\u0000\u0004',
@@ -138,16 +147,13 @@ export default function useFiles() {
     }
 
     try {
-      await writeMetadata(file.file, updatedMetadata, undefined, file.handle)
+      await writeMetadata(new Uint8Array(file.buffer), updatedMetadata, undefined, file.handle)
     }
     catch (e) {
-      console.warn('Failed to save metadata for file: ', file.file.name, ' - ', e)
+      console.warn('Failed to save metadata for file: ', file.data.name, ' - ', e)
     }
 
-    loadedFiles.value[file.id] = {
-      ...file,
-      metadata: updatedMetadata,
-    }
+    loadedFiles.value[file.id]!.metadata = updatedMetadata
   }
 
   function getOriginal(fileId: string, key: string): string | undefined {
