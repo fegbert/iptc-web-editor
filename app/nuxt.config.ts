@@ -3,7 +3,15 @@ import { name, version } from './package.json'
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  compatibilityDate: '2025-11-30',
+  compatibilityDate: '2026-01-12',
+  app: {
+    head: {
+      title: 'IPTC Web Editor',
+      meta: [
+        { name: 'description', content: 'A web-based IPTC metadata editor for images. Currently supports JPEG files with IPTC-IIM metadata.' },
+      ],
+    },
+  },
   devtools: { enabled: true },
   runtimeConfig: {
     public: {
