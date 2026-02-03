@@ -134,8 +134,16 @@ export default function useFiles() {
       return acc
     }, {})
 
+    // Remove fields from original metadata if they're empty in the update
+    const fileMetadataWithRemovedFields = Object.entries(file.metadata).reduce<Record<string, string>>((acc, [key, value]) => {
+      if (key in strippedMappedMetadata) {
+        acc[key] = value
+      }
+      return acc
+    }, {})
+
     const updatedMetadata = {
-      ...file.metadata,
+      ...fileMetadataWithRemovedFields,
       ...strippedMappedMetadata,
       // Automatically set originating program and version using values from package.json
       ...(originatingProgram ? { '2:65': originatingProgram } : {}),
