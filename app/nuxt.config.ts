@@ -28,6 +28,7 @@ export default defineNuxtConfig({
         colorDanger: 'var(--color-error)',
         colorSuccess: 'var(--color-success)',
         colorWarning: 'var(--color-warning)',
+        colorModalBackdrop: 'rgba(0, 0, 0, 0.5)',
       },
     },
   },
