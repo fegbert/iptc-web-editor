@@ -19,7 +19,20 @@ export default defineNuxtConfig({
       appVersion: version,
     },
   },
+  clerk: {
+    appearance: {
+      variables: {
+        colorPrimary: 'var(--color-primary)',
+        colorBackground: 'var(--ui-bg)',
+        colorText: 'var(--ui-text)',
+        colorDanger: 'var(--color-error)',
+        colorSuccess: 'var(--color-success)',
+        colorWarning: 'var(--color-warning)',
+      },
+    },
+  },
   modules: [
+    '@clerk/nuxt',
     '@nuxt/ui',
     '@nuxt/icon',
     '@nuxt/fonts',

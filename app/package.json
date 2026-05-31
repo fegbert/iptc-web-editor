@@ -13,6 +13,7 @@
     "start": "node .output/server/index.mjs"
   },
   "dependencies": {
+    "@clerk/nuxt": "^2.5.2",
     "@iconify-json/lucide": "^1.2.82",
     "@internationalized/date": "^3.10.0",
     "@nuxt/eslint": "1.4.1",

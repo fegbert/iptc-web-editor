@@ -18,6 +18,14 @@
           aria-label="GitHub"
         />
       </UTooltip>
+      <Show when="signed-in">
+        <UserButton />
+      </Show>
+      <Show when="signed-out">
+        <SignInButton mode="modal">
+          <UButton color="neutral" variant="outline" label="Sign in" />
+        </SignInButton>
+      </Show>
     </div>
   </div>
 </template>
