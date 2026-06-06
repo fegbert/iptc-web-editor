@@ -2,6 +2,26 @@
 const { workspace: queryWorkspace } = useQuery()
 
 const { data: workspaces } = queryWorkspace.list()
+
+const { $trpc, queryClient, useMutation, makeTrpcErrorToast } = useMutationHelpers()
+const notification = useToast()
+
+const create = useMutation({
+  mutationFn: $trpc.workspace.create.mutate,
+  onError: makeTrpcErrorToast(notification, { description: 'Failed to create workspace' }),
+  onSuccess: async () => {
+    await queryClient.invalidateQueries({ queryKey: ['workspace'] })
+    notification.add({
+      title: 'The Workspace has been created',
+      color: 'success',
+      duration: 5000,
+    })
+  },
+})
+
+function test() {
+  create.mutate({ name: 'Test Workspace' })
+}
 </script>
 
 <template>
@@ -9,7 +29,7 @@ const { data: workspaces } = queryWorkspace.list()
     <div class="flex items-center gap-2">
       <Icon name="material-symbols:image-search-outline" size="24" />
       <h1 class="font-bold text-lg font-sans">
-        IPTC Web Editor
+        IPTC Web Editor {{ `(${workspaces?.length ?? 0} workspaces)` }}
       </h1>
     </div>
     <div class="flex items-center gap-2">
@@ -32,7 +52,7 @@ const { data: workspaces } = queryWorkspace.list()
           <UButton color="neutral" variant="outline" label="Sign in" />
         </SignInButton>
       </Show>
-      <UButton color="neutral" variant="subtle" label="Test TRPC" />
+      <UButton color="neutral" variant="subtle" label="Test TRPC" @click="test" />
     </div>
   </div>
 </template>

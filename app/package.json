@@ -39,6 +39,7 @@
     "idb-keyval": "^6.2.2",
     "iptc-parser": "workspace:*",
     "nuxt": "^4.1.1",
+    "pg": "^8.21.0",
     "superjson": "^2.2.6",
     "tailwindcss": "^4.1.13",
     "trpc-nuxt": "^2.1.1",
@@ -50,6 +51,7 @@
   "packageManager": "pnpm@10.12.4",
   "devDependencies": {
     "@antfu/eslint-config": "^4.14.1",
+    "@types/pg": "^8.20.0",
     "eslint": "^9.29.0",
     "prisma": "^7.8.0"
   }

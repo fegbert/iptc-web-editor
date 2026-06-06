@@ -1,13 +1,17 @@
 import type { Router } from '~/server/trpc/routers/index'
-import { createTRPCNuxtClient, httpBatchLink } from 'trpc-nuxt/client'
+import { splitLink } from '@trpc/client'
+import superjson from 'superjson'
+import { createTRPCNuxtClient, httpBatchLink, httpLink } from 'trpc-nuxt/client'
 
 export default defineNuxtPlugin(() => {
   const trpc = createTRPCNuxtClient<Router>({
-    links: [
-      httpBatchLink({
-        url: '/api/trpc',
-      }),
-    ],
+    links: [splitLink({
+      condition(op) {
+        return Boolean(op.context.skipBatch)
+      },
+      true: httpLink({ url: '/api/trpc', transformer: superjson }),
+      false: httpBatchLink({ url: '/api/trpc', transformer: superjson }),
+    })],
   })
 
   return {

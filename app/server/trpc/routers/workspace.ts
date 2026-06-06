@@ -18,7 +18,7 @@ export const workspaceRouter = createRouter({
       return ctx.prisma.workspace.create({
         data: {
           name: input.name,
-          clerkOrgId: '0',
+          clerkOrgId: '',
           createdBy: ctx.auth.userId,
         },
       })
