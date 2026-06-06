@@ -4,9 +4,10 @@ packages:
 ignoredBuiltDependencies:
   - sharp
 onlyBuiltDependencies:
-  - '@prisma/engines'
-  - prisma
-  - esbuild
+  - '@clerk/shared'
   - '@parcel/watcher'
+  - esbuild
+  - prisma
+  - '@prisma/engines'
   - unrs-resolver
   - vue-demi
