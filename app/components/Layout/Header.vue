@@ -1,3 +1,9 @@
+<script setup lang="ts">
+const { workspace: queryWorkspace } = useQuery()
+
+const { data: workspaces } = queryWorkspace.list()
+</script>
+
 <template>
   <div class="HeaderHeight px-16 flex justify-between items-center bg-default/75 border-default border-b">
     <div class="flex items-center gap-2">
@@ -26,6 +32,7 @@
           <UButton color="neutral" variant="outline" label="Sign in" />
         </SignInButton>
       </Show>
+      <UButton color="neutral" variant="subtle" label="Test TRPC" />
     </div>
   </div>
 </template>

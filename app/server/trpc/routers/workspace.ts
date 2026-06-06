@@ -15,13 +15,10 @@ export const workspaceRouter = createRouter({
     .input(z.object({ name: z.string().min(1).max(100) }))
     .mutation(({ ctx, input }) => {
       // TODO OBVIOUSLY
-      if (!ctx.auth.orgId) {
-        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Must be in an organization to create a workspace' })
-      }
       return ctx.prisma.workspace.create({
         data: {
           name: input.name,
-          clerkOrgId: ctx.auth.orgId,
+          clerkOrgId: '0',
           createdBy: ctx.auth.userId,
         },
       })

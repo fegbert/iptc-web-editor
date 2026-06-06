@@ -11,6 +11,10 @@ export const protectedProcedure = t.procedure.use(t.middleware(async ({ ctx, nex
   return next({
     ctx: {
       ...ctx,
+      auth: {
+        ...ctx.auth,
+        userId: ctx.auth.userId!,
+      },
     },
   })
 }))
