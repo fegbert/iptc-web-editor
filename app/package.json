@@ -17,6 +17,8 @@
     "db:generate": "prisma generate"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1063.0",
+    "@aws-sdk/s3-request-presigner": "^3.1063.0",
     "@clerk/nuxt": "^2.5.2",
     "@iconify-json/lucide": "^1.2.82",
     "@internationalized/date": "^3.10.0",
