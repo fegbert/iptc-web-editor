@@ -21,6 +21,9 @@ RUN pnpm install --frozen-lockfile
 # Copy app module
 COPY app ./app
 
+# Generate Prisma client (must run before nuxt build for types to exist)
+RUN pnpm -C app db:generate
+
 # Build Nuxt app (parser builds automatically via prepare script)
 RUN pnpm -C app build
 
@@ -42,9 +45,10 @@ COPY --from=builder /editor/pnpm-lock.yaml ./
 COPY --from=builder /editor/parser/package.json ./parser/
 COPY --from=builder /editor/parser/dist ./parser/dist
 
-# Copy app package.json and built files
+# Copy app package.json, built files, and generated Prisma client
 COPY --from=builder /editor/app/package.json ./app/
 COPY --from=builder /editor/app/.output ./app/.output
+COPY --from=builder /editor/app/prisma/generated ./app/prisma/generated
 
 # Install only production dependencies
 RUN pnpm install --frozen-lockfile --prod --ignore-scripts

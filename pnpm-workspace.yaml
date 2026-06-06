@@ -6,8 +6,8 @@ ignoredBuiltDependencies:
 onlyBuiltDependencies:
   - '@clerk/shared'
   - '@parcel/watcher'
-  - '@prisma/engines'
   - esbuild
   - prisma
+  - '@prisma/engines'
   - unrs-resolver
   - vue-demi
