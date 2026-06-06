@@ -46,6 +46,7 @@ function test() {
       </UTooltip>
       <Show when="signed-in">
         <UserButton />
+        <OrganizationSwitcher />
       </Show>
       <Show when="signed-out">
         <SignInButton mode="modal">
