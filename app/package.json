@@ -10,7 +10,11 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "lint": "eslint --ext .ts,.vue .",
-    "start": "node .output/server/index.mjs"
+    "start": "node .output/server/index.mjs",
+    "db:migrate": "prisma migrate dev",
+    "db:push": "prisma db push",
+    "db:studio": "prisma studio",
+    "db:generate": "prisma generate"
   },
   "dependencies": {
     "@iconify-json/lucide": "^1.2.82",
@@ -20,11 +24,13 @@
     "@nuxt/icon": "1.13.0",
     "@nuxt/image": "^2.0.0",
     "@nuxt/ui": "^4.1.0",
+    "@prisma/client": "^7.8.0",
     "@vueuse/core": "^13.9.0",
     "@vueuse/integrations": "^13.9.0",
     "@vueuse/nuxt": "^13.9.0",
     "async-validator": "^4.2.5",
     "browser-fs-access": "^0.38.0",
+    "dotenv": "^17.4.2",
     "idb-keyval": "^6.2.2",
     "iptc-parser": "workspace:*",
     "nuxt": "^4.1.1",
@@ -37,6 +43,7 @@
   "packageManager": "pnpm@10.12.4",
   "devDependencies": {
     "@antfu/eslint-config": "^4.14.1",
-    "eslint": "^9.29.0"
+    "eslint": "^9.29.0",
+    "prisma": "^7.8.0"
   }
 }
