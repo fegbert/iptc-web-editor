@@ -8,6 +8,7 @@ import { r2, r2Bucket } from '~/server/utils/r2'
 import { createRouter } from '../init'
 import { hasRole, makeRoleCheckedProcedure } from '../procedures'
 
+const UPLOAD_URL_TTL_SECONDS = 5 * 60
 const DOWNLOAD_URL_TTL_SECONDS = 60 * 60
 
 const MAX_ALLOWED_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
@@ -26,7 +27,7 @@ function checkFilePermissions(file: Prisma.WorkspaceFileGetPayload<{ select: { c
 
 // TODO: Definitely still look into rate limiting
 export const fileRouter = createRouter({
-  getAll: makeRoleCheckedProcedure('viewer')
+  list: makeRoleCheckedProcedure('viewer')
     .input(z.object({ path: z.string().default('/') }))
     .query(async ({ ctx, input }) => {
       const files = await ctx.prisma.workspaceFile.findMany({
@@ -52,45 +53,58 @@ export const fileRouter = createRouter({
 
       return filesWithUrls
     }),
-  upload: makeRoleCheckedProcedure('member')
+  getUploadUrl: makeRoleCheckedProcedure('member')
     .input(z.object({
-      file: z.file().max(MAX_ALLOWED_FILE_SIZE, { error: `File size must be less than ${MAX_ALLOWED_FILE_SIZE / (1024 * 1024)} MB` }).mime('image/jpeg'),
-      path: z.string().optional(),
+      filename: z.string().max(255),
+      contentType: z.enum(['image/jpeg']),
+      size: z.number().max(MAX_ALLOWED_FILE_SIZE, { error: `File size must be less than ${MAX_ALLOWED_FILE_SIZE / (1024 * 1024)} MB` }),
     }))
-    .mutation(async ({ input, ctx }) => {
-      const ext = input.file.name.split('.').pop()
+    .query(async ({ input, ctx }) => {
+      const ext = input.filename.split('.').pop()
 
       if (!ext) {
-        throw new TRPCError({ code: 'BAD_REQUEST', message: 'File name must have an extension' })
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Filename must have an extension' })
       }
 
       const clerkOrgId = ctx.auth.orgId
       const r2Key = `${clerkOrgId}/${crypto.randomUUID()}.${ext}`
 
-      const uploadResult = await r2.send(new PutObjectCommand({
-        Bucket: r2Bucket,
-        Key: r2Key,
-        Body: input.file,
-        ContentType: input.file.type,
-        ContentLength: input.file.size,
-      }))
+      const uploadUrl = await getSignedUrl(
+        r2,
+        new PutObjectCommand({
+          Bucket: r2Bucket,
+          Key: r2Key,
+          ContentType: input.contentType,
+          ContentLength: input.size,
+        }),
+        { expiresIn: UPLOAD_URL_TTL_SECONDS },
+      )
 
-      if (uploadResult.$metadata.httpStatusCode !== 200) {
-        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to upload file to storage' })
-      }
+      return { uploadUrl, r2Key }
+    }),
+  create: makeRoleCheckedProcedure('member')
+    .input(z.object({
+      r2Key: z.string(),
+      name: z.string().max(255),
+      path: z.string().default('/'),
+      size: z.number().max(MAX_ALLOWED_FILE_SIZE, { error: `File size must be less than ${MAX_ALLOWED_FILE_SIZE / (1024 * 1024)} MB` }),
+      contentType: z.enum(['image/jpeg']),
+      metadata: z.record(z.string(), z.string()),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const clerkOrgId = ctx.auth.orgId
 
-      const fileRecord = await ctx.prisma.workspaceFile.create({
+      return ctx.prisma.workspaceFile.create({
         data: {
           clerkOrgId,
-          name: input.file.name,
-          r2Key,
-          size: input.file.size,
+          name: input.name,
+          r2Key: input.r2Key,
+          size: input.size,
+          metadata: input.metadata,
           createdBy: ctx.auth.userId,
           path: input.path,
         },
       })
-
-      return fileRecord
     }),
   delete: makeRoleCheckedProcedure('member')
     .input(z.object({ fileId: z.string() }))
