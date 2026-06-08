@@ -1,4 +1,5 @@
 import { defineNuxtConfig } from 'nuxt/config'
+import { clerkConfig } from './clerk.config'
 import { name, version } from './package.json'
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
@@ -19,19 +20,7 @@ export default defineNuxtConfig({
       appVersion: version,
     },
   },
-  clerk: {
-    appearance: {
-      variables: {
-        colorPrimary: 'var(--color-primary)',
-        colorBackground: 'var(--ui-bg)',
-        colorText: 'var(--ui-text)',
-        colorDanger: 'var(--color-error)',
-        colorSuccess: 'var(--color-success)',
-        colorWarning: 'var(--color-warning)',
-        colorModalBackdrop: 'rgba(0, 0, 0, 0.5)',
-      },
-    },
-  },
+  clerk: clerkConfig,
   modules: [
     '@clerk/nuxt',
     '@nuxt/ui',
