@@ -7,23 +7,11 @@ datasource db {
   provider = "postgresql"
 }
 
-model Workspace {
-  id         String          @id @default(cuid())
-  name       String
-  clerkOrgId String
-  createdBy  String
-  files      WorkspaceFile[]
-  createdAt  DateTime        @default(now())
-  updatedAt  DateTime        @updatedAt
-
-  @@index([clerkOrgId])
-}
-
 model WorkspaceFile {
   id            String    @id @default(cuid())
-  workspaceId   String
-  workspace     Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  clerkOrgId    String
   name          String
+  path          String    @default("/")
   r2Key         String    @unique
   size          Int
   metadata      Json      @default("{}")

@@ -1,7 +1,6 @@
+import type { OrgRole } from '../types'
 import { TRPCError } from '@trpc/server'
 import { t } from './init'
-
-type OrgRole = 'admin' | 'member' | 'viewer'
 
 const ROLE_HIERARCHY: Record<OrgRole, number> = {
   viewer: 1,
