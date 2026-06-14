@@ -1,5 +1,5 @@
-import workspace from './mutations/workspace'
+import file from './mutations/file'
 
 export default () => ({
-  workspace,
+  file,
 })

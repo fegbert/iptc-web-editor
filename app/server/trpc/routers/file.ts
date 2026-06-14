@@ -18,7 +18,7 @@ function checkFilePermissions(file: Prisma.WorkspaceFileGetPayload<{ select: { c
     throw new TRPCError({ code: 'FORBIDDEN', message: 'The file does not belong to your organization' })
   }
 
-  const isAdminOrCreator = hasRole(userId, 'admin') || file.createdBy === userId
+  const isAdminOrCreator = hasRole(userId, 'org:admin') || file.createdBy === userId
 
   if (!isAdminOrCreator) {
     throw new TRPCError({ code: 'FORBIDDEN', message: 'You do not have permission to access this file' })
@@ -27,7 +27,7 @@ function checkFilePermissions(file: Prisma.WorkspaceFileGetPayload<{ select: { c
 
 // TODO: Definitely still look into rate limiting
 export const fileRouter = createRouter({
-  list: makeRoleCheckedProcedure('viewer')
+  list: makeRoleCheckedProcedure('org:viewer')
     .input(z.object({ path: z.string().default('/') }))
     .query(async ({ ctx, input }) => {
       const files = await ctx.prisma.workspaceFile.findMany({
@@ -53,7 +53,7 @@ export const fileRouter = createRouter({
 
       return filesWithUrls
     }),
-  getUploadUrl: makeRoleCheckedProcedure('member')
+  getUploadUrl: makeRoleCheckedProcedure('org:member')
     .input(z.object({
       filename: z.string().max(255),
       contentType: z.enum(['image/jpeg']),
@@ -82,7 +82,7 @@ export const fileRouter = createRouter({
 
       return { uploadUrl, r2Key }
     }),
-  create: makeRoleCheckedProcedure('member')
+  create: makeRoleCheckedProcedure('org:member')
     .input(z.object({
       r2Key: z.string(),
       name: z.string().max(255),
@@ -106,7 +106,7 @@ export const fileRouter = createRouter({
         },
       })
     }),
-  delete: makeRoleCheckedProcedure('member')
+  delete: makeRoleCheckedProcedure('org:member')
     .input(z.object({ fileId: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const file = await ctx.prisma.workspaceFile.findUnique({

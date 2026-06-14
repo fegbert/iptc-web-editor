@@ -2,6 +2,9 @@
 import { fileOpen } from 'browser-fs-access'
 
 const { addFiles } = useFiles()
+const { uploadFiles } = useWorkspace()
+
+const { orgId } = useAuth()
 
 async function openFiles() {
   try {
@@ -11,7 +14,11 @@ async function openFiles() {
       multiple: true,
     })
 
-    await addFiles(blob)
+    const addedFiles = await addFiles(blob)
+
+    if (orgId.value) {
+      await uploadFiles(addedFiles)
+    }
   }
   catch {
     // User cancelled the file selection

@@ -1,8 +1,8 @@
 import { createRouter } from '../init'
-import { workspaceRouter } from './workspace'
+import { fileRouter } from './file'
 
 export const router = createRouter({
-  workspace: workspaceRouter,
+  file: fileRouter,
 })
 
 export type Router = typeof router

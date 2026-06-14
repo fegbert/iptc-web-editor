@@ -5,6 +5,7 @@ interface FileData {
   type: string
   size: number
   lastModified: number
+  path?: string
 }
 export interface FileWithMetadata {
   id: string
