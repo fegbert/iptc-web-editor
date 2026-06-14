@@ -1,3 +1,15 @@
+<script setup lang="ts">
+import type { OrganizationResource } from '@clerk/nuxt/types'
+
+function getAfterSelectUrl(org: OrganizationResource) {
+  if (!org.slug) {
+    return '/'
+  }
+  navigateTo(`/workspace/${org.slug}`)
+  return ''
+}
+</script>
+
 <template>
   <div class="HeaderHeight px-16 flex justify-between items-center bg-default/75 border-default border-b">
     <div class="flex items-center gap-2">
@@ -20,7 +32,7 @@
       </UTooltip>
       <Show when="signed-in">
         <UserButton />
-        <OrganizationSwitcher />
+        <OrganizationSwitcher after-select-personal-url="/" :after-select-organization-url="getAfterSelectUrl" />
       </Show>
       <Show when="signed-out">
         <SignInButton mode="modal">

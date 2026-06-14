@@ -58,6 +58,7 @@ function reset() {
 }
 
 onMounted(async () => {
+  const { params } = useRoute()
   const clerk = useClerk()
   const { organization, isLoaded } = useOrganization()
 
@@ -66,8 +67,8 @@ onMounted(async () => {
   await until(isClerkLoaded).toBe(true)
   await until(isLoaded).toBe(true)
 
-  if (organization.value) {
-    await clerk.value?.setActive({ organization: null })
+  if (!organization.value || organization.value.slug !== params.orgId) {
+    await clerk.value?.setActive({ organization: params.orgId as string })
   }
 })
 </script>
