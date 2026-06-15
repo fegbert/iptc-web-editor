@@ -12,7 +12,7 @@ model WorkspaceFileData {
   name          String
   type          String
   size          Float
-  lastModified  Int
+  lastModified  String
   path          String?
   workspaceFile WorkspaceFile?
 }

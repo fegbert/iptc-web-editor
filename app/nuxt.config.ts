@@ -46,4 +46,9 @@ export default defineNuxtConfig({
   build: {
     transpile: ['trpc-nuxt'],
   },
+  nitro: {
+    experimental: {
+      websocket: true,
+    },
+  },
 })

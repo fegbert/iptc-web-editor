@@ -1,4 +1,8 @@
 export default defineNuxtRouteMiddleware(async (to) => {
+  if (import.meta.server) {
+    return
+  }
+
   const { user, isLoaded, isSignedIn } = useUser()
 
   await until(isLoaded).toBe(true)

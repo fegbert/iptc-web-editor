@@ -5,6 +5,7 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { TRPCError } from '@trpc/server'
 import { z } from 'zod'
 import { r2, r2Bucket } from '~/server/utils/r2'
+import { broadcastToOrg } from '~/server/utils/wsOrg'
 import { createRouter } from '../init'
 import { hasRole, makeRoleCheckedProcedure } from '../procedures'
 
@@ -63,7 +64,11 @@ export const fileRouter = createRouter({
           { expiresIn: DOWNLOAD_URL_TTL_SECONDS },
         )
 
-        return { ...file, url }
+        return {
+          ...file,
+          previewUrl: url,
+          metadata: file.metadata as Record<string, string>,
+        }
       }))
 
       return filesWithUrls
@@ -103,14 +108,14 @@ export const fileRouter = createRouter({
       name: z.string().max(255),
       path: z.string().optional(),
       size: z.number().max(MAX_ALLOWED_FILE_SIZE, { error: `File size must be less than ${MAX_ALLOWED_FILE_SIZE / (1024 * 1024)} MB` }),
-      lastModified: z.number(),
+      lastModified: z.string().refine(date => !Number.isNaN(date), { message: 'Invalid date format for lastModified' }),
       contentType: z.enum(['image/jpeg']),
       metadata: z.record(z.string(), z.string()),
     }))
     .mutation(async ({ input, ctx }) => {
       const clerkOrgId = ctx.auth.orgId
 
-      return ctx.prisma.workspaceFile.create({
+      const workspaceFile = await ctx.prisma.workspaceFile.create({
         data: {
           clerkOrgId,
           r2Key: input.r2Key,
@@ -127,6 +132,32 @@ export const fileRouter = createRouter({
           },
         },
       })
+
+      const previewUrl = await getSignedUrl(
+        r2,
+        new GetObjectCommand({ Bucket: r2Bucket, Key: workspaceFile.r2Key }),
+        { expiresIn: DOWNLOAD_URL_TTL_SECONDS },
+      )
+
+      broadcastToOrg(clerkOrgId, {
+        type: 'file:added',
+        data: {
+          id: workspaceFile.id,
+          r2Key: workspaceFile.r2Key,
+          metadata: workspaceFile.metadata as Record<string, string>,
+          createdAt: workspaceFile.createdAt,
+          previewUrl,
+          fileData: {
+            name: input.name,
+            type: input.contentType,
+            size: input.size,
+            lastModified: input.lastModified,
+            path: input.path ?? null,
+          },
+        },
+      })
+
+      return workspaceFile
     }),
   delete: makeRoleCheckedProcedure('org:member')
     .input(z.object({ fileId: z.string() }))
@@ -144,7 +175,12 @@ export const fileRouter = createRouter({
 
       await r2.send(new DeleteObjectCommand({ Bucket: r2Bucket, Key: file.r2Key }))
 
-      return ctx.prisma.workspaceFile.delete({ where: { id: input.fileId } })
+      await ctx.prisma.workspaceFile.delete({ where: { id: input.fileId } })
+
+      broadcastToOrg(ctx.auth.orgId, {
+        type: 'file:deleted',
+        data: { fileId: input.fileId },
+      })
     }),
   updateMetadata: makeRoleCheckedProcedure('org:member')
     .input(z.object({
@@ -163,9 +199,19 @@ export const fileRouter = createRouter({
 
       checkFilePermissions(file, ctx.auth.orgRole, ctx.auth.orgId)
 
-      return ctx.prisma.workspaceFile.update({
+      const updatedFile = await ctx.prisma.workspaceFile.update({
         where: { id: input.fileId },
         data: { metadata: input.metadata },
       })
+
+      broadcastToOrg(ctx.auth.orgId, {
+        type: 'file:metadata_updated',
+        data: {
+          fileId: updatedFile.id,
+          metadata: updatedFile.metadata as Record<string, string>,
+        },
+      })
+
+      return updatedFile
     }),
 })

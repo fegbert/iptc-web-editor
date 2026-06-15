@@ -1,39 +1,72 @@
 <script setup lang="ts">
 import type { FileWithMetadata } from '~/shared/types'
-import { supported } from 'browser-fs-access'
 
 definePageMeta({ middleware: 'workspace' })
 
-const { loadedFiles, removeFile, fileAmount, loadAmountFromCookies, loadFilesFromIndexedDB } = useFiles()
-const { getSelectedIds, toggleSelection, loadSelectedFileIdsFromIndexedDB } = useFileSelection()
-const { removeFileState, setupFileState, loadFileStatesFromIndexedDB } = useFileState()
+const { $trpc } = useNuxtApp()
+const { files, initFiles, disconnect, connect, isConnected } = useWorkspaceSync()
+const { loadedFiles } = useFiles()
+const { fileStates } = useFileState()
+const { setupFileState, removeFileState } = useFileState()
+const { selections, getSelectedIds, toggleSelection } = useFileSelection()
+const route = useRoute()
 
 const isLoading = ref(true)
 
-Promise.all([
-  loadFilesFromIndexedDB(),
-  loadFileStatesFromIndexedDB(),
-  loadSelectedFileIdsFromIndexedDB(),
-]).then(() => isLoading.value = false)
+const adapterFiles = computed(() => Object.fromEntries(files.value.map(f => [f.id, workspaceFileToFileWithMetadata(f)])))
 
-loadAmountFromCookies()
+watch(adapterFiles, (adapted, previous) => {
+  Object.keys(adapted).forEach((id) => {
+    if (!previous?.[id]) {
+      loadedFiles.value[id] = adapted[id]!
+      setupFileState(id)
+    }
+    else {
+      loadedFiles.value[id]!.metadata = adapted[id]!.metadata
+    }
+  })
 
-const hasSeenSupportedBrowserModal = useCookie('hasSeenSupportedBrowserModal', { default: () => false })
-const showSupportedBrowserModal = ref(false)
+  Object.keys(previous ?? {}).forEach((id) => {
+    if (!adapted[id]) {
+      delete loadedFiles.value[id]
+      removeFileState(id)
+    }
+  })
+})
 
-if (!supported && !hasSeenSupportedBrowserModal.value) {
-  showSupportedBrowserModal.value = true
+async function load() {
+  isLoading.value = true
+  const result = await $trpc.file.list.query({})
+  initFiles(result)
+  isLoading.value = false
 }
 
-function acceptSupportedBrowserNotice() {
-  hasSeenSupportedBrowserModal.value = true
-  showSupportedBrowserModal.value = false
-}
+watch(() => route.params.orgId, async (orgId) => {
+  const parsedOrgId = Array.isArray(orgId) ? orgId[0] : orgId
+  if (!parsedOrgId) {
+    return
+  }
+
+  const clerk = useClerk()
+  await clerk.value?.setActive({ organization: parsedOrgId })
+
+  disconnect()
+  selections.value = {}
+  loadedFiles.value = {}
+  fileStates.value = {}
+  await load()
+  connect(clerk.value?.organization?.id ?? parsedOrgId)
+})
+
+onUnmounted(() => {
+  disconnect()
+  loadedFiles.value = {}
+  fileStates.value = {}
+  selections.value = {}
+})
 
 const editorContainer = ref(null)
-
 const { y: scrollY } = useScroll(editorContainer, { behavior: 'smooth' })
-
 const { shift, ctrl } = useMagicKeys()
 
 function toggleFileSelection(file: FileWithMetadata) {
@@ -42,9 +75,8 @@ function toggleFileSelection(file: FileWithMetadata) {
   scrollY.value = 0
 }
 
-function remove(fileId: string) {
-  removeFile(fileId)
-  removeFileState(fileId)
+async function remove(fileId: string) {
+  await $trpc.file.delete.mutate({ fileId })
 }
 
 const showResetModal = ref<{ fileId: string } | null>(null)
@@ -60,18 +92,18 @@ function reset() {
 }
 
 onMounted(async () => {
-  const { params } = useRoute()
   const clerk = useClerk()
-  const { organization, isLoaded } = useOrganization()
-
   const isClerkLoaded = computed(() => !!clerk.value)
-
   await until(isClerkLoaded).toBe(true)
-  await until(isLoaded).toBe(true)
 
-  if (!organization.value || organization.value.slug !== params.orgId) {
-    await clerk.value?.setActive({ organization: params.orgId as string })
+  const orgId = Array.isArray(route.params.orgId) ? route.params.orgId[0] : route.params.orgId as string
+  if (!orgId) {
+    return
   }
+
+  await clerk.value?.setActive({ organization: orgId })
+  await load()
+  connect(clerk.value?.organization?.id ?? orgId)
 })
 </script>
 
@@ -83,15 +115,12 @@ onMounted(async () => {
     :labels="{ confirm: 'Revert', cancel: 'Cancel' }"
     @confirm="reset()"
   />
-  <ModalSupportedBrowserNotice
-    v-model="showSupportedBrowserModal"
-    @close="acceptSupportedBrowserNotice()"
-  />
   <UDashboardGroup class="Dashboard">
     <UDashboardSidebar class="Sidebar" :default-size="20">
       <template #header>
         <div class="flex flex-col w-full h-[var(--u-header-height)]">
-          <FileLoadButton />
+          {{ isConnected }}
+          <WorkspaceUploadButton />
         </div>
       </template>
 
@@ -122,7 +151,7 @@ onMounted(async () => {
         </UEmpty>
       </div>
       <div v-else>
-        <USkeleton v-for="file in fileAmount" :key="file" class="w-full h-20 mb-2 rounded-lg" />
+        <USkeleton v-for="file in []" :key="file" class="w-full h-20 mb-2 rounded-lg" />
       </div>
     </UDashboardSidebar>
     <UDashboardPanel :ui="{ body: 'pr-0!' }" class="min-h-min!">
