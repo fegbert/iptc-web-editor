@@ -19,7 +19,7 @@ const emit = defineEmits<{
 }>()
 
 const fileData = computed(() => props.file.data)
-const fileUrl = computedAsync(async () => await loadImageForPreview(props.file.buffer))
+const fileUrl = computedAsync(async () => props.file.previewUrl ?? await loadImageForPreview(props.file.buffer))
 const fileSize = (fileData.value.size / 1024).toFixed(2)
 const altText = `${fileData.value.name} - ${fileSize} KB`
 

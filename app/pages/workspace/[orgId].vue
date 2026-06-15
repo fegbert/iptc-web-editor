@@ -2,6 +2,8 @@
 import type { FileWithMetadata } from '~/shared/types'
 import { supported } from 'browser-fs-access'
 
+definePageMeta({ middleware: 'workspace' })
+
 const { loadedFiles, removeFile, fileAmount, loadAmountFromCookies, loadFilesFromIndexedDB } = useFiles()
 const { getSelectedIds, toggleSelection, loadSelectedFileIdsFromIndexedDB } = useFileSelection()
 const { removeFileState, setupFileState, loadFileStatesFromIndexedDB } = useFileState()

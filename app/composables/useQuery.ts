@@ -4,12 +4,13 @@ import { useQuery } from '@tanstack/vue-query'
 export default () => {
   const { $trpc } = useNuxtApp()
   const { orgId } = useAuth()
+  const route = useRoute()
 
   return {
     file: {
       list: (path?: string) => useQuery({
         queryFn: () => $trpc.file.list.query({ path }),
-        queryKey: ['file', 'list'],
+        queryKey: ['file', 'list', route.params.orgId],
         meta: { errorKey: 'listing files', path, orgId },
       }),
       getUploadUrl: (input: FileGetUploadUrlInput) => useQuery({

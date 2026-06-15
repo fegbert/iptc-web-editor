@@ -28,17 +28,32 @@ function checkFilePermissions(file: Prisma.WorkspaceFileGetPayload<{ select: { c
 // TODO: Definitely still look into rate limiting
 export const fileRouter = createRouter({
   list: makeRoleCheckedProcedure('org:viewer')
-    .input(z.object({ path: z.string().default('/') }))
+    .input(z.object({ path: z.string().optional() }))
     .query(async ({ ctx, input }) => {
       const files = await ctx.prisma.workspaceFile.findMany({
         where: {
           clerkOrgId: ctx.auth.orgId,
-          path: { startsWith: input.path },
+          fileData: {
+            path: { startsWith: input.path },
+          },
         },
         select: {
+          id: true,
           r2Key: true,
-          path: true,
+          metadata: true,
+          createdAt: true,
+          updatedAt: true,
+          fileData: {
+            select: {
+              name: true,
+              type: true,
+              size: true,
+              lastModified: true,
+              path: true,
+            },
+          },
         },
+        orderBy: { createdAt: 'desc' },
       })
 
       const filesWithUrls = await Promise.all(files.map(async (file) => {
@@ -86,8 +101,9 @@ export const fileRouter = createRouter({
     .input(z.object({
       r2Key: z.string(),
       name: z.string().max(255),
-      path: z.string().default('/'),
+      path: z.string().optional(),
       size: z.number().max(MAX_ALLOWED_FILE_SIZE, { error: `File size must be less than ${MAX_ALLOWED_FILE_SIZE / (1024 * 1024)} MB` }),
+      lastModified: z.number(),
       contentType: z.enum(['image/jpeg']),
       metadata: z.record(z.string(), z.string()),
     }))
@@ -97,12 +113,18 @@ export const fileRouter = createRouter({
       return ctx.prisma.workspaceFile.create({
         data: {
           clerkOrgId,
-          name: input.name,
           r2Key: input.r2Key,
-          size: input.size,
           metadata: input.metadata,
           createdBy: ctx.auth.userId,
-          path: input.path,
+          fileData: {
+            create: {
+              name: input.name,
+              type: input.contentType,
+              size: input.size,
+              lastModified: input.lastModified,
+              path: input.path,
+            },
+          },
         },
       })
     }),
@@ -123,5 +145,27 @@ export const fileRouter = createRouter({
       await r2.send(new DeleteObjectCommand({ Bucket: r2Bucket, Key: file.r2Key }))
 
       return ctx.prisma.workspaceFile.delete({ where: { id: input.fileId } })
+    }),
+  updateMetadata: makeRoleCheckedProcedure('org:member')
+    .input(z.object({
+      fileId: z.string(),
+      metadata: z.record(z.string(), z.string()),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const file = await ctx.prisma.workspaceFile.findUnique({
+        where: { id: input.fileId },
+        select: { clerkOrgId: true, createdBy: true },
+      })
+
+      if (!file) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'File not found' })
+      }
+
+      checkFilePermissions(file, ctx.auth.orgRole, ctx.auth.orgId)
+
+      return ctx.prisma.workspaceFile.update({
+        where: { id: input.fileId },
+        data: { metadata: input.metadata },
+      })
     }),
 })
