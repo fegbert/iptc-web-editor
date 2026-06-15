@@ -4,11 +4,11 @@ import type { FileWithMetadata } from '~/shared/types'
 definePageMeta({ middleware: 'workspace' })
 
 const { $trpc } = useNuxtApp()
-const { files, initFiles, disconnect, connect, isConnected } = useWorkspaceSync()
+const { files, initFiles, disconnect, connect } = useWorkspaceSync()
+const { clearStorage } = useWorkspace()
 const { loadedFiles } = useFiles()
-const { fileStates } = useFileState()
 const { setupFileState, removeFileState } = useFileState()
-const { selections, getSelectedIds, toggleSelection } = useFileSelection()
+const { getSelectedIds, toggleSelection } = useFileSelection()
 const route = useRoute()
 
 const isLoading = ref(true)
@@ -51,18 +51,14 @@ watch(() => route.params.orgId, async (orgId) => {
   await clerk.value?.setActive({ organization: parsedOrgId })
 
   disconnect()
-  selections.value = {}
-  loadedFiles.value = {}
-  fileStates.value = {}
+  clearStorage()
   await load()
   connect(clerk.value?.organization?.id ?? parsedOrgId)
 })
 
 onUnmounted(() => {
   disconnect()
-  loadedFiles.value = {}
-  fileStates.value = {}
-  selections.value = {}
+  clearStorage()
 })
 
 const editorContainer = ref(null)
@@ -101,6 +97,8 @@ onMounted(async () => {
     return
   }
 
+  clearStorage()
+
   await clerk.value?.setActive({ organization: orgId })
   await load()
   connect(clerk.value?.organization?.id ?? orgId)
@@ -119,7 +117,6 @@ onMounted(async () => {
     <UDashboardSidebar class="Sidebar" :default-size="20">
       <template #header>
         <div class="flex flex-col w-full h-[var(--u-header-height)]">
-          {{ isConnected }}
           <WorkspaceUploadButton />
         </div>
       </template>

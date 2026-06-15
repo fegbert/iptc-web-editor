@@ -3,6 +3,9 @@ export interface WorkspaceFileRecord {
   r2Key: string
   metadata: Record<string, string>
   createdAt: Date
+  createdBy: string
+  updatedAt?: Date | null
+  updatedBy?: string | null
   previewUrl: string
   fileData: {
     name: string

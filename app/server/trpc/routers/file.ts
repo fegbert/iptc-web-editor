@@ -1,5 +1,6 @@
 import type { Prisma } from '~/prisma/generated/client'
 import type { OrgRole } from '~/server/types'
+import type { WorkspaceFileRecord } from '~/shared/wsTypes'
 import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { TRPCError } from '@trpc/server'
@@ -43,7 +44,9 @@ export const fileRouter = createRouter({
           r2Key: true,
           metadata: true,
           createdAt: true,
+          createdBy: true,
           updatedAt: true,
+          updatedBy: true,
           fileData: {
             select: {
               name: true,
@@ -57,15 +60,20 @@ export const fileRouter = createRouter({
         orderBy: { createdAt: 'desc' },
       })
 
-      const filesWithUrls = await Promise.all(files.map(async (file) => {
+      const filesWithUrls: WorkspaceFileRecord[] = await Promise.all(files.map(async (file) => {
         const url = await getSignedUrl(
           r2,
           new GetObjectCommand({ Bucket: r2Bucket, Key: file.r2Key }),
           { expiresIn: DOWNLOAD_URL_TTL_SECONDS },
         )
 
+        if (!file.fileData) {
+          throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'File data is missing' })
+        }
+
         return {
           ...file,
+          fileData: file.fileData!, // checked that its not null above, safe to assert
           previewUrl: url,
           metadata: file.metadata as Record<string, string>,
         }
@@ -146,6 +154,9 @@ export const fileRouter = createRouter({
           r2Key: workspaceFile.r2Key,
           metadata: workspaceFile.metadata as Record<string, string>,
           createdAt: workspaceFile.createdAt,
+          createdBy: workspaceFile.createdBy,
+          updatedAt: workspaceFile.updatedAt,
+          updatedBy: workspaceFile.updatedBy,
           previewUrl,
           fileData: {
             name: input.name,
@@ -201,7 +212,10 @@ export const fileRouter = createRouter({
 
       const updatedFile = await ctx.prisma.workspaceFile.update({
         where: { id: input.fileId },
-        data: { metadata: input.metadata },
+        data: {
+          metadata: input.metadata,
+          updatedBy: ctx.auth.userId,
+        },
       })
 
       broadcastToOrg(ctx.auth.orgId, {

@@ -18,7 +18,7 @@ const file = computedAsync(async () => {
   if (!fileToShow.value) {
     return undefined
   }
-  return await loadImageForPreview(fileToShow.value.buffer)
+  return fileToShow.value.previewUrl ? fileToShow.value.previewUrl : await loadImageForPreview(fileToShow.value.buffer)
 })
 </script>
 

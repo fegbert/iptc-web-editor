@@ -5,6 +5,16 @@ const isUploading = ref(false)
 export default function useWorkspace() {
   const { queryClient, $trpc } = useMutationHelpers()
 
+  function clearStorage() {
+    const { fileStates } = useFileState()
+    const { selections } = useFileSelection()
+    const { loadedFiles } = useFiles()
+
+    loadedFiles.value = {}
+    fileStates.value = {}
+    selections.value = {}
+  }
+
   async function uploadFiles(files: File[]) {
     isUploading.value = true
     const uploaded = await Promise.allSettled(files.map(async (file) => {
@@ -77,5 +87,6 @@ export default function useWorkspace() {
   return {
     uploadFiles,
     isUploading,
+    clearStorage,
   }
 }

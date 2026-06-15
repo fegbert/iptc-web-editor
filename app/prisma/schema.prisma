@@ -8,23 +8,24 @@ datasource db {
 }
 
 model WorkspaceFileData {
-  id            String         @id @default(cuid())
-  name          String
-  type          String
-  size          Float
-  lastModified  String
-  path          String?
-  workspaceFile WorkspaceFile?
+  id              String        @id @default(cuid())
+  name            String
+  type            String
+  size            Float
+  lastModified    String
+  path            String?
+  workspaceFileId String        @unique
+  workspaceFile   WorkspaceFile @relation(fields: [workspaceFileId], references: [id], onDelete: Cascade)
 }
 
 model WorkspaceFile {
-  id         String            @id @default(cuid())
+  id         String             @id @default(cuid())
   clerkOrgId String
-  r2Key      String            @unique
-  metadata   Json              @default("{}")
-  fileDataId String            @unique
-  fileData   WorkspaceFileData @relation(fields: [fileDataId], references: [id])
+  r2Key      String             @unique
+  metadata   Json               @default("{}")
+  fileData   WorkspaceFileData?
   createdBy  String
-  createdAt  DateTime          @default(now())
-  updatedAt  DateTime          @updatedAt
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+  updatedBy  String?
 }

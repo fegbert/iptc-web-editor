@@ -5,7 +5,7 @@ interface FileData {
   type: string
   size: number
   lastModified: number
-  path?: string
+  path?: string | null
 }
 export interface FileWithMetadata {
   id: string
@@ -15,4 +15,8 @@ export interface FileWithMetadata {
   metadata: Record<string, string>
   isDownloaded?: boolean
   previewUrl?: string
+  createdAt?: Date
+  createdBy?: string
+  updatedAt?: Date
+  updatedBy?: string
 }
