@@ -19,9 +19,14 @@ const emit = defineEmits<{
 }>()
 
 const fileData = computed(() => props.file.data)
-const fileUrl = computedAsync(async () => await loadImageForPreview(props.file.buffer))
+const fileUrl = computedAsync(async () => props.file.previewUrl ?? await loadImageForPreview(props.file.buffer))
 const fileSize = (fileData.value.size / 1024).toFixed(2)
 const altText = `${fileData.value.name} - ${fileSize} KB`
+
+const canDelete = computed(() => {
+  const { orgRole, userId, orgId } = useAuth()
+  return orgId.value ? orgRole.value === 'org:admin' || props.file.createdBy === userId.value : true
+})
 
 const { isSelected } = useFileSelection()
 const { fileChanges } = useFileState()
@@ -53,7 +58,7 @@ const hasChanged = computed(() => fileChanges(props.file.id) > 0)
     </div>
     <div class="absolute top-0 right-0 flex items-center mr-1 mt-1 gap-1">
       <UButton v-if="hasChanged" color="secondary" size="sm" icon="i-lucide-timer-reset" variant="subtle" @click.stop="emit('reset', file.id)" />
-      <UButton color="error" variant="subtle" size="sm" icon="i-lucide-x" @click.stop="emit('remove', file.id)" />
+      <UButton v-if="canDelete" color="error" variant="subtle" size="sm" icon="i-lucide-x" @click.stop="emit('remove', file.id)" />
     </div>
   </div>
 </template>

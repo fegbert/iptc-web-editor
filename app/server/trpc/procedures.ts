@@ -3,9 +3,9 @@ import { TRPCError } from '@trpc/server'
 import { t } from './init'
 
 const ROLE_HIERARCHY: Record<OrgRole, number> = {
-  viewer: 1,
-  member: 2,
-  admin: 3,
+  'org:viewer': 1,
+  'org:member': 2,
+  'org:admin': 3,
 }
 
 export function hasRole(userRole: OrgRole, requiredRole: OrgRole) {

@@ -7,15 +7,25 @@ datasource db {
   provider = "postgresql"
 }
 
+model WorkspaceFileData {
+  id              String        @id @default(cuid())
+  name            String
+  type            String
+  size            Float
+  lastModified    String
+  path            String?
+  workspaceFileId String        @unique
+  workspaceFile   WorkspaceFile @relation(fields: [workspaceFileId], references: [id], onDelete: Cascade)
+}
+
 model WorkspaceFile {
-  id            String    @id @default(cuid())
-  clerkOrgId    String
-  name          String
-  path          String    @default("/")
-  r2Key         String    @unique
-  size          Int
-  metadata      Json      @default("{}")
-  createdBy     String
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id         String             @id @default(cuid())
+  clerkOrgId String
+  r2Key      String             @unique
+  metadata   Json               @default("{}")
+  fileData   WorkspaceFileData?
+  createdBy  String
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+  updatedBy  String?
 }
