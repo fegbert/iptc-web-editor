@@ -6,6 +6,9 @@ export default function useHasChanged(fileId: Ref<string>, field: Ref<IPTCFieldW
   const originalValue = computed(() => getOriginal(fileId.value, field.value.key))
 
   return computed(() => {
+    if (!fileId.value) {
+      return false
+    }
     if (!originalValue.value && !currentValue.value) {
       return false
     }
