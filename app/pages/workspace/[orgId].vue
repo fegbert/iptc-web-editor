@@ -8,7 +8,7 @@ const { files, initFiles, disconnect, connect } = useWorkspaceSync()
 const { clearStorage } = useWorkspace()
 const { loadedFiles } = useFiles()
 const { setupFileState, removeFileState } = useFileState()
-const { getSelectedIds, toggleSelection } = useFileSelection()
+const { selectedIds, toggleSelection } = useFileSelection()
 const route = useRoute()
 
 const isLoading = ref(true)
@@ -63,10 +63,10 @@ onUnmounted(() => {
 
 const editorContainer = ref(null)
 const { y: scrollY } = useScroll(editorContainer, { behavior: 'smooth' })
-const { shift, ctrl } = useMagicKeys()
+const { shift, ctrl, meta } = useMagicKeys()
 
 function toggleFileSelection(file: FileWithMetadata) {
-  const modifier = shift?.value ? 'shift' : ctrl?.value ? 'ctrl' : undefined
+  const modifier = shift?.value ? 'shift' : ctrl?.value || meta?.value ? 'ctrl' : undefined
   toggleSelection(file, modifier)
   scrollY.value = 0
 }
@@ -155,7 +155,10 @@ onMounted(async () => {
       <template #header>
         <UDashboardNavbar title="Edit Metadata">
           <template #right>
-            <EditorSaveButton v-if="getSelectedIds().length > 0" />
+            <div class="flex items-center gap-2">
+              <WorkspaceDownloadButton v-if="selectedIds.length > 0" />
+              <WorkspaceSaveButton v-if="selectedIds.length > 0" />
+            </div>
           </template>
         </UDashboardNavbar>
       </template>

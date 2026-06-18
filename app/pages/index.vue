@@ -3,7 +3,7 @@ import type { FileWithMetadata } from '~/shared/types'
 import { supported } from 'browser-fs-access'
 
 const { loadedFiles, removeFile, fileAmount, loadAmountFromCookies, loadFilesFromIndexedDB } = useFiles()
-const { getSelectedIds, toggleSelection, loadSelectedFileIdsFromIndexedDB } = useFileSelection()
+const { selectedIds, toggleSelection, loadSelectedFileIdsFromIndexedDB } = useFileSelection()
 const { removeFileState, setupFileState, loadFileStatesFromIndexedDB } = useFileState()
 
 const isLoading = ref(true)
@@ -126,7 +126,7 @@ onMounted(async () => {
       <template #header>
         <UDashboardNavbar title="Edit Metadata">
           <template #right>
-            <EditorSaveButton v-if="getSelectedIds().length > 0" />
+            <EditorSaveButton v-if="selectedIds.length > 0" />
           </template>
         </UDashboardNavbar>
       </template>

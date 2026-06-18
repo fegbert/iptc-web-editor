@@ -1,18 +1,70 @@
-import { parseMetadata } from 'iptc-parser'
+import { parseMetadata, writeMetadata } from 'iptc-parser'
 
 const isUploading = ref(false)
+const isSaving = ref(false)
+const isDownloading = ref(false)
 
 export default function useWorkspace() {
   const { queryClient, $trpc } = useMutationHelpers()
+  const { fileStates, filesChanged, fileChanges, getFileState } = useFileState()
+  const { selections, selectedIds } = useFileSelection()
+  const { loadedFiles } = useFiles()
+  const toast = useToast()
 
   function clearStorage() {
-    const { fileStates } = useFileState()
-    const { selections } = useFileSelection()
-    const { loadedFiles } = useFiles()
-
     loadedFiles.value = {}
     fileStates.value = {}
     selections.value = {}
+  }
+
+  async function saveAll() {
+    if (!filesChanged.value) {
+      return
+    }
+
+    isSaving.value = true
+
+    const toSave = Object.keys(fileStates.value).filter(fileId => fileChanges(fileId) > 0)
+
+    const saveResults = await Promise.allSettled(toSave.map(async (fileId) => {
+      const metadata = Object.fromEntries(
+        getFileState(fileId).filter(state => state.value).map(state => [state.key, state.value]),
+      )
+
+      await $trpc.file.updateMetadata.mutate({ fileId, metadata })
+    }))
+
+    isSaving.value = false
+
+    const successfullySaved = saveResults.filter(result => result.status === 'fulfilled').length
+    const hasSavedAll = successfullySaved === toSave.length
+
+    toast.add({
+      title: hasSavedAll ? `${successfullySaved} files saved.` : `${successfullySaved} of ${toSave.length} files saved.`,
+      description: hasSavedAll ? '' : 'Some files could not be saved. Please try again.',
+      color: hasSavedAll ? 'success' : 'warning',
+      duration: 3000,
+    })
+  }
+
+  async function download() {
+    if (!selectedIds.value.length) {
+      return
+    }
+
+    isDownloading.value = true
+
+    await Promise.allSettled(selectedIds.value.map(async (fileId) => {
+      const file = loadedFiles.value[fileId]
+      if (!file?.previewUrl) {
+        return
+      }
+
+      const buffer = await fetch(file.previewUrl).then(file => file.arrayBuffer())
+      await writeMetadata(new Uint8Array(buffer), file.metadata, undefined, undefined, file.data.name)
+    }))
+
+    isDownloading.value = false
   }
 
   async function uploadFiles(files: File[]) {
@@ -88,5 +140,9 @@ export default function useWorkspace() {
     uploadFiles,
     isUploading,
     clearStorage,
+    saveAll,
+    isSaving,
+    download,
+    isDownloading,
   }
 }

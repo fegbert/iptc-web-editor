@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { getSelectedIds, firstSelectedFile } = useFileSelection()
+const { firstSelectedFile, selectedIds } = useFileSelection()
 const { getFileState } = useFileState()
 
 const selectedState = computed(() => getFileState(firstSelectedFile.value?.id || ''))
@@ -8,7 +8,7 @@ const fileId = computed(() => firstSelectedFile.value?.id || '')
 
 <template>
   <div v-if="firstSelectedFile && selectedState.length > 0" class="w-full h-full pr-4 sm:pr-6">
-    <EditorFileInformation class="bg-accented/20 rounded-lg" :file-ids="getSelectedIds()" />
+    <EditorFileInformation class="bg-accented/20 rounded-lg" :file-ids="selectedIds" />
     <div class="flex flex-col w-full gap-4 pt-8">
       <BaseCollapsible :default-open="true">
         <template #title>

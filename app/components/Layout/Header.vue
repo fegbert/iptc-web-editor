@@ -8,6 +8,9 @@ function getAfterSelectUrl(org: OrganizationResource) {
   navigateTo(`/workspace/${org.slug}`)
   return ''
 }
+
+const route = useRoute()
+const isWorkspace = computed(() => route.path.startsWith('/workspace/'))
 </script>
 
 <template>
@@ -19,6 +22,7 @@ function getAfterSelectUrl(org: OrganizationResource) {
       </h1>
     </div>
     <div class="flex items-center gap-2">
+      <WorkspaceConnectionStatus v-if="isWorkspace" />
       <UColorModeButton />
       <UTooltip text="Open on GitHub">
         <UButton
@@ -30,16 +34,16 @@ function getAfterSelectUrl(org: OrganizationResource) {
           aria-label="GitHub"
         />
       </UTooltip>
+      <hr class="border-accented border-1 h-7 rounded-full">
       <Show when="signed-in">
-        <UserButton />
         <OrganizationSwitcher after-select-personal-url="/" :after-select-organization-url="getAfterSelectUrl" />
+        <UserButton />
       </Show>
       <Show when="signed-out">
         <SignInButton mode="modal">
           <UButton color="neutral" variant="outline" label="Sign in" />
         </SignInButton>
       </Show>
-      <UButton color="neutral" variant="subtle" label="Test TRPC" />
     </div>
   </div>
 </template>
