@@ -1,4 +1,4 @@
-// TODO: Improve this typing when adding full metadata mapping
+import type { Prisma } from '~/prisma/generated/client'
 
 interface FileData {
   name: string
@@ -20,3 +20,20 @@ export interface FileWithMetadata {
   updatedAt?: Date
   updatedBy?: string
 }
+
+export type Template = Prisma.TemplateGetPayload<{ include: { fields: true } }>
+export type TemplateIdb = Prisma.TemplateGetPayload<{
+  select: {
+    id: true
+    title: true
+    description: true
+    fields: {
+      select: {
+        fieldId: true
+        value: true
+      }
+    }
+  }
+}>
+export type TemplateCreateInput = Prisma.TemplateCreateInput & { fields: Prisma.TemplateFieldCreateInput[] }
+export type TemplateIdbCreateInput = Omit<TemplateIdb, 'id'>
