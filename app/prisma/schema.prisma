@@ -29,3 +29,23 @@ model WorkspaceFile {
   updatedAt  DateTime           @updatedAt
   updatedBy  String?
 }
+
+model TemplateField {
+  id          String   @id @default(cuid())
+  templateId  String
+  template    Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  fieldId     String
+  value       String?
+}
+
+model Template {
+  id String @id @default(cuid())
+  title String
+  description String?
+  fields TemplateField[]
+  createdBy String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  sharedWithOrgIds String[]
+}
