@@ -1,21 +1,27 @@
 <script setup lang="ts">
+import type { UserTemplateItem } from './List.vue'
 import { categories } from '~/utils/iptc-iim/categories'
 import { iptcIimFields } from '~/utils/iptc-iim/mapping'
+
+const props = defineProps<{
+  template?: UserTemplateItem
+}>()
 
 const emit = defineEmits<{
   (e: 'saved'): void
 }>()
 
-const { createTemplate } = useTemplate()
+const { createTemplate, updateTemplate } = useTemplate()
 const { selectedIds } = useFileSelection()
 const { getFileState } = useFileState()
 const notification = useToast()
 
-const { orgId } = useAuth()
+const { userId } = useAuth()
 
 const { template: mutationTemplate } = useMutations()
 const { upsert } = mutationTemplate()
 
+const isEditMode = computed(() => !!props.template)
 const isSavingRemote = computed(() => upsert.isPending.value)
 
 const title = ref('')
@@ -65,7 +71,7 @@ function importCurrentValues() {
   }
 
   getFileState(ids[0]!).forEach((field) => {
-    if (!field.value) {
+    if (!field.value || field.key === '2:65' || field.key === '2:70') {
       return
     }
 
@@ -80,27 +86,55 @@ function importCurrentValues() {
   })
 }
 
+watch(() => props.template, (template) => {
+  if (template) {
+    title.value = template.title
+    description.value = template.description ?? ''
+    fieldValues.value = Object.fromEntries(
+      template.fields.filter(field => field.value).map(field => [field.fieldId, field.value!]),
+    )
+  }
+  else {
+    title.value = ''
+    description.value = ''
+    fieldValues.value = {}
+  }
+}, { immediate: true })
+
 async function saveLocal() {
   if (!title.value.trim()) {
     return
   }
-  await createTemplate({
-    title: title.value.trim(),
-    description: description.value.trim() ?? null,
-    fields: Object.entries(fieldValues.value)
-      .filter(([, value]) => value)
-      .map(([key, value]) => ({ fieldId: key, value })),
-  })
+
+  if (isEditMode.value && props.template!.isLocal) {
+    await updateTemplate({
+      id: props.template!.id,
+      title: title.value.trim(),
+      description: description.value.trim() ?? null,
+      fields: Object.entries(fieldValues.value)
+        .filter(([, value]) => value)
+        .map(([key, value]) => ({ fieldId: key, value })),
+    })
+  }
+  else {
+    await createTemplate({
+      title: title.value.trim(),
+      description: description.value.trim() ?? null,
+      fields: Object.entries(fieldValues.value)
+        .filter(([, value]) => value)
+        .map(([key, value]) => ({ fieldId: key, value })),
+    })
+  }
 
   emit('saved')
 }
 
-async function saveToWorkspace() {
+async function saveToServer() {
   if (!title.value.trim()) {
     return
   }
 
-  upsert.mutate({
+  await upsert.mutateAsync({
     title: title.value.trim(),
     description: description.value.trim() ?? null,
     fields: Object.entries(fieldValues.value)
@@ -108,11 +142,9 @@ async function saveToWorkspace() {
       .map(([key, value]) => ({ fieldId: key, value })),
   })
 
-  emit('saved')
-}
-
-function isTruncated(element: HTMLElement): boolean {
-  return element.scrollWidth > element.offsetWidth
+  if (upsert.isSuccess) {
+    emit('saved')
+  }
 }
 </script>
 
@@ -171,19 +203,34 @@ function isTruncated(element: HTMLElement): boolean {
 
     <USeparator />
 
-    <div class="flex items-center justify-between pt-1">
-      <p v-if="orgId" class="text-xs text-muted">
-        Local templates are stored in your browser and only available to you. Saving to workspace allows you to access the template across devices and share it with your organization.
-      </p>
-      <div class="flex w-full gap-2 shrink-0">
-        <UButton class="w-full justify-center" variant="soft" color="neutral" :disabled="!title.trim() || isSavingRemote || filledCount === 0" @click="saveLocal">
-          Save locally
-        </UButton>
-        <UButton v-if="orgId" color="primary" :disabled="!title.trim() || filledCount === 0" :loading="isSavingRemote" @click="saveToWorkspace">
-          Save to workspace
-        </UButton>
+    <template v-if="isEditMode">
+      <UButton
+        color="primary"
+        class="justify-center"
+        icon="i-lucide-save"
+        :disabled="!title.trim() || filledCount === 0"
+        :loading="isSavingRemote"
+        @click="props.template!.isLocal ? saveLocal() : saveToServer()"
+      >
+        Save changes
+      </UButton>
+    </template>
+    <template v-else>
+      <div class="flex flex-col gap-2">
+        <div class="flex w-full gap-2">
+          <UButton icon="i-lucide-save" class="w-full justify-center" variant="soft" color="neutral" :disabled="!title.trim() || isSavingRemote || filledCount === 0" @click="saveLocal">
+            Save locally
+          </UButton>
+          <UButton v-if="userId" icon="i-lucide-cloud-upload" class="w-full justify-center" color="primary" :disabled="!title.trim() || filledCount === 0" :loading="isSavingRemote" @click="saveToServer">
+            Save to Server
+          </UButton>
+        </div>
+        <p v-if="userId" class="text-xs text-muted">
+          Local templates are stored in your browser and only available to you. Saving to the server allows you to access the template across devices and share it with your organization.
+          Local templates may also be promoted to server templates at a later time.
+        </p>
       </div>
-    </div>
+    </template>
   </div>
 </template>
 

@@ -1,7 +1,7 @@
 import { TRPCError } from '@trpc/server'
 import z from 'zod'
 import { createRouter } from '../init'
-import { hasRole, makeRoleCheckedProcedure } from '../procedures'
+import { hasRole, makeRoleCheckedProcedure, protectedProcedure } from '../procedures'
 
 const templateUpsertSchema = z.object({
   id: z.string().optional(),
@@ -16,13 +16,13 @@ const templateUpsertSchema = z.object({
 })
 
 export const templateRouter = createRouter({
-  list: makeRoleCheckedProcedure('org:member')
+  list: protectedProcedure
     .query(async ({ ctx }) => {
       const templates = await ctx.prisma.template.findMany({
         where: {
           OR: [
             { createdBy: ctx.auth.userId },
-            { sharedWithOrgIds: { has: ctx.auth.orgId } },
+            ...(ctx.auth.orgId ? [{ sharedWithOrgIds: { has: ctx.auth.orgId } }] : []),
           ],
         },
         select: {
@@ -51,17 +51,18 @@ export const templateRouter = createRouter({
 
       return orderedTemplates
     }),
-  upsert: makeRoleCheckedProcedure('org:member')
+  upsert: protectedProcedure
     .input(templateUpsertSchema)
     .mutation(async ({ ctx, input }) => {
-      const { id, title, description, sharedWithOrgIds, fields } = input
+      const { id, title, description, fields } = input
+      const { orgId } = ctx.auth
 
       const upsertedTemplate = await ctx.prisma.template.upsert({
         where: { id: id ?? '' },
         update: {
           title,
           description,
-          sharedWithOrgIds,
+          sharedWithOrgIds: { set: input.sharedWithOrgIds ?? orgId ? [orgId!] : [] },
           updatedAt: new Date(),
           updatedBy: ctx.auth.userId,
           fields: {
@@ -84,7 +85,7 @@ export const templateRouter = createRouter({
         create: {
           title,
           description,
-          sharedWithOrgIds,
+          sharedWithOrgIds: orgId ? [orgId] : [],
           createdBy: ctx.auth.userId!,
           fields: {
             create: fields.map(field => ({
@@ -139,7 +140,7 @@ export const templateRouter = createRouter({
         select: { id: true, sharedWithOrgIds: true },
       })
     }),
-  delete: makeRoleCheckedProcedure('org:member')
+  delete: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const templateToDelete = await ctx.prisma.template.findUnique({
@@ -151,7 +152,7 @@ export const templateRouter = createRouter({
         throw new TRPCError({ code: 'NOT_FOUND', message: 'Template not found' })
       }
 
-      if (!hasRole(ctx.auth.orgRole, 'org:admin') && templateToDelete?.createdBy !== ctx.auth.userId) {
+      if (templateToDelete?.createdBy !== ctx.auth.userId) {
         throw new TRPCError({ code: 'FORBIDDEN', message: 'You do not have permission to delete this template' })
       }
 

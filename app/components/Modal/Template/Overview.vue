@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { UserTemplateItem } from './View/List.vue'
 import type { Prisma } from '~/prisma/generated/client'
 
 const emit = defineEmits<{
@@ -7,19 +8,21 @@ const emit = defineEmits<{
 const open = defineModel<boolean>({ required: true })
 
 const { userId, orgId } = useAuth()
-const { templates: localTemplates, loadTemplatesFromIndexedDB } = useTemplate()
+const { templates: localTemplates, loadTemplatesFromIndexedDB, deleteTemplate: deleteLocalTemplate } = useTemplate()
+const notification = useToast()
 
-const isUserInOrg = computed(() => !!orgId.value)
+const isUserLoggedIn = computed(() => !!userId.value)
 
 const { template: queryTemplate } = useQuery()
-const { data: remoteTemplates, isLoading } = queryTemplate.list({ enabled: isUserInOrg })
+const { data: remoteTemplates, isLoading } = queryTemplate.list({ enabled: isUserLoggedIn })
 
 const { template: mutationTemplate } = useMutations()
-const { setSharing } = mutationTemplate()
+const { setSharing, deleteTemplate: deleteRemoteTemplate, upsert } = mutationTemplate()
 
-type ModalView = 'list' | 'create'
+type ModalView = 'list' | 'create' | 'edit'
 
 const view = ref<ModalView>('list')
+const editingTemplate = ref<UserTemplateItem | null>(null)
 
 const userTemplates = computed(() => [
   ...localTemplates.value.map(template => ({ ...template, isLocal: true as const })),
@@ -42,8 +45,48 @@ function handleToggleSharing(template: Prisma.TemplateGetPayload<{ select: { id:
   })
 }
 
+function handleEdit(template: UserTemplateItem) {
+  editingTemplate.value = template
+  view.value = 'edit'
+}
+
+async function handleDelete(template: UserTemplateItem) {
+  if (template.isLocal) {
+    await deleteLocalTemplate(template.id)
+    notification.add({
+      color: 'success',
+      title: 'Template Deleted',
+      description: 'The template has been deleted from your local storage.',
+      duration: 3000,
+    })
+  }
+  else {
+    deleteRemoteTemplate.mutate({ id: template.id })
+  }
+}
+
+async function handlePromote(template: UserTemplateItem & { isLocal: true }) {
+  await upsert.mutateAsync({
+    title: template.title,
+    description: template.description ?? undefined,
+    fields: template.fields.map(field => ({ fieldId: field.fieldId, value: field.value ?? undefined })),
+  })
+
+  if (!upsert.isSuccess) {
+    notification.add({
+      title: 'Error promoting template',
+      description: 'An error occurred while promoting the template. Please try again.',
+      color: 'error',
+    })
+    return
+  }
+
+  await deleteLocalTemplate(template.id)
+}
+
 async function handleSaved() {
   view.value = 'list'
+  editingTemplate.value = null
   await loadTemplatesFromIndexedDB()
 }
 
@@ -57,8 +100,9 @@ watch(open, async (isOpen) => {
 }, { immediate: true })
 
 function handleClose() {
-  if (view.value === 'create') {
+  if (view.value === 'create' || view.value === 'edit') {
     view.value = 'list'
+    editingTemplate.value = null
   }
   else {
     emit('close')
@@ -69,7 +113,7 @@ function handleClose() {
 <template>
   <UModal
     :open="Boolean(open)"
-    :title="view === 'create' ? 'Create Template' : 'Templates'"
+    :title="view === 'edit' ? 'Edit Template ' : view === 'create' ? 'Create Template' : 'Templates'"
     :description="view === 'create'
       ? 'Define field values to reuse across files.'
       : 'Apply predefined metadata values to the selected file(s).'
@@ -88,6 +132,9 @@ function handleClose() {
           <p v-if="view === 'create'" class="text-sm text-muted">
             Define field values to reuse across files.
           </p>
+          <p v-else-if="view === 'edit'" class="text-sm text-muted">
+            Update the template's field values.
+          </p>
           <p v-else class="text-sm text-muted">
             Apply predefined metadata values to the selected file(s).
           </p>
@@ -99,7 +146,7 @@ function handleClose() {
             </UButton>
             <UButton variant="ghost" color="neutral" icon="i-lucide-x" @click="emit('close')" />
           </div>
-          <UButton v-else variant="ghost" color="neutral" icon="i-lucide-arrow-left" @click="view = 'list'" />
+          <UButton v-else variant="ghost" color="neutral" icon="i-lucide-arrow-left" @click="handleClose" />
         </div>
       </div>
     </template>
@@ -107,7 +154,11 @@ function handleClose() {
     <template #close />
 
     <template #body>
-      <ModalTemplateViewCreate v-if="view === 'create'" @saved="handleSaved" />
+      <ModalTemplateViewCreateOrEdit
+        v-if="view === 'create' || view === 'edit'"
+        :template="editingTemplate ?? undefined"
+        @saved="handleSaved"
+      />
       <ModalTemplateViewList
         v-else
         :user-templates="userTemplates"
@@ -115,6 +166,9 @@ function handleClose() {
         :is-loading="isLoading"
         @create="view = 'create'"
         @toggle-sharing="handleToggleSharing"
+        @edit="handleEdit"
+        @delete="handleDelete"
+        @promote="handlePromote"
         @apply="() => {}"
       />
     </template>

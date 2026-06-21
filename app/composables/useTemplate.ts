@@ -33,6 +33,8 @@ export default function useTemplate() {
 
   async function deleteTemplate(templateId: string) {
     templates.value = templates.value.filter(template => template.id !== templateId)
+    // Force Idb update after deletion
+    await updateIdb<TemplateIdb[]>(TEMPLATES_IDB_KEY, templates.value)
   }
 
   return { loadTemplatesFromIndexedDB, templates, createTemplate, updateTemplate, deleteTemplate }

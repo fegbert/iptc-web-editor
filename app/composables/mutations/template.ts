@@ -34,5 +34,21 @@ export default () => {
     },
   })
 
-  return { setSharing, upsert }
+  const deleteTemplate = useMutation({
+    mutationFn: $trpc.template.delete.mutate,
+    onError: makeTrpcErrorToast(notification, { description: 'Failed to delete the template' }),
+    onSuccess: () => {
+      notification.add({
+        title: 'Template deleted',
+        description: 'The template was successfully deleted.',
+        color: 'success',
+        duration: 3000,
+        icon: 'check',
+      })
+
+      queryClient.invalidateQueries({ queryKey: ['template'] })
+    },
+  })
+
+  return { setSharing, upsert, deleteTemplate }
 }
