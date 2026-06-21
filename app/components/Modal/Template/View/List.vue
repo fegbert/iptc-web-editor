@@ -133,7 +133,7 @@ function deleteTemplate() {
 
       <div class="flex flex-col gap-2">
         <p class="text-sm font-medium text-highlighted">
-          Org Templates
+          Workspace Templates
         </p>
         <USkeleton v-if="isLoading" class="h-16 w-full" />
         <div v-else-if="orgTemplates.length > 0" class="flex flex-col gap-2">

@@ -1,7 +1,7 @@
 import { TRPCError } from '@trpc/server'
 import z from 'zod'
 import { createRouter } from '../init'
-import { hasRole, makeRoleCheckedProcedure, protectedProcedure } from '../procedures'
+import { protectedProcedure } from '../procedures'
 
 const templateUpsertSchema = z.object({
   id: z.string().optional(),
