@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { UserTemplateItem } from './List.vue'
+import type { IPTCField } from '~/utils/iptc-iim/types.js'
 import { categories } from '~/utils/iptc-iim/categories'
 import { iptcIimFields } from '~/utils/iptc-iim/mapping'
 
@@ -53,6 +54,40 @@ const filteredGroups = computed(() => {
 })
 
 const filledCount = computed(() => Object.values(fieldValues.value).filter(value => value).length)
+
+const fieldErrors = computed(() => {
+  const errors: Record<string, string> = {}
+
+  for (const [key, value] of Object.entries(fieldValues.value)) {
+    if (!value) continue
+
+    const field = iptcIimFields.find(field => field.key === key)
+    if (!field?.allowedCharacterTypes?.length) continue
+    if (!isValid(value, field.allowedCharacterTypes)) {
+      errors[key] = `Only the following characters are allowed: ${field.allowedCharacterTypes.join(', ')}`
+    }
+  }
+
+  return errors
+})
+
+const hasErrors = computed(() => Object.keys(fieldErrors.value).length > 0)
+
+const isSavingDisabled = computed(() => !title.value.trim() || filledCount.value === 0 || hasErrors.value)
+
+function digits(num?: number) {
+  return (num ?? 0).toString().length
+}
+
+function getCharacterLimits(field: IPTCField) {
+  const currentValue = fieldValues.value[field.key] ?? ''
+
+  const limits = typeof field.octets === 'number' ? { max: field.octets } : field.octets
+  const characterCountText = limits ? `${currentValue.length}/${limits.max}` : undefined
+  const characterCountWidth = limits ? `${digits(currentValue.length) + 1 + digits(limits.max)}ch` : undefined
+
+  return { limits, characterCountText, characterCountWidth }
+}
 
 function importCurrentValues() {
   const ids = selectedIds.value
@@ -180,13 +215,33 @@ async function saveToServer() {
         <div class="flex flex-col gap-2">
           <div v-for="field in group.fields" :key="field.key" class="flex items-center gap-3">
             <span class="text-sm w-40 shrink-0 truncate" :title="field.title">{{ field.title }}</span>
-            <UInput
-              v-model="fieldValues[field.key]"
-              :placeholder="field.placeholder"
-              :highlight="!!fieldValues[field.key]"
-              variant="outline"
-              class="w-full"
-            />
+            <div class="flex flex-col gap-1 w-full">
+              <UInput
+                v-model="fieldValues[field.key]"
+                :placeholder="field.placeholder"
+                :highlight="!!fieldValues[field.key]"
+                :maxlength="getCharacterLimits(field).limits?.max"
+                :color="fieldErrors[field.key] ? 'error' : undefined"
+                :ui="{ trailing: 'pointer-events-none' }"
+                :style="{ paddingRight: getCharacterLimits(field).characterCountWidth }"
+                variant="outline"
+                class="w-full"
+              >
+                <template v-if="getCharacterLimits(field).limits !== undefined" #trailing>
+                  <div
+                    class="text-xs text-muted tabular-nums min-w-0"
+                    :style="{ width: getCharacterLimits(field).characterCountWidth, textAlign: 'right' }"
+                    aria-live="polite"
+                    role="status"
+                  >
+                    {{ getCharacterLimits(field).characterCountText }}
+                  </div>
+                </template>
+              </UInput>
+              <p v-if="fieldErrors[field.key]" class="text-xs text-error">
+                {{ fieldErrors[field.key] }}
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -218,10 +273,10 @@ async function saveToServer() {
     <template v-else>
       <div class="flex flex-col gap-2">
         <div class="flex w-full gap-2">
-          <UButton icon="i-lucide-save" class="w-full justify-center" variant="soft" color="neutral" :disabled="!title.trim() || isSavingRemote || filledCount === 0" @click="saveLocal">
+          <UButton icon="i-lucide-save" class="w-full justify-center" variant="soft" color="neutral" :disabled="isSavingRemote || isSavingDisabled" @click="saveLocal">
             Save locally
           </UButton>
-          <UButton v-if="userId" icon="i-lucide-cloud-upload" class="w-full justify-center" color="primary" :disabled="!title.trim() || filledCount === 0" :loading="isSavingRemote" @click="saveToServer">
+          <UButton v-if="userId" icon="i-lucide-cloud-upload" class="w-full justify-center" color="primary" :disabled="isSavingDisabled" :loading="isSavingRemote" @click="saveToServer">
             Save to Server
           </UButton>
         </div>
