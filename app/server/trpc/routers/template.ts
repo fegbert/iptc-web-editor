@@ -113,31 +113,25 @@ export const templateRouter = createRouter({
 
       return upsertedTemplate
     }),
-  setSharing: makeRoleCheckedProcedure('org:member')
-    .input(z.object({ id: z.string(), shared: z.boolean() }))
+  updateSharing: protectedProcedure
+    .input(z.object({ id: z.string(), sharedWithOrgIds: z.array(z.string()) }))
     .mutation(async ({ ctx, input }) => {
       const template = await ctx.prisma.template.findUnique({
         where: { id: input.id },
-        select: { createdBy: true, sharedWithOrgIds: true },
+        select: { createdBy: true },
       })
 
       if (!template) {
         throw new TRPCError({ code: 'NOT_FOUND', message: 'Template not found' })
       }
 
-      if (!hasRole(ctx.auth.orgRole, 'org:admin') && template.createdBy !== ctx.auth.userId) {
+      if (template.createdBy !== ctx.auth.userId) {
         throw new TRPCError({ code: 'FORBIDDEN', message: 'You do not have permission to change sharing settings of this template' })
       }
 
-      const orgId = ctx.auth.orgId!
-      const updated = input.shared
-        ? [...new Set([...template.sharedWithOrgIds, orgId])]
-        : template.sharedWithOrgIds.filter(id => id !== orgId)
-
       return ctx.prisma.template.update({
         where: { id: input.id },
-        data: { sharedWithOrgIds: updated },
-        select: { id: true, sharedWithOrgIds: true },
+        data: { sharedWithOrgIds: { set: input.sharedWithOrgIds } },
       })
     }),
   delete: protectedProcedure

@@ -142,7 +142,7 @@ async function saveToServer() {
       .map(([key, value]) => ({ fieldId: key, value })),
   })
 
-  if (upsert.isSuccess) {
+  if (upsert.isSuccess.value) {
     emit('saved')
   }
 }

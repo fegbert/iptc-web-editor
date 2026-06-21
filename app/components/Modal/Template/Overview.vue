@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import type { UserTemplateItem } from './View/List.vue'
-import type { Prisma } from '~/prisma/generated/client'
 
 const emit = defineEmits<{
   (e: 'close'): void
 }>()
 const open = defineModel<boolean>({ required: true })
 
-const { userId, orgId } = useAuth()
+const { userId } = useAuth()
 const { templates: localTemplates, loadTemplatesFromIndexedDB, deleteTemplate: deleteLocalTemplate } = useTemplate()
 const notification = useToast()
 
@@ -17,7 +16,7 @@ const { template: queryTemplate } = useQuery()
 const { data: remoteTemplates, isLoading } = queryTemplate.list({ enabled: isUserLoggedIn })
 
 const { template: mutationTemplate } = useMutations()
-const { setSharing, deleteTemplate: deleteRemoteTemplate, upsert } = mutationTemplate()
+const { deleteTemplate: deleteRemoteTemplate, upsert } = mutationTemplate()
 
 type ModalView = 'list' | 'create' | 'edit'
 
@@ -32,18 +31,6 @@ const userTemplates = computed(() => [
 ])
 
 const orgTemplates = computed(() => remoteTemplates.value?.filter(t => t.createdBy !== userId.value) ?? [])
-
-function handleToggleSharing(template: Prisma.TemplateGetPayload<{ select: { id: true, sharedWithOrgIds: true } }>) {
-  if (!orgId.value) {
-    return
-  }
-
-  const isShared = template.sharedWithOrgIds.includes(orgId.value)
-  setSharing.mutate({
-    id: template.id,
-    shared: !isShared,
-  })
-}
 
 function handleEdit(template: UserTemplateItem) {
   editingTemplate.value = template
@@ -72,12 +59,7 @@ async function handlePromote(template: UserTemplateItem & { isLocal: true }) {
     fields: template.fields.map(field => ({ fieldId: field.fieldId, value: field.value ?? undefined })),
   })
 
-  if (!upsert.isSuccess) {
-    notification.add({
-      title: 'Error promoting template',
-      description: 'An error occurred while promoting the template. Please try again.',
-      color: 'error',
-    })
+  if (!upsert.isSuccess.value) {
     return
   }
 
@@ -165,7 +147,6 @@ function handleClose() {
         :org-templates="orgTemplates"
         :is-loading="isLoading"
         @create="view = 'create'"
-        @toggle-sharing="handleToggleSharing"
         @edit="handleEdit"
         @delete="handleDelete"
         @promote="handlePromote"

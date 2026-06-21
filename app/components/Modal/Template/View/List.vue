@@ -15,7 +15,6 @@ const emit = defineEmits<{
   (e: 'edit', template: UserTemplateItem): void
   (e: 'delete', template: UserTemplateItem): void
   (e: 'promote', template: TemplateIdb & { isLocal: true }): void
-  (e: 'toggleSharing', template: TemplateListOutput): void
   (e: 'apply', template: UserTemplateItem): void
 }>()
 
@@ -64,7 +63,7 @@ function deleteTemplate() {
                 Local
               </UBadge>
               <UBadge v-else-if="isSharedWithOrg(template)" color="success" variant="subtle" size="sm">
-                Shared
+                Shared with this Workspace
               </UBadge>
             </div>
             <p v-if="template.description" class="text-xs text-muted truncate">
@@ -85,16 +84,7 @@ function deleteTemplate() {
             >
               Promote
             </UButton>
-            <UButton
-              v-if="!template.isLocal"
-              size="xs"
-              icon="i-lucide-share-2"
-              :variant="isSharedWithOrg(template) ? 'soft' : 'ghost'"
-              :color="isSharedWithOrg(template) ? 'error' : 'neutral'"
-              @click="emit('toggleSharing', template)"
-            >
-              {{ isSharedWithOrg(template) ? 'Unshare' : 'Share' }}
-            </UButton>
+            <ModalTemplateSharePopover v-if="!template.isLocal" :template="template" />
             <UButton icon="i-lucide-clipboard-paste" size="sm" variant="ghost" color="primary" @click="emit('apply', template)">
               Apply
             </UButton>
@@ -134,7 +124,7 @@ function deleteTemplate() {
                 {{ filledFieldCount(template.fields) }} field{{ filledFieldCount(template.fields) === 1 ? '' : 's' }}
               </p>
             </div>
-            <UButton size="sm" variant="soft" color="primary">
+            <UButton icon="i-lucide-clipboard-paste" size="sm" variant="ghost" color="primary" @click="emit('apply', { ...template, isLocal: false })">
               Apply
             </UButton>
           </div>

@@ -2,8 +2,8 @@ export default () => {
   const { $trpc, useMutation, makeTrpcErrorToast, queryClient } = useMutationHelpers()
   const notification = useToast()
 
-  const setSharing = useMutation({
-    mutationFn: $trpc.template.setSharing.mutate,
+  const updateSharing = useMutation({
+    mutationFn: $trpc.template.updateSharing.mutate,
     onError: makeTrpcErrorToast(notification, { description: 'Failed to update template sharing settings' }),
     onSuccess: () => {
       notification.add({
@@ -50,5 +50,5 @@ export default () => {
     },
   })
 
-  return { setSharing, upsert, deleteTemplate }
+  return { updateSharing, upsert, deleteTemplate }
 }
