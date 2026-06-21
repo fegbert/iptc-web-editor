@@ -74,7 +74,7 @@ provide('editorMultiFile', { isMixed, getMixedValues })
 </script>
 
 <template>
-  <ModalTemplate v-model="showTemplateModal" @close="showTemplateModal = false" />
+  <ModalTemplateOverview v-model="showTemplateModal" @close="showTemplateModal = false" />
   <div v-if="firstSelectedId || isMultiple" class="w-full h-full pr-4 sm:pr-6">
     <EditorFileInformation class="bg-accented/20 rounded-lg" />
     <div class="flex flex-col w-full gap-4 pt-8">

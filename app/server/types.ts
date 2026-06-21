@@ -8,3 +8,5 @@ type RouterOutput = inferRouterOutputs<Router>
 
 export type FileGetUploadUrlInput = RouterInput['file']['getUploadUrl']
 export type FileGetUploadUrlOutput = RouterOutput['file']['getUploadUrl']
+
+export type TemplateListOutput = RouterOutput['template']['list'][number]

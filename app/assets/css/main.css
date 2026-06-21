@@ -35,4 +35,6 @@
   --ui-bg: #100F0E;
   --ui-text: #F1E9D1;
   --ui-text-highlighted: #F9F6EC;
+
+  --ui-text-dimmed: var(--ui-color-neutral-400);
 }
