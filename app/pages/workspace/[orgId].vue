@@ -76,6 +76,7 @@ async function remove(fileId: string) {
 }
 
 const showResetModal = ref<{ fileId: string } | null>(null)
+const showTemplateModal = ref(false)
 
 function reset() {
   if (!showResetModal.value) {
@@ -113,6 +114,7 @@ onMounted(async () => {
     :labels="{ confirm: 'Revert', cancel: 'Cancel' }"
     @confirm="reset()"
   />
+  <ModalTemplateOverview v-model="showTemplateModal" @close="showTemplateModal = false" />
   <UDashboardGroup class="Dashboard">
     <UDashboardSidebar class="Sidebar" :default-size="20">
       <template #header>
@@ -155,9 +157,13 @@ onMounted(async () => {
       <template #header>
         <UDashboardNavbar title="Edit Metadata">
           <template #right>
-            <div class="flex items-center gap-2">
-              <WorkspaceDownloadButton v-if="selectedIds.length > 0" />
-              <WorkspaceSaveButton v-if="selectedIds.length > 0" />
+            <div v-if="selectedIds.length > 0" class="flex items-center gap-2">
+              <UButton variant="subtle" color="secondary" icon="i-lucide-book" @click.stop="showTemplateModal = true">
+                Templates
+              </UButton>
+              <USeparator class="h-8" orientation="vertical" />
+              <WorkspaceDownloadButton />
+              <WorkspaceSaveButton />
             </div>
           </template>
         </UDashboardNavbar>

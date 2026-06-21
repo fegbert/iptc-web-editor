@@ -50,7 +50,7 @@ async function save() {
 
 <template>
   <UPopover v-model:open="isOpen">
-    <UButton size="sm" variant="ghost" color="neutral" icon="i-lucide-share-2">
+    <UButton size="sm" variant="ghost" color="neutral" icon="i-lucide-share-2" @click.stop>
       Manage Access
     </UButton>
 
@@ -74,10 +74,10 @@ async function save() {
         <USeparator />
 
         <div class="flex w-full gap-2">
-          <UButton class="w-full justify-center" icon="i-lucide-x" size="sm" variant="subtle" color="neutral" @click="isOpen = false">
+          <UButton class="w-full justify-center" icon="i-lucide-x" size="sm" variant="subtle" color="neutral" @click.stop="isOpen = false">
             Cancel
           </UButton>
-          <UButton class="w-full justify-center" icon="i-lucide-check" size="sm" color="primary" :loading="updateSharing.isPending.value" @click="save">
+          <UButton class="w-full justify-center" icon="i-lucide-check" size="sm" color="primary" :loading="updateSharing.isPending.value" @click.stop="save">
             Save
           </UButton>
         </div>

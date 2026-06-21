@@ -8,6 +8,8 @@ const open = defineModel<boolean>({ required: true })
 
 const { userId } = useAuth()
 const { templates: localTemplates, loadTemplatesFromIndexedDB, deleteTemplate: deleteLocalTemplate } = useTemplate()
+const { updateFileData } = useFileState()
+const { selectedIds } = useFileSelection()
 const notification = useToast()
 
 const isUserLoggedIn = computed(() => !!userId.value)
@@ -64,6 +66,33 @@ async function handlePromote(template: UserTemplateItem & { isLocal: true }) {
   }
 
   await deleteLocalTemplate(template.id)
+}
+
+function handleApply(template: { fields: UserTemplateItem['fields'] }) {
+  if (selectedIds.value.length === 0) {
+    notification.add({
+      title: 'No Files Selected',
+      description: 'Please select one or more files to apply the template to.',
+      color: 'warning',
+      duration: 3000,
+    })
+    return
+  }
+
+  template.fields
+    .filter(field => field.value)
+    .forEach(({ fieldId, value }) => {
+      selectedIds.value.forEach(fileId => updateFileData(fileId, fieldId, value!))
+    })
+
+  notification.add({
+    title: 'Template applied!',
+    description: `The template has been applied to ${selectedIds.value.length} file${selectedIds.value.length !== 1 ? 's' : ''}.`,
+    color: 'success',
+    duration: 3000,
+  })
+
+  emit('close')
 }
 
 async function handleSaved() {
@@ -150,7 +179,7 @@ function handleClose() {
         @edit="handleEdit"
         @delete="handleDelete"
         @promote="handlePromote"
-        @apply="() => {}"
+        @apply="handleApply"
       />
     </template>
   </UModal>

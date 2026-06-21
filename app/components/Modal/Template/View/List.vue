@@ -90,17 +90,17 @@ function deleteTemplate() {
                 variant="ghost"
                 color="neutral"
                 icon="i-lucide-cloud-upload"
-                @click="emit('promote', template)"
+                @click.stop="emit('promote', template)"
               >
                 Promote
               </UButton>
               <ModalTemplateSharePopover v-if="!template.isLocal" :template="template" />
-              <UButton icon="i-lucide-clipboard-paste" size="sm" variant="ghost" color="primary" @click="emit('apply', template)">
+              <UButton icon="i-lucide-clipboard-paste" size="sm" variant="ghost" color="primary" @click.stop="emit('apply', template)">
                 Apply
               </UButton>
               <USeparator orientation="vertical" class="h-8" />
-              <UButton icon="i-lucide-edit" size="sm" variant="ghost" color="primary" @click="emit('edit', template)" />
-              <UButton size="sm" variant="ghost" color="error" icon="i-lucide-trash-2" @click="templateToDelete = template" />
+              <UButton icon="i-lucide-edit" size="sm" variant="ghost" color="primary" @click.stop="emit('edit', template)" />
+              <UButton size="sm" variant="ghost" color="error" icon="i-lucide-trash-2" @click.stop="templateToDelete = template" />
             </div>
           </div>
 
@@ -120,7 +120,7 @@ function deleteTemplate() {
       <UEmpty
         v-else
         class="px-4 py-6"
-        size="xs"
+        size="sm"
         variant="outline"
         icon="i-lucide-book-open"
         title="No templates yet."

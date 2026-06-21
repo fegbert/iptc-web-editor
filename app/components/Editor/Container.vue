@@ -68,25 +68,16 @@ function getMixedValues(key: string) {
   }))
 }
 
-const showTemplateModal = ref(false)
-
 provide('editorMultiFile', { isMixed, getMixedValues })
 </script>
 
 <template>
-  <ModalTemplateOverview v-model="showTemplateModal" @close="showTemplateModal = false" />
   <div v-if="firstSelectedId || isMultiple" class="w-full h-full pr-4 sm:pr-6">
     <EditorFileInformation class="bg-accented/20 rounded-lg" />
     <div class="flex flex-col w-full gap-4 pt-8">
       <BaseCollapsible :default-open="true">
         <template #title>
           <span>IPTC-IIM</span>
-        </template>
-
-        <template #actions>
-          <UButton size="sm" variant="subtle" color="secondary" icon="i-lucide-book" @click.stop="showTemplateModal = true">
-            Templates
-          </UButton>
         </template>
 
         <template #content>
