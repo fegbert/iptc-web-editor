@@ -46,6 +46,7 @@ function remove(fileId: string) {
 }
 
 const showResetModal = ref<{ fileId: string } | null>(null)
+const showTemplateModal = ref(false)
 
 function reset() {
   if (!showResetModal.value) {
@@ -84,6 +85,7 @@ onMounted(async () => {
     v-model="showSupportedBrowserModal"
     @close="acceptSupportedBrowserNotice()"
   />
+  <ModalTemplateOverview v-model="showTemplateModal" @close="showTemplateModal = false" />
   <UDashboardGroup class="Dashboard">
     <UDashboardSidebar class="Sidebar" :default-size="20">
       <template #header>
@@ -125,8 +127,12 @@ onMounted(async () => {
     <UDashboardPanel :ui="{ body: 'pr-0!' }" class="min-h-min!">
       <template #header>
         <UDashboardNavbar title="Edit Metadata">
-          <template #right>
-            <EditorSaveButton v-if="selectedIds.length > 0" />
+          <template v-if="selectedIds.length > 0" #right>
+            <UButton variant="subtle" color="secondary" icon="i-lucide-book" @click.stop="showTemplateModal = true">
+              Templates
+            </UButton>
+            <USeparator class="h-8" orientation="vertical" />
+            <EditorSaveButton />
           </template>
         </UDashboardNavbar>
       </template>

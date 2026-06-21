@@ -19,5 +19,13 @@ export default () => {
         meta: { errorKey: 'getting upload url', orgId },
       }),
     },
+    template: {
+      list: (input: { enabled?: Ref<boolean> }) => useQuery({
+        queryFn: () => $trpc.template.list.query(),
+        queryKey: ['template', 'list', route.params.orgId],
+        meta: { errorKey: 'listing templates', orgId },
+        enabled: input.enabled?.value ?? false,
+      }),
+    },
   } as const
 }
