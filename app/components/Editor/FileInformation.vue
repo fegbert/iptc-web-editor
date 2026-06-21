@@ -19,6 +19,13 @@ const singleUrl = computedAsync(() => {
   return singleFile.value.previewUrl ? singleFile.value.previewUrl : loadImageForPreview(singleFile.value.buffer)
 })
 
+const singleFileSize = computed(() => singleFile.value
+  ? singleFile.value.data.size >= 1024 * 1024
+    ? `${(singleFile.value.data.size / (1024 * 1024)).toFixed(2)} MB`
+    : `${(singleFile.value.data.size / 1024).toFixed(2)} KB`
+  : undefined,
+)
+
 const stackFiles = computed(() => selectedIds.value.slice(0, STACK_SIZE).map(id => loadedFiles.value[id]).filter(f => !!f))
 const extraCount = computed(() => Math.max(0, selectedIds.value.length - STACK_SIZE))
 const stackUrls = computedAsync(() =>
@@ -60,7 +67,7 @@ const modifiedCount = computed(() => selectedIds.value.filter(id => fileChanges(
               <td class="PropertyColumn">
                 File Size:
               </td>
-              <td>{{ (singleFile?.data.size ?? 0 / 1024 / 1024).toFixed(2) }} MB</td>
+              <td>{{ singleFileSize }}</td>
             </tr>
             <tr>
               <td class="PropertyColumn">
