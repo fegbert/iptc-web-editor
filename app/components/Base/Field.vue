@@ -80,7 +80,7 @@ const isPending = computed(() => proposalCtx?.isPendingField(field.value.key) ??
           </template>
         </UPopover>
         <UPopover v-if="isPending" mode="hover" :content="{ side: 'top' }" class="max-w-sm">
-          <div class="pt-1">
+          <div class="pt-1.5">
             <UIcon name="i-lucide-clock" class="w-3.5 h-3.5 text-warning" />
           </div>
           <template #content>

@@ -1,3 +1,4 @@
+import { clerkClient } from '@clerk/nuxt/server'
 import { TRPCError } from '@trpc/server'
 import z from 'zod'
 import { createRouter } from '../init'
@@ -83,24 +84,15 @@ export const proposalRouter = createRouter({
       })
     }),
 
-  listForFile: makeRoleCheckedProcedure('org:member')
-    .input(z.object({ fileId: z.string() }))
-    .query(async ({ ctx, input }) => {
-      const file = await ctx.prisma.workspaceFile.findUnique({
-        where: { id: input.fileId },
-        select: { clerkOrgId: true },
-      })
-
-      if (!file) {
-        throw new TRPCError({ code: 'NOT_FOUND', message: 'File not found' })
-      }
-
-      if (file.clerkOrgId !== ctx.auth.orgId) {
-        throw new TRPCError({ code: 'FORBIDDEN', message: 'File does not belong to your active workspace' })
-      }
-
-      return ctx.prisma.metadataProposal.findMany({
-        where: { workspaceFileId: input.fileId, status: 'PENDING' },
+  listForOrg: makeRoleCheckedProcedure('org:admin')
+    .query(async ({ ctx }) => {
+      const proposals = await ctx.prisma.metadataProposal.findMany({
+        where: {
+          status: 'PENDING',
+          workspaceFile: {
+            clerkOrgId: ctx.auth.orgId,
+          },
+        },
         select: {
           id: true,
           proposedBy: true,
@@ -113,11 +105,44 @@ export const proposalRouter = createRouter({
               newValue: true,
             },
           },
+          workspaceFile: {
+            select: {
+              id: true,
+              fileData: { select: { name: true } },
+            },
+          },
         },
         orderBy: { proposedAt: 'asc' },
       })
-    }),
 
+      const uniqueUserIds = [...new Set(proposals.map(p => p.proposedBy))]
+
+      const userList = await ctx.clerk.users.getUserList({ userId: uniqueUserIds })
+      const dataByUserId = Object.fromEntries(userList.data.map(user => ([
+        user.id,
+        {
+          displayName: user.fullName ?? user.username ?? user.primaryEmailAddress ?? user.id,
+          image: user.hasImage ? user.imageUrl : undefined,
+        },
+      ])))
+
+      return proposals.map(proposal => ({
+        ...proposal,
+        proposedByData: dataByUserId[proposal.proposedBy] || null,
+      }))
+    }),
+  countForOrg: makeRoleCheckedProcedure('org:admin')
+    .query(async ({ ctx }) => {
+      const count = await ctx.prisma.metadataProposal.count({
+        where: {
+          status: 'PENDING',
+          workspaceFile: {
+            clerkOrgId: ctx.auth.orgId,
+          },
+        },
+      })
+      return { count }
+    }),
   approve: makeRoleCheckedProcedure('org:admin')
     .input(z.object({ proposalId: z.string() }))
     .mutation(async ({ ctx, input }) => {

@@ -2,6 +2,7 @@
 const { $trpc } = useNuxtApp()
 const { fileStates, fileChanges, getFileState } = useFileState()
 const { loadedFiles } = useFiles()
+const { queryClient } = useMutationHelpers()
 const { applySubmittedChanges } = useProposal()
 const notification = useToast()
 
@@ -32,6 +33,8 @@ async function submitAll() {
     }
 
     const result = await $trpc.proposal.submit.mutate({ fileId, changes })
+    await queryClient.invalidateQueries({ queryKey: ['proposal', 'listForOrg'] })
+
     applySubmittedChanges(fileId, changes, result.id)
   }))
 

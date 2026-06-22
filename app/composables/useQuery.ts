@@ -24,15 +24,21 @@ export default () => {
         queryFn: () => $trpc.template.list.query(),
         queryKey: ['template', 'list', route.params.orgId],
         meta: { errorKey: 'listing templates', orgId },
-        enabled: input.enabled?.value ?? false,
+        enabled: input.enabled,
       }),
     },
     proposal: {
-      listForFile: (input: { fileId: Ref<string>, enabled?: Ref<boolean> }) => useQuery({
-        queryFn: () => $trpc.proposal.listForFile.query({ fileId: input.fileId.value }),
-        queryKey: ['proposal', 'listForFile', input.fileId.value],
-        meta: { errorKey: 'listing proposals for file', orgId, fileId: input.fileId.value },
-        enabled: input.enabled?.value ?? false,
+      listForOrg: (input: { enabled?: Ref<boolean> }) => useQuery({
+        queryFn: () => $trpc.proposal.listForOrg.query(),
+        queryKey: ['proposal', 'listForOrg', route.params.orgId],
+        meta: { errorKey: 'listing proposals for org', orgId },
+        enabled: input.enabled,
+      }),
+      countForOrg: (input: { enabled?: Ref<boolean> }) => useQuery({
+        queryFn: () => $trpc.proposal.countForOrg.query(),
+        queryKey: ['proposal', 'countForOrg', route.params.orgId],
+        meta: { errorKey: 'counting proposals for org', orgId },
+        enabled: input.enabled,
       }),
     },
   } as const
