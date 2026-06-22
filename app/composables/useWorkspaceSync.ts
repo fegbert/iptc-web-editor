@@ -1,6 +1,6 @@
 import type { QueryClient } from '@tanstack/vue-query'
-import { useQueryClient } from '@tanstack/vue-query'
 import type { WorkspaceFileRecord, WorkspaceServerEvent } from '~/shared/wsTypes'
+import { useQueryClient } from '@tanstack/vue-query'
 
 const files = ref<WorkspaceFileRecord[]>([])
 const isConnected = ref(false)
