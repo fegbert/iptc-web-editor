@@ -1,4 +1,3 @@
-import { clerkClient } from '@clerk/nuxt/server'
 import { TRPCError } from '@trpc/server'
 import z from 'zod'
 import { createRouter } from '../init'
@@ -12,14 +11,18 @@ export const proposalRouter = createRouter({
         where: {
           workspaceFileId: input.fileId,
           proposedBy: ctx.auth.userId,
-          status: 'PENDING',
+          changes: { some: { status: 'PENDING' } },
         },
         select: {
           id: true,
           changes: {
+            where: {
+              status: 'PENDING',
+            },
             select: {
               fieldId: true,
               newValue: true,
+              status: true,
             },
           },
         },
@@ -59,14 +62,16 @@ export const proposalRouter = createRouter({
         where: {
           workspaceFileId: input.fileId,
           proposedBy: ctx.auth.userId,
-          status: 'PENDING',
+          changes: { some: { status: 'PENDING' } },
         },
         select: { id: true },
       })
 
       if (existingProposal) {
         await ctx.prisma.$transaction([
-          ctx.prisma.proposalChange.deleteMany({ where: { proposalId: existingProposal.id } }),
+          ctx.prisma.proposalChange.deleteMany({
+            where: { proposalId: existingProposal.id, status: 'PENDING' },
+          }),
           ctx.prisma.proposalChange.createMany({
             data: changesWithOld.map(change => ({ ...change, proposalId: existingProposal.id })),
           }),
@@ -88,10 +93,8 @@ export const proposalRouter = createRouter({
     .query(async ({ ctx }) => {
       const proposals = await ctx.prisma.metadataProposal.findMany({
         where: {
-          status: 'PENDING',
-          workspaceFile: {
-            clerkOrgId: ctx.auth.orgId,
-          },
+          workspaceFile: { clerkOrgId: ctx.auth.orgId },
+          changes: { some: { status: 'PENDING' } },
         },
         select: {
           id: true,
@@ -103,6 +106,9 @@ export const proposalRouter = createRouter({
               fieldId: true,
               oldValue: true,
               newValue: true,
+              status: true,
+              reviewNote: true,
+              reviewedAt: true,
             },
           },
           workspaceFile: {
@@ -135,34 +141,29 @@ export const proposalRouter = createRouter({
     .query(async ({ ctx }) => {
       const count = await ctx.prisma.metadataProposal.count({
         where: {
-          status: 'PENDING',
-          workspaceFile: {
-            clerkOrgId: ctx.auth.orgId,
-          },
+          workspaceFile: { clerkOrgId: ctx.auth.orgId },
+          changes: { some: { status: 'PENDING' } },
         },
       })
       return { count }
     }),
-  approve: makeRoleCheckedProcedure('org:admin')
-    .input(z.object({ proposalId: z.string() }))
+  approveFields: makeRoleCheckedProcedure('org:admin')
+    .input(z.object({
+      proposalId: z.string(),
+      fieldIds: z.array(z.string()).min(1),
+    }))
     .mutation(async ({ ctx, input }) => {
       const proposal = await ctx.prisma.metadataProposal.findUnique({
         where: { id: input.proposalId },
         select: {
           id: true,
-          status: true,
           workspaceFileId: true,
           changes: {
-            select: {
-              fieldId: true,
-              newValue: true,
-            },
+            where: { fieldId: { in: input.fieldIds }, status: 'PENDING' },
+            select: { id: true, fieldId: true, newValue: true },
           },
           workspaceFile: {
-            select: {
-              metadata: true,
-              clerkOrgId: true,
-            },
+            select: { metadata: true, clerkOrgId: true },
           },
         },
       })
@@ -175,8 +176,8 @@ export const proposalRouter = createRouter({
         throw new TRPCError({ code: 'FORBIDDEN', message: 'Proposal does not belong to your active workspace' })
       }
 
-      if (proposal.status !== 'PENDING') {
-        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Only pending proposals can be approved' })
+      if (proposal.changes.length === 0) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'No pending changes found for the specified fields' })
       }
 
       const metadata = { ...(proposal.workspaceFile.metadata as Record<string, string>) }
@@ -190,77 +191,73 @@ export const proposalRouter = createRouter({
         }
       }
 
+      const now = new Date()
+
       await ctx.prisma.$transaction(async (tx) => {
         await tx.workspaceFile.update({
           where: { id: proposal.workspaceFileId },
           data: { metadata, updatedBy: ctx.auth.userId },
         })
 
-        await tx.metadataProposal.update({
-          where: { id: proposal.id },
-          data: {
-            status: 'APPROVED',
-            reviewedBy: ctx.auth.userId,
-            reviewedAt: new Date(),
-          },
+        await tx.proposalChange.updateMany({
+          where: { id: { in: proposal.changes.map(c => c.id) } },
+          data: { status: 'APPROVED', reviewedBy: ctx.auth.userId, reviewedAt: now },
         })
 
-        const otherPendingIds = await tx.metadataProposal.findMany({
+        const otherProposalIds = await tx.metadataProposal.findMany({
           where: {
             workspaceFileId: proposal.workspaceFileId,
-            status: 'PENDING',
             id: { not: proposal.id },
+            changes: { some: { status: 'PENDING' } },
           },
           select: { id: true },
         }).then(results => results.map(r => r.id))
 
-        if (otherPendingIds.length > 0) {
+        if (otherProposalIds.length > 0) {
           await Promise.all(
             proposal.changes.map(change =>
               tx.proposalChange.updateMany({
                 where: {
-                  proposalId: { in: otherPendingIds },
+                  proposal: {
+                    workspaceFileId: proposal.workspaceFileId,
+                    id: { not: proposal.id },
+                  },
                   fieldId: change.fieldId,
+                  status: 'PENDING',
                 },
-                data: { oldValue: change.newValue },
+                data: {
+                  status: 'REJECTED',
+                  reviewedBy: ctx.auth.userId,
+                  reviewedAt: now,
+                  reviewNote: 'Automatically rejected due to another proposal being approved for the same field',
+                },
               }),
             ),
           )
         }
-      })
 
-      await ctx.prisma.$transaction([
-        ctx.prisma.workspaceFile.update({
-          where: { id: proposal.workspaceFileId },
-          data: { metadata, updatedBy: ctx.auth.userId },
-        }),
-        ctx.prisma.metadataProposal.update({
-          where: { id: proposal.id },
-          data: {
-            status: 'APPROVED',
-            reviewedBy: ctx.auth.userId,
-            reviewedAt: new Date(),
-          },
-        }),
-      ])
-
-      broadcastToOrg(ctx.auth.orgId, {
-        type: 'file:metadata_updated',
-        data: { fileId: proposal.workspaceFileId, metadata },
+        broadcastToOrg(ctx.auth.orgId, {
+          type: 'file:metadata_updated',
+          data: { fileId: proposal.workspaceFileId, metadata },
+        })
       })
     }),
 
-  reject: makeRoleCheckedProcedure('org:admin')
-    .input(z.object({ proposalId: z.string(), note: z.string().optional() }))
+  rejectFields: makeRoleCheckedProcedure('org:admin')
+    .input(z.object({
+      proposalId: z.string(),
+      fieldIds: z.array(z.string()).min(1),
+      reviewNote: z.string().optional(),
+    }))
     .mutation(async ({ ctx, input }) => {
       const proposal = await ctx.prisma.metadataProposal.findUnique({
         where: { id: input.proposalId },
         select: {
           id: true,
-          status: true,
-          workspaceFileId: true,
-          workspaceFile: {
-            select: { clerkOrgId: true },
+          workspaceFile: { select: { clerkOrgId: true } },
+          changes: {
+            where: { fieldId: { in: input.fieldIds }, status: 'PENDING' },
+            select: { id: true },
           },
         },
       })
@@ -273,17 +270,17 @@ export const proposalRouter = createRouter({
         throw new TRPCError({ code: 'FORBIDDEN', message: 'Proposal does not belong to your active workspace' })
       }
 
-      if (proposal.status !== 'PENDING') {
-        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Only pending proposals can be rejected' })
+      if (proposal.changes.length === 0) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'No pending changes found for the specified fields' })
       }
 
-      await ctx.prisma.metadataProposal.update({
-        where: { id: proposal.id },
+      await ctx.prisma.proposalChange.updateMany({
+        where: { id: { in: proposal.changes.map(c => c.id) } },
         data: {
           status: 'REJECTED',
+          reviewNote: input.reviewNote,
           reviewedBy: ctx.auth.userId,
           reviewedAt: new Date(),
-          reviewNote: input.note,
         },
       })
     }),
