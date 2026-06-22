@@ -115,6 +115,32 @@ function toggleEntry(proposalId: string, fieldId: string, fileId: string) {
   selectedEntries.value = next
 }
 
+function getFileSelectableEntries(file: FileGroup) {
+  return file.fields.map(field => ({ proposalId: field.entries[0]!.proposalId, fieldId: field.fieldId }))
+}
+
+function isFileAllSelected(file: FileGroup) {
+  return getFileSelectableEntries(file).every(({ proposalId, fieldId }) => isSelected(proposalId, fieldId))
+}
+
+function isFileIndeterminate(file: FileGroup) {
+  const entries = getFileSelectableEntries(file)
+  const count = entries.filter(({ proposalId, fieldId }) => isSelected(proposalId, fieldId)).length
+  return count > 0 && count < entries.length
+}
+
+function toggleFileAll(file: FileGroup) {
+  const next = new Set(selectedEntries.value)
+  const entries = getFileSelectableEntries(file)
+  if (isFileAllSelected(file)) {
+    entries.forEach(({ proposalId, fieldId }) => next.delete(entryKey(proposalId, fieldId)))
+  }
+  else {
+    entries.forEach(({ proposalId, fieldId }) => next.add(entryKey(proposalId, fieldId)))
+  }
+  selectedEntries.value = next
+}
+
 function groupSelectionByProposal() {
   const byProposal = new Map<string, string[]>()
   for (const key of selectedEntries.value) {
@@ -204,7 +230,15 @@ function cancelRejectBatch() {
                 <table class="w-full text-sm">
                   <thead>
                     <tr class="bg-accented/30 text-left">
-                      <th class="TableHeading" />
+                      <th class="TableHeading w-8">
+                        <UCheckbox
+                          :model-value="isFileAllSelected(file)"
+                          :indeterminate="isFileIndeterminate(file)"
+                          :ui="{ base: 'border border-primary/30 aria-checked:border-0' }"
+                          color="success"
+                          @update:model-value="toggleFileAll(file)"
+                        />
+                      </th>
                       <th class="TableHeading w-[17%]">
                         Field
                       </th>
@@ -226,6 +260,7 @@ function cancelRejectBatch() {
                         :key="entry.proposalId"
                         class="border-t border-default cursor-pointer hover:bg-accented/30"
                         :class="[
+                          field.entries.length > 1 && isSelected(entry.proposalId, field.fieldId) ? 'bg-warning/15 hover:bg-warning/20' : '',
                           field.entries.length > 1 ? 'bg-warning/5 hover:bg-warning/10' : '',
                           isSelected(entry.proposalId, field.fieldId) ? 'bg-primary/10 hover:bg-primary/15' : '',
                         ]"
@@ -234,12 +269,13 @@ function cancelRejectBatch() {
                         <td class="px-3 py-2.5 align-middle">
                           <UCheckbox
                             :model-value="isSelected(entry.proposalId, field.fieldId)"
+                            :ui="{ base: 'border border-primary/30 aria-checked:border-0' }"
                             color="success"
                             @click.stop
                             @update:model-value="toggleEntry(entry.proposalId, field.fieldId, file.fileId)"
                           />
                         </td>
-                        <td class="px-3 py-2.5 text-xs font-medium align-top">
+                        <td class="px-3 py-2.5 text-xs font-medium align-middle">
                           <div v-if="entryIndex === 0" class="flex items-center gap-1.5 pt-0.5">
                             <span>{{ field.fieldTitle }}</span>
                             <UBadge
@@ -252,7 +288,7 @@ function cancelRejectBatch() {
                             </UBadge>
                           </div>
                         </td>
-                        <td class="px-3 py-2.5 align-top">
+                        <td class="px-3 py-2.5 align-middle">
                           <span class="text-xs text-muted block truncate max-w-[9rem]">
                             {{ entry.proposedByData?.displayName ?? 'Unknown User' }}
                           </span>
@@ -292,41 +328,51 @@ function cancelRejectBatch() {
 
     <template #footer>
       <div class="flex flex-col gap-3 w-full">
-        <div v-if="isRejectingBatch" class="flex items-start gap-2">
-          <UTextarea
-            v-model="rejectNote"
-            placeholder="Reason for rejection (optional)..."
-            class="flex-1 text-sm"
-            :rows="2"
-            autofocus
-          />
-          <div class="flex flex-col gap-1 shrink-0">
-            <UButton
-              color="error"
-              size="sm"
-              :loading="rejectFields.isPending.value"
-              @click="handleRejectSelected"
-            >
-              Confirm
-            </UButton>
-            <UButton
-              variant="ghost"
-              size="sm"
-              @click="cancelRejectBatch"
-            >
-              Cancel
-            </UButton>
-          </div>
-        </div>
-
         <div class="flex items-center justify-between gap-4">
           <span class="text-sm text-muted">
             {{ selectionCount }} selected / {{ totalFieldCount }} total
           </span>
           <div class="flex gap-2">
-            <UButton variant="subtle" color="error" icon="i-lucide-x" :disabled="!selectionCount || approveFields.isPending.value" @click="isRejectingBatch = true">
-              Reject selected
-            </UButton>
+            <UPopover v-model:open="isRejectingBatch" :content="{ side: 'top' }">
+              <UButton variant="subtle" color="error" icon="i-lucide-x" :disabled="!selectionCount || approveFields.isPending.value" @click="isRejectingBatch = true">
+                Reject selected
+              </UButton>
+
+              <template #content>
+                <div class="flex flex-col p-3 items-center gap-2 justify-center">
+                  <span class="text-xs font-semibold uppercase tracking-wide text-default/50">
+                    Confirm Rejection
+                  </span>
+                  <UTextarea
+                    v-model="rejectNote"
+                    placeholder="Reason for rejection (optional)..."
+                    class="flex-1 text-sm"
+                    :rows="3"
+                    autofocus
+                  />
+                  <div class="flex w-full gap-1 shrink-0">
+                    <UButton
+                      class="w-full justify-center"
+                      variant="ghost"
+                      size="sm"
+                      @click="cancelRejectBatch"
+                    >
+                      Cancel
+                    </UButton>
+                    <UButton
+                      class="w-full justify-center"
+                      variant="subtle"
+                      color="error"
+                      size="sm"
+                      :loading="rejectFields.isPending.value"
+                      @click="handleRejectSelected"
+                    >
+                      Reject
+                    </UButton>
+                  </div>
+                </div>
+              </template>
+            </UPopover>
             <UButton
               color="success"
               icon="i-lucide-check"
