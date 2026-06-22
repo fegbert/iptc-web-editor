@@ -24,6 +24,7 @@ model WorkspaceFile {
   r2Key      String             @unique
   metadata   Json               @default("{}")
   fileData   WorkspaceFileData?
+  proposals  MetadataProposal[]
   createdBy  String
   createdAt  DateTime           @default(now())
   updatedAt  DateTime           @updatedAt
@@ -48,4 +49,33 @@ model Template {
   updatedAt DateTime @updatedAt
   updatedBy String?
   sharedWithOrgIds String[]
+}
+
+enum ProposalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model MetadataProposal {
+  id String @id @default(cuid())
+  workspaceFileId String
+  workspaceFile WorkspaceFile @relation(fields: [workspaceFileId], references: [id], onDelete: Cascade)
+  changes ProposalChange[]
+  proposedBy String
+  proposedAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+  status ProposalStatus @default(PENDING)
+  reviewedBy String?
+  reviewedAt DateTime?
+  reviewNote String?
+}
+
+model ProposalChange {
+  id String @id @default(cuid())
+  proposalId String
+  proposal MetadataProposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  fieldId String
+  oldValue String?
+  newValue String?
 }
