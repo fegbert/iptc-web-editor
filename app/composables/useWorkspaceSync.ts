@@ -1,16 +1,23 @@
+import type { QueryClient } from '@tanstack/vue-query'
+import { useQueryClient } from '@tanstack/vue-query'
 import type { WorkspaceFileRecord, WorkspaceServerEvent } from '~/shared/wsTypes'
 
 const files = ref<WorkspaceFileRecord[]>([])
 const isConnected = ref(false)
 
 let ws: WebSocket | null = null
+let _queryClient: QueryClient | null = null
 
 export default function useWorkspaceSync() {
+  const queryClient = useQueryClient()
+
   function initFiles(initialFiles: WorkspaceFileRecord[]) {
     files.value = initialFiles
   }
 
   function connect(orgId: string) {
+    _queryClient = queryClient
+
     if (ws) {
       disconnect()
     }
@@ -52,6 +59,16 @@ export default function useWorkspaceSync() {
         if (file) {
           file.metadata = message.data.metadata
         }
+        break
+      }
+      case 'proposal:fields_rejected': {
+        const { clearRejectedFields } = useProposal()
+        clearRejectedFields(message.data.fileId, message.data.fieldIds)
+        _queryClient?.invalidateQueries({ queryKey: ['proposal'] })
+        break
+      }
+      case 'proposal:submitted': {
+        _queryClient?.invalidateQueries({ queryKey: ['proposal'] })
         break
       }
     }

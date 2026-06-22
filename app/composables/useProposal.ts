@@ -70,6 +70,31 @@ export default function useProposal() {
     }
   }
 
+  function clearRejectedFields(fileId: string, fieldIds: string[]) {
+    const ids = pendingFieldIds.value[fileId]
+    if (!ids) return
+
+    const { loadedFiles } = useFiles()
+    const committed = loadedFiles.value[fileId]?.metadata ?? {}
+    const state = fileStates.value[fileId]
+
+    for (const fieldId of fieldIds) {
+      ids.delete(fieldId)
+      delete pendingValues.value[fileId]?.[fieldId]
+
+      const field = state?.find(f => f.key === fieldId)
+      if (field) {
+        field.value = committed[fieldId] ?? ''
+      }
+    }
+
+    if (ids.size === 0) {
+      delete pendingFieldIds.value[fileId]
+      delete pendingValues.value[fileId]
+      delete proposalIds.value[fileId]
+    }
+  }
+
   function clearProposalForFile(fileId: string) {
     delete pendingFieldIds.value[fileId]
     delete pendingValues.value[fileId]
@@ -107,6 +132,7 @@ export default function useProposal() {
   return {
     loadProposalForFile,
     applySubmittedChanges,
+    clearRejectedFields,
     clearProposalForFile,
     removeProposalTracking,
     isPendingField,

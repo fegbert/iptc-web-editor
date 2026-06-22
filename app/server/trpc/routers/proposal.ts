@@ -76,10 +76,11 @@ export const proposalRouter = createRouter({
             data: changesWithOld.map(change => ({ ...change, proposalId: existingProposal.id })),
           }),
         ])
+        broadcastToOrg(ctx.auth.orgId, { type: 'proposal:submitted', data: { fileId: input.fileId } })
         return { id: existingProposal.id }
       }
 
-      return ctx.prisma.metadataProposal.create({
+      const proposal = await ctx.prisma.metadataProposal.create({
         data: {
           workspaceFileId: input.fileId,
           proposedBy: ctx.auth.userId,
@@ -87,6 +88,8 @@ export const proposalRouter = createRouter({
         },
         select: { id: true },
       })
+      broadcastToOrg(ctx.auth.orgId, { type: 'proposal:submitted', data: { fileId: input.fileId } })
+      return proposal
     }),
 
   listForOrg: makeRoleCheckedProcedure('org:admin')
@@ -254,6 +257,7 @@ export const proposalRouter = createRouter({
         where: { id: input.proposalId },
         select: {
           id: true,
+          workspaceFileId: true,
           workspaceFile: { select: { clerkOrgId: true } },
           changes: {
             where: { fieldId: { in: input.fieldIds }, status: 'PENDING' },
@@ -282,6 +286,11 @@ export const proposalRouter = createRouter({
           reviewedBy: ctx.auth.userId,
           reviewedAt: new Date(),
         },
+      })
+
+      broadcastToOrg(ctx.auth.orgId, {
+        type: 'proposal:fields_rejected',
+        data: { fileId: proposal.workspaceFileId, fieldIds: input.fieldIds },
       })
     }),
 })
