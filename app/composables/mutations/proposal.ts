@@ -2,35 +2,35 @@ export default () => {
   const { $trpc, makeTrpcErrorToast, queryClient, useMutation } = useMutationHelpers()
   const notification = useToast()
 
-  const approve = useMutation({
-    mutationFn: $trpc.proposal.approve.mutate,
-    onError: makeTrpcErrorToast(notification, { description: 'Failed to approve the proposal.' }),
-    onSuccess: () => {
+  const approveFields = useMutation({
+    mutationFn: $trpc.proposal.approveFields.mutate,
+    onError: makeTrpcErrorToast(notification, { description: 'Failed to approve the selected fields.' }),
+    onSuccess: async () => {
       notification.add({
-        title: 'Proposal approved',
-        description: 'The proposed changes have been approved.',
+        title: 'Fields approved',
+        description: 'The selected proposed changes have been approved and applied to the file.',
         color: 'success',
         duration: 3000,
       })
 
-      queryClient.invalidateQueries({ queryKey: ['proposal'] })
+      await queryClient.invalidateQueries({ queryKey: ['proposal'] })
     },
   })
 
-  const reject = useMutation({
-    mutationFn: $trpc.proposal.reject.mutate,
-    onError: makeTrpcErrorToast(notification, { description: 'Failed to reject the proposal.' }),
-    onSuccess: () => {
+  const rejectFields = useMutation({
+    mutationFn: $trpc.proposal.rejectFields.mutate,
+    onError: makeTrpcErrorToast(notification, { description: 'Failed to reject the selected fields.' }),
+    onSuccess: async () => {
       notification.add({
-        title: 'Proposal rejected',
-        description: 'The proposed changes have been rejected.',
-        color: 'error',
+        title: 'Fields rejected',
+        description: 'The selected proposed changes have been rejected.',
+        color: 'success',
         duration: 3000,
       })
 
-      queryClient.invalidateQueries({ queryKey: ['proposal'] })
+      await queryClient.invalidateQueries({ queryKey: ['proposal'] })
     },
   })
 
-  return { approve, reject }
+  return { approveFields, rejectFields }
 }
