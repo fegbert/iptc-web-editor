@@ -9,6 +9,8 @@ const { clearStorage } = useWorkspace()
 const { loadedFiles } = useFiles()
 const { setupFileState, removeFileState } = useFileState()
 const { selectedIds, toggleSelection } = useFileSelection()
+const { orgRole } = useAuth()
+const { loadProposalForFile, removeProposalTracking } = useProposal()
 const route = useRoute()
 
 const isLoading = ref(true)
@@ -20,6 +22,9 @@ watch(adapterFiles, (adapted, previous) => {
     if (!previous?.[id]) {
       loadedFiles.value[id] = adapted[id]!
       setupFileState(id)
+      if (orgRole.value && orgRole.value !== 'org:admin') {
+        loadProposalForFile(id)
+      }
     }
     else {
       loadedFiles.value[id]!.metadata = adapted[id]!.metadata
@@ -30,6 +35,7 @@ watch(adapterFiles, (adapted, previous) => {
     if (!adapted[id]) {
       delete loadedFiles.value[id]
       removeFileState(id)
+      removeProposalTracking(id)
     }
   })
 })

@@ -44,6 +44,12 @@ const multiFileCtx = inject<{
 
 const isMixed = computed(() => multiFileCtx?.isMixed(field.value.key) ?? false)
 const mixedValues = computed(() => multiFileCtx?.getMixedValues(field.value.key) ?? [])
+
+const proposalCtx = inject<{
+  isPendingField: (key: string) => boolean
+} | null>('editorProposal', null)
+
+const isPending = computed(() => proposalCtx?.isPendingField(field.value.key) ?? false)
 </script>
 
 <template>
@@ -69,6 +75,23 @@ const mixedValues = computed(() => multiFileCtx?.getMixedValues(field.value.key)
                   </div>
                   <UButton v-if="mixed.value" size="xs" class="h-6" variant="ghost" icon="lucide:circle-plus" @click="field.value = mixed.value" />
                 </div>
+              </div>
+            </div>
+          </template>
+        </UPopover>
+        <UPopover v-if="isPending" mode="hover" :content="{ side: 'top' }" class="max-w-sm">
+          <div class="pt-1">
+            <UIcon name="i-lucide-clock" class="w-3.5 h-3.5 text-warning" />
+          </div>
+          <template #content>
+            <div class="flex flex-col py-3">
+              <p class="px-3 pb-2 text-xs font-semibold uppercase tracking-wide text-default/50">
+                Pending review
+              </p>
+              <div class="px-3 py-1.5 max-w-xs">
+                <p class="text-sm text-wrap">
+                  This field has a pending change that is not yet approved. Changing the value will override the pending change.
+                </p>
               </div>
             </div>
           </template>

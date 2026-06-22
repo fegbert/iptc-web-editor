@@ -13,6 +13,15 @@ export const proposalRouter = createRouter({
           proposedBy: ctx.auth.userId,
           status: 'PENDING',
         },
+        select: {
+          id: true,
+          changes: {
+            select: {
+              fieldId: true,
+              newValue: true,
+            },
+          },
+        },
       }),
     ),
 
