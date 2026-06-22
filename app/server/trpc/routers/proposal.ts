@@ -190,6 +190,45 @@ export const proposalRouter = createRouter({
         }
       }
 
+      await ctx.prisma.$transaction(async (tx) => {
+        await tx.workspaceFile.update({
+          where: { id: proposal.workspaceFileId },
+          data: { metadata, updatedBy: ctx.auth.userId },
+        })
+
+        await tx.metadataProposal.update({
+          where: { id: proposal.id },
+          data: {
+            status: 'APPROVED',
+            reviewedBy: ctx.auth.userId,
+            reviewedAt: new Date(),
+          },
+        })
+
+        const otherPendingIds = await tx.metadataProposal.findMany({
+          where: {
+            workspaceFileId: proposal.workspaceFileId,
+            status: 'PENDING',
+            id: { not: proposal.id },
+          },
+          select: { id: true },
+        }).then(results => results.map(r => r.id))
+
+        if (otherPendingIds.length > 0) {
+          await Promise.all(
+            proposal.changes.map(change =>
+              tx.proposalChange.updateMany({
+                where: {
+                  proposalId: { in: otherPendingIds },
+                  fieldId: change.fieldId,
+                },
+                data: { oldValue: change.newValue },
+              }),
+            ),
+          )
+        }
+      })
+
       await ctx.prisma.$transaction([
         ctx.prisma.workspaceFile.update({
           where: { id: proposal.workspaceFileId },

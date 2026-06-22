@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { TableColumn } from '@nuxt/ui'
 import type { ProposalOrgListItem } from '~/server/types'
 
 const emit = defineEmits<{
@@ -108,7 +109,7 @@ async function handleReject(proposalId: string) {
               </span>
             </div>
 
-            <div v-for="proposal in file.proposals" :key="proposal.id" class="flex flex-col gap-3 rounded-lg border p-4 ml-7">
+            <div v-for="proposal in file.proposals" :key="proposal.id" class="flex flex-col gap-3 rounded-lg border border-default bg-accented/40 p-4 ml-7">
               <div class="flex items-center justify-between gap-2">
                 <div class="flex items-center gap-2">
                   <NuxtImg
@@ -128,44 +129,32 @@ async function handleReject(proposalId: string) {
                 </UBadge>
               </div>
 
-              <div class="rounded-md border overflow-hidden">
+              <div class="rounded-md border overflow-hidden bg-default">
                 <table class="w-full text-sm">
                   <thead>
-                    <tr class="bg-accented/30">
-                      <th class="TableHeading w-1/4 shrink-0">
+                    <tr class="bg-accented/30 text-left">
+                      <th class="TableHeading w-1/4">
                         Field
                       </th>
-                      <th class="TableHeading w-1/2">
+                      <th class="TableHeading w-[37.5%]">
                         Current
                       </th>
-                      <th class="TableHeading w-1/2">
+                      <th class="TableHeading w-[37.5%]">
                         Proposed
                       </th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr v-for="change in proposal.changes" :key="change.fieldId" class="border-t">
-                      <td class="px-3 py-2 text-xs font-medium text-muted">
+                      <td class="px-3 py-2 text-xs font-medium">
                         {{ getFieldTitle(change.fieldId) }}
                       </td>
                       <td class="px-3 py-2">
-                        <BaseDiff
-                          v-if="change.oldValue && change.newValue"
-                          :old-text="change.oldValue"
-                          :new-text="change.newValue"
-                          mode="old"
-                        />
-                        <span v-else-if="change.oldValue" class="text-sm">{{ change.oldValue }}</span>
+                        <span v-if="change.oldValue" class="text-sm">{{ change.oldValue }}</span>
                         <span v-else class="text-xs text-muted italic">Empty</span>
                       </td>
                       <td class="px-3 py-2">
-                        <BaseDiff
-                          v-if="change.oldValue && change.newValue"
-                          :old-text="change.oldValue"
-                          :new-text="change.newValue"
-                          mode="new"
-                        />
-                        <span v-else-if="change.newValue" class="text-sm">{{ change.newValue }}</span>
+                        <span v-if="change.newValue" class="text-sm">{{ change.newValue }}</span>
                         <span v-else class="text-xs text-error italic">Removed</span>
                       </td>
                     </tr>
