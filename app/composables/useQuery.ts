@@ -27,5 +27,13 @@ export default () => {
         enabled: input.enabled?.value ?? false,
       }),
     },
+    proposal: {
+      listForFile: (input: { fileId: Ref<string>, enabled?: Ref<boolean> }) => useQuery({
+        queryFn: () => $trpc.proposal.listForFile.query({ fileId: input.fileId.value }),
+        queryKey: ['proposal', 'listForFile', input.fileId.value],
+        meta: { errorKey: 'listing proposals for file', orgId, fileId: input.fileId.value },
+        enabled: input.enabled?.value ?? false,
+      }),
+    },
   } as const
 }
