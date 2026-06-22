@@ -64,7 +64,7 @@ model MetadataProposal {
   changes ProposalChange[]
   proposedBy String
   proposedAt DateTime @default(now())
-  updateAt DateTime @updatedAt
+  updatedAt DateTime @updatedAt
   status ProposalStatus @default(PENDING)
   reviewedBy String?
   reviewedAt DateTime?

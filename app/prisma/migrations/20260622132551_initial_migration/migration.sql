@@ -58,7 +58,7 @@ CREATE TABLE "MetadataProposal" (
     "workspaceFileId" TEXT NOT NULL,
     "proposedBy" TEXT NOT NULL,
     "proposedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updateAt" TIMESTAMP(3) NOT NULL,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     "status" "ProposalStatus" NOT NULL DEFAULT 'PENDING',
     "reviewedBy" TEXT,
     "reviewedAt" TIMESTAMP(3),
