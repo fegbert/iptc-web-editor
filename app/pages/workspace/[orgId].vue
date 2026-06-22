@@ -169,7 +169,8 @@ onMounted(async () => {
               </UButton>
               <USeparator class="h-8" orientation="vertical" />
               <WorkspaceDownloadButton />
-              <WorkspaceSaveButton />
+              <WorkspaceSaveButton v-if="orgRole === 'org:admin'" />
+              <WorkspaceSubmitButton v-else class="text-nowrap" />
             </div>
           </template>
         </UDashboardNavbar>

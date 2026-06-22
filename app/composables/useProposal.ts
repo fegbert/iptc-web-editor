@@ -30,6 +30,11 @@ export default function useProposal() {
     proposalIds.value[fileId] = proposal.id
   }
 
+  function applySubmittedChanges(fileId: string, changes: { fieldId: string, newValue: string | null }[], proposalId: string) {
+    pendingFieldIds.value[fileId] = new Set(changes.map(change => change.fieldId))
+    proposalIds.value[fileId] = proposalId
+  }
+
   function clearProposalForFile(fileId: string) {
     delete pendingFieldIds.value[fileId]
     delete proposalIds.value[fileId]
@@ -56,6 +61,7 @@ export default function useProposal() {
 
   return {
     loadProposalForFile,
+    applySubmittedChanges,
     clearProposalForFile,
     removeProposalTracking,
     isPendingField,
