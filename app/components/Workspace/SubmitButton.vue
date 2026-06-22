@@ -1,14 +1,14 @@
 <script setup lang="ts">
 const { $trpc } = useNuxtApp()
-const { fileStates, fileChanges, getFileState } = useFileState()
 const { loadedFiles } = useFiles()
+const { fileStates, getNonPendingChanges, getFileState } = useFileState()
 const { queryClient } = useMutationHelpers()
-const { applySubmittedChanges } = useProposal()
+const { applySubmittedChanges, isPendingField } = useProposal()
 const notification = useToast()
 
 const isSubmitting = ref(false)
 
-const changedFileIds = computed(() => Object.keys(fileStates.value).filter(fileId => fileChanges(fileId) > 0))
+const changedFileIds = computed(() => Object.keys(fileStates.value).filter(fileId => getNonPendingChanges(fileId).length > 0))
 const count = computed(() => changedFileIds.value.length)
 
 async function submitAll() {
@@ -18,14 +18,16 @@ async function submitAll() {
 
   isSubmitting.value = true
 
+  const currentCount = count.value
+
   const results = await Promise.allSettled(changedFileIds.value.map(async (fileId) => {
-    const committed = loadedFiles.value[fileId]?.metadata ?? {}
+    const commited = loadedFiles.value[fileId]?.metadata ?? {}
 
     const changes = getFileState(fileId)
-      .filter(field => (field.value || '') !== (committed[field.key] || ''))
+      .filter(field => isPendingField(fileId, field.key) || (field.value ?? '') !== (commited[field.key] ?? ''))
       .map(field => ({
         fieldId: field.key,
-        newValue: field.value || null,
+        newValue: field.value ?? null,
       }))
 
     if (changes.length === 0) {
@@ -34,7 +36,6 @@ async function submitAll() {
 
     const result = await $trpc.proposal.submit.mutate({ fileId, changes })
     await queryClient.invalidateQueries({ queryKey: ['proposal', 'listForOrg'] })
-
     applySubmittedChanges(fileId, changes, result.id)
   }))
 
@@ -43,10 +44,10 @@ async function submitAll() {
   const succeeded = results.filter(result => result.status === 'fulfilled').length
 
   notification.add({
-    title: succeeded === count.value
+    title: succeeded === currentCount
       ? `${succeeded} file${succeeded !== 1 ? 's' : ''} submitted for review.`
-      : `${succeeded} of ${count.value} files submitted for review.`,
-    color: succeeded === count.value ? 'success' : 'warning',
+      : `${succeeded} of ${currentCount} files submitted for review.`,
+    color: succeeded === currentCount ? 'success' : 'warning',
     duration: 3000,
   })
 }

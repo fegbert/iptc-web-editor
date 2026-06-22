@@ -10,7 +10,7 @@ const { loadedFiles } = useFiles()
 const { setupFileState, removeFileState } = useFileState()
 const { selectedIds, toggleSelection } = useFileSelection()
 const { orgRole } = useAuth()
-const { loadProposalForFile, removeProposalTracking } = useProposal()
+const { loadProposalForFile, removeProposalTracking, applyMetadataUpdate } = useProposal()
 const route = useRoute()
 
 const isLoading = ref(true)
@@ -27,7 +27,9 @@ watch(adapterFiles, (adapted, previous) => {
       }
     }
     else {
+      const oldMetadata = { ...loadedFiles.value[id]!.metadata }
       loadedFiles.value[id]!.metadata = adapted[id]!.metadata
+      applyMetadataUpdate(id, oldMetadata, adapted[id]!.metadata)
     }
   })
 

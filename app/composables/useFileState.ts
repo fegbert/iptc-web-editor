@@ -54,7 +54,7 @@ export default function useFileState() {
     })
   }
 
-  function fileChanges(fileId: string) {
+  function fileChanges(fileId: string, excludeFieldIds?: Set<string>) {
     const file = loadedFiles.value[fileId]
     if (!file) {
       return 0
@@ -64,6 +64,9 @@ export default function useFileState() {
     let changes = 0
 
     state.forEach((field) => {
+      if (excludeFieldIds?.has(field.key)) {
+        return
+      }
       const originalValue = file.metadata[field.key] ?? ''
       if (originalValue !== field.value) {
         changes++
@@ -71,6 +74,17 @@ export default function useFileState() {
     })
 
     return changes
+  }
+
+  function getNonPendingChanges(fileId: string) {
+    const { isPendingField } = useProposal()
+    const commited = loadedFiles.value[fileId]?.metadata ?? {}
+    return getFileState(fileId).filter((field) => {
+      if (isPendingField(fileId, field.key)) {
+        return false
+      }
+      return (commited[field.key] ?? '') !== (field.value ?? '')
+    })
   }
 
   const filesChanged = computed(() => Object.keys(fileStates.value).filter(fileId => fileChanges(fileId) > 0).length)
@@ -134,5 +148,6 @@ export default function useFileState() {
     saveAll,
     isLoading,
     loadFileStatesFromIndexedDB,
+    getNonPendingChanges,
   }
 }

@@ -29,9 +29,9 @@ const canDelete = computed(() => {
 })
 
 const { isSelected } = useFileSelection()
-const { fileChanges } = useFileState()
+const { getNonPendingChanges } = useFileState()
 
-const hasChanged = computed(() => fileChanges(props.file.id) > 0)
+const hasChanged = computed(() => getNonPendingChanges(props.file.id).length > 0)
 
 const { hasPendingProposal } = useProposal()
 const isPending = computed(() => hasPendingProposal(props.file.id))
@@ -62,7 +62,7 @@ const isPending = computed(() => hasPendingProposal(props.file.id))
       </UTooltip>
     </div>
     <div class="absolute top-0 right-0 flex items-center mr-1 mt-1 gap-1">
-      <UIcon v-if="isPending" name="i-lucide-clock" size="sm" class="w-3.5 h-3.5 text-warning mr-1" />
+      <UIcon v-if="isPending" name="i-lucide-clock" size="sm" class="w-4 h-4 text-warning mr-1" />
       <UButton v-if="hasChanged" color="secondary" size="sm" icon="i-lucide-timer-reset" variant="subtle" @click.stop="emit('reset', file.id)" />
       <UButton v-if="canDelete" color="error" variant="subtle" size="sm" icon="i-lucide-x" @click.stop="emit('remove', file.id)" />
     </div>
