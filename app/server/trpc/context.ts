@@ -5,6 +5,7 @@ export async function createTRPCContext(event: H3Event, _opts: FetchCreateContex
   return {
     prisma: event.context.prisma,
     auth: event.context.auth(),
+    clerk: event.context.clerk,
     event,
   }
 }

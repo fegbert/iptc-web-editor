@@ -4,8 +4,11 @@ import type { IPTCFieldWithValue } from '~/utils/iptc-iim/types'
 const { firstSelectedId, selectedIds } = useFileSelection()
 const { getFileState, updateFileData } = useFileState()
 const { loadedFiles } = useFiles()
+const { isPendingField, hasPendingProposal } = useProposal()
 
 const isMultiple = computed(() => selectedIds.value.length > 1)
+
+const hasPendingForSelected = computed(() => !isMultiple.value && firstSelectedId.value && hasPendingProposal(firstSelectedId.value))
 
 // Single File - directly reference to fileStates
 const singleFileState = computed({
@@ -69,11 +72,26 @@ function getMixedValues(key: string) {
 }
 
 provide('editorMultiFile', { isMixed, getMixedValues })
+provide('editorProposal', {
+  isPendingField: (key: string) => {
+    if (isMultiple.value || !firstSelectedId.value) return false
+    return isPendingField(firstSelectedId.value, key)
+  },
+})
 </script>
 
 <template>
   <div v-if="firstSelectedId || isMultiple" class="w-full h-full pr-4 sm:pr-6">
     <EditorFileInformation class="bg-accented/20 rounded-lg" />
+    <UAlert
+      v-if="hasPendingForSelected"
+      color="warning"
+      variant="subtle"
+      icon="i-lucide-clock"
+      title="Pending Review"
+      description="You have proposed changes on this file that are awaiting approval."
+      class="mt-4 -mb-4"
+    />
     <div class="flex flex-col w-full gap-4 pt-8">
       <BaseCollapsible :default-open="true">
         <template #title>

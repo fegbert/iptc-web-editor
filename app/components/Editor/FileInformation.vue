@@ -49,7 +49,24 @@ const modifiedCount = computed(() => selectedIds.value.filter(id => fileChanges(
   <div class="flex h-[22rem] gap-4 p-4">
     <!-- Single File Preview -->
     <template v-if="!isMultiple">
-      <NuxtImg v-if="singleUrl" :src="singleUrl" :alt="singleFile?.data.name" :style="{ height: '22rem' }" />
+      <div
+        v-if="singleFile"
+        class="relative shrink-0 self-center"
+        :style="{
+          width: `${WIDTH + (stackFiles.length - 1) * OFFSET}px`,
+          height: `${HEIGHT + (stackFiles.length - 1) * OFFSET}px`,
+        }"
+      >
+        <div
+          class="absolute rounded-md overflow-hidden shadow-md bg-accented"
+          :style="{
+            width: `${WIDTH}px`,
+            height: `${HEIGHT}px`,
+          }"
+        >
+          <NuxtImg :src="singleUrl" :alt="singleFile?.data.name" class="w-full h-full object-cover" />
+        </div>
+      </div>
       <USkeleton v-else class="h-full w-1/4" />
       <div class="flex flex-col w-full justify-center py-4">
         <h1 class="text-lg font-bold">
@@ -117,10 +134,11 @@ const modifiedCount = computed(() => selectedIds.value.filter(id => fileChanges(
         </div>
       </div>
 
-      <div class="flex flex-col justify-center gap-3 pl-2">
+      <div class="flex flex-col w-full justify-center py-4">
         <h1 class="text-lg font-bold">
           File Properties
         </h1>
+
         <table class="w-1/2">
           <tbody>
             <tr>

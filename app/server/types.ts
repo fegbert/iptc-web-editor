@@ -10,3 +10,6 @@ export type FileGetUploadUrlInput = RouterInput['file']['getUploadUrl']
 export type FileGetUploadUrlOutput = RouterOutput['file']['getUploadUrl']
 
 export type TemplateListOutput = RouterOutput['template']['list'][number]
+
+export type ProposalOrgListItem = RouterOutput['proposal']['listForOrg'][number]
+export type ProposalChange = ProposalOrgListItem['changes'][number]

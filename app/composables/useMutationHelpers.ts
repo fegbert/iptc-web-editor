@@ -44,7 +44,7 @@ function makeTrpcErrorToast(notification: ReturnType<typeof useToast>, options: 
       title: options.title ?? 'Operation Failed',
       description: `${description} ${error ? `(Error: ${formatTrpcErrorErrorMessage(error)})` : ''}`,
       color: 'error',
-      duration: options.duration ?? 5000,
+      duration: options.duration ?? 3000,
     })
   }
 }

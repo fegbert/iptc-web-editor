@@ -10,10 +10,17 @@ function getAfterSelectUrl(org: OrganizationResource) {
 }
 
 const route = useRoute()
-const isWorkspace = computed(() => route.path.startsWith('/workspace/'))
+const { orgId, orgRole } = useAuth()
+const isWorkspace = computed(() => !!orgId && route.path.startsWith('/workspace/'))
+
+const { proposal: queryProposal } = useQuery()
+const { data: proposalCount } = queryProposal.countForOrg({ enabled: computed(() => isWorkspace.value && orgRole.value === 'org:admin') })
+
+const showReviewModal = ref(false)
 </script>
 
 <template>
+  <ModalReviewOverview v-if="isWorkspace" v-model="showReviewModal" @close="showReviewModal = false" />
   <div class="HeaderHeight px-16 flex justify-between items-center bg-default/75 border-default border-b">
     <div class="flex items-center gap-2">
       <Icon name="material-symbols:image-search-outline" size="24" />
@@ -34,6 +41,10 @@ const isWorkspace = computed(() => route.path.startsWith('/workspace/'))
           aria-label="GitHub"
         />
       </UTooltip>
+      <hr class="border-accented border-1 h-7 rounded-full">
+      <UButton v-if="orgRole === 'org:admin'" variant="ghost" icon="i-lucide-clipboard-list" @click="showReviewModal = true">
+        Review Proposals ({{ proposalCount?.count ?? 0 }})
+      </UButton>
       <hr class="border-accented border-1 h-7 rounded-full">
       <Show when="signed-in">
         <OrganizationSwitcher after-select-personal-url="/" :after-select-organization-url="getAfterSelectUrl" />

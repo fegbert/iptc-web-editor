@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { TemplateListOutput } from '~/server/types'
 import type { TemplateIdb } from '~/shared/types'
-import { iptcIimFields } from '~/utils/iptc-iim/mapping'
 
 export type UserTemplateItem = (TemplateIdb & { isLocal: true }) | (TemplateListOutput & { isLocal: false })
 
@@ -30,10 +29,6 @@ function filledFieldCount(fields: UserTemplateItem['fields']) {
 
 function isSharedWithOrg(template: TemplateListOutput) {
   return !!orgId.value && template.sharedWithOrgIds.includes(orgId.value)
-}
-
-function getFieldTitle(fieldId: string) {
-  return iptcIimFields.find(field => field.key === fieldId)?.title || fieldId
 }
 
 function deleteTemplate() {
