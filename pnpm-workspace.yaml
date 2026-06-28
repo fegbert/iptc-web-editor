@@ -3,3 +3,11 @@ packages:
   - parser
 ignoredBuiltDependencies:
   - sharp
+onlyBuiltDependencies:
+  - '@clerk/shared'
+  - '@parcel/watcher'
+  - esbuild
+  - prisma
+  - '@prisma/engines'
+  - unrs-resolver
+  - vue-demi

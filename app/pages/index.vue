@@ -3,7 +3,7 @@ import type { FileWithMetadata } from '~/shared/types'
 import { supported } from 'browser-fs-access'
 
 const { loadedFiles, removeFile, fileAmount, loadAmountFromCookies, loadFilesFromIndexedDB } = useFiles()
-const { getSelectedIds, toggleSelection, loadSelectedFileIdsFromIndexedDB } = useFileSelection()
+const { selectedIds, toggleSelection, loadSelectedFileIdsFromIndexedDB } = useFileSelection()
 const { removeFileState, setupFileState, loadFileStatesFromIndexedDB } = useFileState()
 
 const isLoading = ref(true)
@@ -46,6 +46,7 @@ function remove(fileId: string) {
 }
 
 const showResetModal = ref<{ fileId: string } | null>(null)
+const showTemplateModal = ref(false)
 
 function reset() {
   if (!showResetModal.value) {
@@ -56,6 +57,20 @@ function reset() {
   setupFileState(showResetModal.value.fileId)
   showResetModal.value = null
 }
+
+onMounted(async () => {
+  const clerk = useClerk()
+  const { organization, isLoaded } = useOrganization()
+
+  const isClerkLoaded = computed(() => !!clerk.value)
+
+  await until(isClerkLoaded).toBe(true)
+  await until(isLoaded).toBe(true)
+
+  if (organization.value) {
+    await clerk.value?.setActive({ organization: null })
+  }
+})
 </script>
 
 <template>
@@ -70,6 +85,7 @@ function reset() {
     v-model="showSupportedBrowserModal"
     @close="acceptSupportedBrowserNotice()"
   />
+  <ModalTemplateOverview v-model="showTemplateModal" @close="showTemplateModal = false" />
   <UDashboardGroup class="Dashboard">
     <UDashboardSidebar class="Sidebar" :default-size="20">
       <template #header>
@@ -111,8 +127,12 @@ function reset() {
     <UDashboardPanel :ui="{ body: 'pr-0!' }" class="min-h-min!">
       <template #header>
         <UDashboardNavbar title="Edit Metadata">
-          <template #right>
-            <EditorSaveButton v-if="getSelectedIds().length > 0" />
+          <template v-if="selectedIds.length > 0" #right>
+            <UButton variant="subtle" color="secondary" icon="i-lucide-book" @click.stop="showTemplateModal = true">
+              Templates
+            </UButton>
+            <USeparator class="h-8" orientation="vertical" />
+            <EditorSaveButton />
           </template>
         </UDashboardNavbar>
       </template>

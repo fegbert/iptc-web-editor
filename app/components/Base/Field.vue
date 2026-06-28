@@ -36,6 +36,20 @@ const errorMessage = computed(() => {
 const formattedTitle = computed(() => {
   return field.value.title.charAt(0).toUpperCase() + field.value.title.slice(1)
 })
+
+const multiFileCtx = inject<{
+  isMixed: (key: string) => boolean
+  getMixedValues: (key: string) => { fileId: string, fileName: string, value: string }[]
+} | null>('editorMultiFile', null)
+
+const isMixed = computed(() => multiFileCtx?.isMixed(field.value.key) ?? false)
+const mixedValues = computed(() => multiFileCtx?.getMixedValues(field.value.key) ?? [])
+
+const proposalCtx = inject<{
+  isPendingField: (key: string) => boolean
+} | null>('editorProposal', null)
+
+const isPending = computed(() => proposalCtx?.isPendingField(field.value.key) ?? false)
 </script>
 
 <template>
@@ -44,6 +58,44 @@ const formattedTitle = computed(() => {
       <div class="flex items-center w-full h-7 gap-1">
         <span>{{ title ?? formattedTitle }}</span>
         <UButton v-if="hasChanged" size="sm" color="secondary" variant="link" icon="i-lucide-timer-reset" @click.prevent="emit('reset')" />
+        <UPopover v-if="isMixed" mode="hover" :content="{ side: 'top' }" class="max-w-sm">
+          <div class="pt-1">
+            <UIcon name="i-lucide-layers" class="w-3.5 h-3.5 text-warning" />
+          </div>
+          <template #content>
+            <div class="flex flex-col min-w-48 py-3">
+              <p class="px-3 pb-2 text-xs font-semibold uppercase tracking-wide text-default/50">
+                Existing values
+              </p>
+              <div v-for="(mixed, index) in mixedValues" :key="mixed.fileId" :class="index % 2 === 0 ? 'bg-accented/30' : ''">
+                <div v-if="mixed.value" class="flex w-full justify-between px-3 py-1.5 max-w-xs">
+                  <div class="flex flex-col gap-0.5">
+                    <span class="text-xs text-default/50 truncate">{{ mixed.fileName }}</span>
+                    <span class="text-sm text-wrap">{{ mixed.value || '-' }}</span>
+                  </div>
+                  <UButton v-if="mixed.value" size="xs" class="h-6" variant="ghost" icon="lucide:circle-plus" @click="field.value = mixed.value" />
+                </div>
+              </div>
+            </div>
+          </template>
+        </UPopover>
+        <UPopover v-if="isPending" mode="hover" :content="{ side: 'top' }" class="max-w-sm">
+          <div class="pt-1.5">
+            <UIcon name="i-lucide-clock" class="w-3.5 h-3.5 text-warning" />
+          </div>
+          <template #content>
+            <div class="flex flex-col py-3">
+              <p class="px-3 pb-2 text-xs font-semibold uppercase tracking-wide text-default/50">
+                Pending review
+              </p>
+              <div class="px-3 py-1.5 max-w-xs">
+                <p class="text-sm text-wrap">
+                  This field has a pending change that is not yet approved. Changing the value will override the pending change.
+                </p>
+              </div>
+            </div>
+          </template>
+        </UPopover>
       </div>
     </template>
     <slot name="default" :error="errorMessage" />

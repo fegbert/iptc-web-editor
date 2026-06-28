@@ -1,4 +1,5 @@
 import { defineNuxtConfig } from 'nuxt/config'
+import { clerkConfig } from './clerk.config'
 import { name, version } from './package.json'
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
@@ -19,7 +20,9 @@ export default defineNuxtConfig({
       appVersion: version,
     },
   },
+  clerk: clerkConfig,
   modules: [
+    '@clerk/nuxt',
     '@nuxt/ui',
     '@nuxt/icon',
     '@nuxt/fonts',
@@ -39,5 +42,13 @@ export default defineNuxtConfig({
   colorMode: {
     preference: 'system',
     fallback: 'dark',
+  },
+  build: {
+    transpile: ['trpc-nuxt'],
+  },
+  nitro: {
+    experimental: {
+      websocket: true,
+    },
   },
 })

@@ -2,12 +2,15 @@ import type { FileWithMetadata } from '~/shared/types'
 
 type FileSelection = Record<string, boolean>
 
-const ALLOW_MULTIPLE_SELECTION = false
+const ALLOW_MULTIPLE_SELECTION = true
 const IDB_KEY_SELECTED_FILES = 'selected-files'
 
 const selections = ref<FileSelection>({})
+const selectionHistory = ref<string[]>([])
 
 export default function useFileSelection() {
+  const { loadedFiles } = useFiles()
+
   async function loadSelectedFileIdsFromIndexedDB() {
     if (import.meta.env.SSR) {
       return
@@ -17,50 +20,72 @@ export default function useFileSelection() {
     selections.value = files ?? {}
   }
 
-  function getSelectedIds(): string[] {
-    return Object.entries(selections.value).filter(([_, isSelected]) => isSelected).map(([fileId, _]) => fileId)
-  }
+  const selectedIds = computed(() => Object.entries(selections.value).filter(([_, isSelected]) => isSelected).map(([fileId, _]) => fileId))
 
   function toggleSelection(file: FileWithMetadata, modifier: 'shift' | 'ctrl' | undefined = undefined) {
-    if (ALLOW_MULTIPLE_SELECTION) {
-      if (modifier === 'shift') {
-        if (getSelectedIds().length === 0) {
-          handleNormalSelect(file.id)
-        }
-        else {
-          // TODO: reimplement shift selection
-          // const lastSelectedIndex = selectedIndexes.value[selectedIndexes.value.length - 1] ?? 0
-          // handleShiftSelect(selectedFileIndex, lastSelectedIndex)
-        }
+    if (!ALLOW_MULTIPLE_SELECTION) {
+      modifier = undefined
+    }
+
+    if (modifier === 'shift') {
+      if (selectedIds.value.length === 0) {
+        handleNormalSelect(file.id)
       }
-      else if (modifier === 'ctrl') {
-        handleCtrlSelect(file.id)
+      else {
+        handleShiftSelect(file.id)
       }
+    }
+    else if (modifier === 'ctrl') {
+      handleCtrlSelect(file.id)
     }
     else {
       handleNormalSelect(file.id)
     }
   }
 
-  /* TODO: Reimplement shift selection
-  function handleShiftSelect(fileIndex: number, lastSelectedIndex: number) {
+  function handleShiftSelect(fileId: string) {
+    if (selectionHistory.value.length === 0) {
+      return handleNormalSelect(fileId)
+    }
+
+    const lastSelectedId = selectionHistory.value[selectionHistory.value.length - 1]!
+
+    const fileIds = Object.keys(loadedFiles.value)
+    const lastSelectedIndex = fileIds.indexOf(lastSelectedId)
+    const fileIndex = fileIds.indexOf(fileId)
+
+    if (lastSelectedIndex === -1 || fileIndex === -1) {
+      return
+    }
+
     const [start, end] = fileIndex < lastSelectedIndex ? [fileIndex, lastSelectedIndex] : [lastSelectedIndex, fileIndex]
-    selectedIndexes.value.push(...Array.from({ length: end - start + 1 }, (_, i) => start + i))
+
+    fileIds.forEach((id) => {
+      const fileIndex = fileIds.indexOf(id)
+      selections.value[id] = fileIndex >= start && fileIndex <= end
+    })
   }
-  */
 
   function handleCtrlSelect(fileId: string) {
-    selections.value[fileId] = !selections.value[fileId]
+    const toggleTo = !(selections.value[fileId] ?? false)
+    selections.value[fileId] = toggleTo
+    if (toggleTo) {
+      selectionHistory.value.push(fileId)
+    }
+    else {
+      selectionHistory.value.pop()
+    }
   }
 
   function handleNormalSelect(fileId: string) {
-    const areMoreSelected = getSelectedIds().length > 1
+    const areMoreSelected = selectedIds.value.length > 1
     const isSelectedBefore = isSelected(fileId)
 
     deselectAll()
 
     if ((isSelectedBefore && areMoreSelected) || !isSelectedBefore) {
       selections.value[fileId] = true
+      selectionHistory.value.push(fileId)
     }
   }
 
@@ -68,6 +93,7 @@ export default function useFileSelection() {
     Object.keys(selections.value).forEach((key) => {
       selections.value[key] = false
     })
+    selectionHistory.value = []
   }
 
   function isSelected(fileId: string): boolean {
@@ -75,8 +101,7 @@ export default function useFileSelection() {
   }
 
   const firstSelectedId = computed(() => {
-    const selectedIds = getSelectedIds()
-    return selectedIds.length > 0 ? selectedIds[0] : null
+    return selectedIds.value.length > 0 ? selectedIds.value[0] : null
   })
 
   const firstSelectedFile = computed(() => {
@@ -84,5 +109,5 @@ export default function useFileSelection() {
     return firstSelectedId.value ? loadedFiles.value[firstSelectedId.value] : null
   })
 
-  return { toggleSelection, selections, isSelected, firstSelectedId, firstSelectedFile, loadSelectedFileIdsFromIndexedDB, getSelectedIds }
+  return { toggleSelection, selections, isSelected, firstSelectedId, firstSelectedFile, loadSelectedFileIdsFromIndexedDB, selectedIds }
 }

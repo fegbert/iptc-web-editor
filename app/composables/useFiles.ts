@@ -91,6 +91,8 @@ export default function useFiles() {
     })
 
     updateFileAmountCookie()
+
+    return metadataMapping
   }
 
   function markAsDownloaded(fileIds: string[]) {

@@ -19,14 +19,22 @@ const emit = defineEmits<{
 }>()
 
 const fileData = computed(() => props.file.data)
-const fileUrl = computedAsync(async () => await loadImageForPreview(props.file.buffer))
+const fileUrl = computedAsync(async () => props.file.previewUrl ?? await loadImageForPreview(props.file.buffer))
 const fileSize = (fileData.value.size / 1024).toFixed(2)
 const altText = `${fileData.value.name} - ${fileSize} KB`
 
-const { isSelected } = useFileSelection()
-const { fileChanges } = useFileState()
+const canDelete = computed(() => {
+  const { orgRole, userId, orgId } = useAuth()
+  return orgId.value ? orgRole.value === 'org:admin' || props.file.createdBy === userId.value : true
+})
 
-const hasChanged = computed(() => fileChanges(props.file.id) > 0)
+const { isSelected } = useFileSelection()
+const { getNonPendingChanges } = useFileState()
+
+const hasChanged = computed(() => getNonPendingChanges(props.file.id).length > 0)
+
+const { hasPendingProposal } = useProposal()
+const isPending = computed(() => hasPendingProposal(props.file.id))
 </script>
 
 <template>
@@ -36,6 +44,8 @@ const hasChanged = computed(() => fileChanges(props.file.id) > 0)
       'border-primary bg-accented/20': isSelected(file.id),
       'border-secondary': hasChanged && !isSelected(file.id),
       'bg-secondary/10 hover:bg-secondary/20': hasChanged,
+      'border-warning': isPending && !hasChanged && !isSelected(file.id),
+      'bg-warning/10 hover:bg-warning/20': isPending && !hasChanged,
     }"
     @click="emit('select', file)"
   >
@@ -52,8 +62,9 @@ const hasChanged = computed(() => fileChanges(props.file.id) > 0)
       </UTooltip>
     </div>
     <div class="absolute top-0 right-0 flex items-center mr-1 mt-1 gap-1">
+      <UIcon v-if="isPending" name="i-lucide-clock" size="sm" class="w-4 h-4 text-warning mr-1" />
       <UButton v-if="hasChanged" color="secondary" size="sm" icon="i-lucide-timer-reset" variant="subtle" @click.stop="emit('reset', file.id)" />
-      <UButton color="error" variant="subtle" size="sm" icon="i-lucide-x" @click.stop="emit('remove', file.id)" />
+      <UButton v-if="canDelete" color="error" variant="subtle" size="sm" icon="i-lucide-x" @click.stop="emit('remove', file.id)" />
     </div>
   </div>
 </template>

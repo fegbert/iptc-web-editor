@@ -34,9 +34,12 @@ const amountOfChanges = computed(() => {
         <div class="font-semibold">
           <slot name="title" />
         </div>
-        <span v-if="amountOfChanges && firstSelectedFile && !firstSelectedFile.isDownloaded && !disabled" class="text-sm text-gray-400">
-          {{ amountOfChanges }} unsaved change{{ amountOfChanges === 1 ? '' : 's' }}
-        </span>
+        <div>
+          <slot name="actions" />
+          <span v-if="amountOfChanges && firstSelectedFile && !firstSelectedFile.isDownloaded && !disabled" class="text-sm text-gray-400">
+            {{ amountOfChanges }} unsaved change{{ amountOfChanges === 1 ? '' : 's' }}
+          </span>
+        </div>
       </div>
     </UButton>
     <template #content>

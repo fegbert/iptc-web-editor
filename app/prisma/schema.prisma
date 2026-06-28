@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model WorkspaceFileData {
+  id              String        @id @default(cuid())
+  name            String
+  type            String
+  size            Float
+  lastModified    String
+  path            String?
+  workspaceFileId String        @unique
+  workspaceFile   WorkspaceFile @relation(fields: [workspaceFileId], references: [id], onDelete: Cascade)
+}
+
+model WorkspaceFile {
+  id         String             @id @default(cuid())
+  clerkOrgId String
+  r2Key      String             @unique
+  metadata   Json               @default("{}")
+  fileData   WorkspaceFileData?
+  proposals  MetadataProposal[]
+  createdBy  String
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+  updatedBy  String?
+}
+
+model TemplateField {
+  id         String   @id @default(cuid())
+  templateId String
+  template   Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  fieldId    String
+  value      String?
+}
+
+model Template {
+  id               String          @id @default(cuid())
+  title            String
+  description      String?
+  fields           TemplateField[]
+  createdBy        String
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  updatedBy        String?
+  sharedWithOrgIds String[]
+}
+
+enum ChangeStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model MetadataProposal {
+  id              String           @id @default(cuid())
+  workspaceFileId String
+  workspaceFile   WorkspaceFile    @relation(fields: [workspaceFileId], references: [id], onDelete: Cascade)
+  changes         ProposalChange[]
+  proposedBy      String
+  proposedAt      DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+
+model ProposalChange {
+  id         String           @id @default(cuid())
+  proposalId String
+  proposal   MetadataProposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  fieldId    String
+  oldValue   String?
+  newValue   String?
+  status     ChangeStatus     @default(PENDING)
+  reviewNote String?
+  reviewedBy String?
+  reviewedAt DateTime?
+}

@@ -1,14 +1,97 @@
 <script setup lang="ts">
-const { getSelectedIds, firstSelectedFile } = useFileSelection()
-const { getFileState } = useFileState()
+import type { IPTCFieldWithValue } from '~/utils/iptc-iim/types'
 
-const selectedState = computed(() => getFileState(firstSelectedFile.value?.id || ''))
-const fileId = computed(() => firstSelectedFile.value?.id || '')
+const { firstSelectedId, selectedIds } = useFileSelection()
+const { getFileState, updateFileData } = useFileState()
+const { loadedFiles } = useFiles()
+const { isPendingField, hasPendingProposal } = useProposal()
+
+const isMultiple = computed(() => selectedIds.value.length > 1)
+
+const hasPendingForSelected = computed(() => !isMultiple.value && firstSelectedId.value && hasPendingProposal(firstSelectedId.value))
+
+// Single File - directly reference to fileStates
+const singleFileState = computed({
+  get: () => getFileState(firstSelectedId.value ?? ''),
+  set: () => {},
+})
+
+// Multiple Files - independent copies so mutations don't bleed into per file state
+const multiState = ref<IPTCFieldWithValue[]>([])
+const multiSnapshot = ref<Record<string, string>>({})
+
+function buildMerged() {
+  const ids = selectedIds.value
+  if (ids.length === 0) {
+    return []
+  }
+
+  const states = ids.map(id => getFileState(id))
+  return states[0]!.map((field, index) => {
+    const values = states.map(state => state?.[index]?.value ?? '')
+    const allSame = values.every(value => value === values[0])
+    return { ...field, value: allSame ? values[0] : '' }
+  })
+}
+
+watch(selectedIds, () => {
+  if (!isMultiple.value) {
+    return
+  }
+
+  const merged = buildMerged()
+  multiState.value = merged.map(field => ({ ...field, value: field.value ?? '' }))
+  multiSnapshot.value = Object.fromEntries(merged.map(field => [field.key, field.value ?? '']))
+}, { immediate: true })
+
+watch(multiState, (newState) => {
+  if (!isMultiple.value) {
+    return
+  }
+
+  newState.forEach((field) => {
+    if (field.value !== multiSnapshot.value[field.key]) {
+      selectedIds.value.forEach(id => updateFileData(id, field.key, field.value))
+      multiSnapshot.value[field.key] = field.value
+    }
+  })
+}, { deep: true })
+
+function isMixed(key: string): boolean {
+  if (selectedIds.value.length <= 1) return false
+  const values = selectedIds.value.map(id => getFileState(id).find(state => state.key === key)?.value ?? '')
+  return new Set(values).size > 1
+}
+
+function getMixedValues(key: string) {
+  return selectedIds.value.map(fileId => ({
+    fileId,
+    fileName: loadedFiles.value[fileId]?.data.name ?? 'Unknown',
+    value: getFileState(fileId).find(state => state.key === key)?.value ?? '',
+  }))
+}
+
+provide('editorMultiFile', { isMixed, getMixedValues })
+provide('editorProposal', {
+  isPendingField: (key: string) => {
+    if (isMultiple.value || !firstSelectedId.value) return false
+    return isPendingField(firstSelectedId.value, key)
+  },
+})
 </script>
 
 <template>
-  <div v-if="firstSelectedFile && selectedState.length > 0" class="w-full h-full pr-4 sm:pr-6">
-    <EditorFileInformation class="bg-accented/20 rounded-lg" :file-ids="getSelectedIds()" />
+  <div v-if="firstSelectedId || isMultiple" class="w-full h-full pr-4 sm:pr-6">
+    <EditorFileInformation class="bg-accented/20 rounded-lg" />
+    <UAlert
+      v-if="hasPendingForSelected"
+      color="warning"
+      variant="subtle"
+      icon="i-lucide-clock"
+      title="Pending Review"
+      description="You have proposed changes on this file that are awaiting approval."
+      class="mt-4 -mb-4"
+    />
     <div class="flex flex-col w-full gap-4 pt-8">
       <BaseCollapsible :default-open="true">
         <template #title>
@@ -17,8 +100,11 @@ const fileId = computed(() => firstSelectedFile.value?.id || '')
 
         <template #content>
           <div class="py-4">
-            <UForm v-if="firstSelectedFile" :state="selectedState">
-              <EditorCategories v-model="selectedState" :file-id="fileId" />
+            <UForm v-if="isMultiple" :state="multiState">
+              <EditorCategories v-model="multiState" file-id="" />
+            </UForm>
+            <UForm v-else-if="firstSelectedId" :state="singleFileState">
+              <EditorCategories v-model="singleFileState" :file-id="firstSelectedId" />
             </UForm>
           </div>
         </template>
