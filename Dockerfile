@@ -1,7 +1,7 @@
 # Multi-stage Dockerfile for IPTC Web Editor (Nuxt.js + pnpm workspace)
 
 # Stage 1: Build
-FROM node:24-alpine AS builder
+FROM node:25-alpine AS builder
 
 # Install pnpm
 RUN corepack enable && corepack prepare pnpm@10.12.4 --activate
@@ -28,7 +28,7 @@ RUN pnpm -C app db:generate
 RUN pnpm -C app build
 
 # Stage 2: Production runtime
-FROM node:24-alpine AS runner
+FROM node:25-alpine AS runner
 
 RUN corepack enable && corepack prepare pnpm@10.12.4 --activate
 
@@ -49,6 +49,7 @@ COPY --from=builder /editor/parser/dist ./parser/dist
 COPY --from=builder /editor/app/package.json ./app/
 COPY --from=builder /editor/app/.output ./app/.output
 COPY --from=builder /editor/app/prisma/generated ./app/prisma/generated
+COPY --from=builder /editor/app/prisma/schema.prisma ./app/prisma/
 
 # Install only production dependencies
 RUN pnpm install --frozen-lockfile --prod --ignore-scripts
