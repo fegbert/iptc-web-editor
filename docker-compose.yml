@@ -19,7 +19,7 @@ services:
   migrate:
     build: .
     command: >
-      sh -c "cd /editor/app && node_modules/.bin/prisma db push --skip-generate"
+      sh -c "cd /editor/app && pnpm exec prisma db push --skip-generate"
     environment:
       DATABASE_URL: ${DATABASE_URL}
     depends_on:

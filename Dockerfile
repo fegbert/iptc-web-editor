@@ -51,6 +51,7 @@ COPY --from=builder /editor/app/package.json ./app/
 COPY --from=builder /editor/app/.output ./app/.output
 COPY --from=builder /editor/app/prisma/generated ./app/prisma/generated
 COPY --from=builder /editor/app/prisma/schema.prisma ./app/prisma/
+COPY --from=builder /editor/app/prisma.config.ts ./app/
 
 # Install only production dependencies
 RUN pnpm install --frozen-lockfile --prod --ignore-scripts
