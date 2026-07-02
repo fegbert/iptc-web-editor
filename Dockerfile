@@ -25,8 +25,8 @@ COPY app ./app
 # DATABASE_URL is required by Prisma 7's config loader even for generate — use a dummy value
 RUN DATABASE_URL=postgresql://build:build@localhost:5432/build pnpm -C app db:generate
 
-# Build Nuxt app (parser builds automatically via prepare script)
-RUN pnpm -C app build
+# Build Nuxt app — raise heap limit to avoid OOM on memory-constrained build servers
+RUN NODE_OPTIONS="--max-old-space-size=4096" pnpm -C app build
 
 # Stage 2: Production runtime
 FROM node:25-alpine AS runner
