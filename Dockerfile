@@ -4,7 +4,7 @@
 FROM node:25-alpine AS builder
 
 # Install pnpm
-RUN corepack enable && corepack prepare pnpm@10.12.4 --activate
+RUN npm install -g pnpm@10.12.4
 
 WORKDIR /editor
 
@@ -30,7 +30,7 @@ RUN pnpm -C app build
 # Stage 2: Production runtime
 FROM node:25-alpine AS runner
 
-RUN corepack enable && corepack prepare pnpm@10.12.4 --activate
+RUN npm install -g pnpm@10.12.4
 
 WORKDIR /editor
 
