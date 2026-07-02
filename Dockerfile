@@ -22,7 +22,8 @@ RUN pnpm install --frozen-lockfile
 COPY app ./app
 
 # Generate Prisma client (must run before nuxt build for types to exist)
-RUN pnpm -C app db:generate
+# DATABASE_URL is required by Prisma 7's config loader even for generate — use a dummy value
+RUN DATABASE_URL=postgresql://build:build@localhost:5432/build pnpm -C app db:generate
 
 # Build Nuxt app (parser builds automatically via prepare script)
 RUN pnpm -C app build
